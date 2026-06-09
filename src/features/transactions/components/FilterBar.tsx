@@ -1,5 +1,10 @@
 import React, { memo, useCallback } from 'react';
-import { View, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AppText } from '@components/AppText';
 import { Radius, Spacing } from '@constants/index';
@@ -19,6 +24,7 @@ export const FilterBar = memo(function FilterBar({
   onTypeChange,
 }: FilterBarProps) {
   const { colors, isDark } = useTheme();
+  const activeIndex = FILTERS.findIndex((f) => f.value === activeType);
 
   const handlePress = useCallback(
     (value: TransactionType | 'all') => {
@@ -28,57 +34,65 @@ export const FilterBar = memo(function FilterBar({
     [onTypeChange]
   );
 
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.container}
-    >
-      {FILTERS.map((filter) => {
-        const isActive = filter.value === activeType;
-        const activeBg = isDark ? colors.brand.primary : colors.text.primary;
-        const activeText = isDark ? colors.text.inverse : colors.white;
+  const trackBg  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+  const activeBg = isDark ? colors.brand.primary      : colors.text.primary;
+  const activeTx = isDark ? colors.text.inverse        : colors.white;
 
+  return (
+    <View style={[styles.track, { backgroundColor: trackBg }]}>
+      {FILTERS.map((filter, idx) => {
+        const isActive = idx === activeIndex;
         return (
           <Pressable
             key={filter.value}
             onPress={() => handlePress(filter.value)}
             style={[
-              styles.chip,
-              {
-                backgroundColor: isActive ? activeBg : colors.glass.background,
-                borderColor: isActive ? activeBg : colors.glass.border,
+              styles.tab,
+              isActive && {
+                backgroundColor: activeBg,
+                borderRadius:    Radius.full,
               },
             ]}
+            android_ripple={{ color: 'transparent' }}
           >
             <AppText
               variant="labelMD"
-              color={isActive ? activeText : colors.text.secondary}
-              style={styles.label}
+              numberOfLines={1}
+              style={[
+                styles.label,
+                { color: isActive ? activeTx : colors.text.secondary },
+              ]}
             >
               {filter.label}
             </AppText>
           </Pressable>
         );
       })}
-    </ScrollView>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: Spacing['5'],
-    gap: Spacing['2'],
-    paddingVertical: Spacing['1'],
+  track: {
+    flexDirection:     'row',
+    alignItems:        'center',
+    marginHorizontal:  Spacing['5'],
+    marginBottom:      Spacing['3'],
+    borderRadius:      Radius.full,
+    padding:           3,
+    height:            40,
   },
-  chip: {
-    paddingHorizontal: Spacing['5'],
-    paddingVertical: Spacing['2'],
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    overflow: 'hidden',
-    minWidth: 72,
-    alignItems: 'center',
+  tab: {
+    flex:           1,
+    height:         '100%',
+    alignItems:     'center',
+    justifyContent: 'center',
+    borderRadius:   Radius.full,
+    paddingHorizontal: Spacing['2'],
   },
-  label: { lineHeight: 20 },
+  label: {
+    fontSize:      13,
+    fontWeight:    '600',
+    letterSpacing: 0.1,
+  },
 });
