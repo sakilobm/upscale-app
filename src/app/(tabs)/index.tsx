@@ -7,58 +7,61 @@ import {
   Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useDashboardData } from '@features/dashboard/hooks/useDashboardData';
 import { BalanceCard } from '@features/dashboard/components/BalanceCard';
 import { QuickStatCard } from '@features/dashboard/components/QuickStatCard';
 import { SpendingChart } from '@features/dashboard/components/SpendingChart';
 import { RecentTransactionRow } from '@features/dashboard/components/RecentTransactionRow';
-import { AccountChip } from '@features/dashboard/components/AccountChip';
 import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
 import { LoadingScreen } from '@components/LoadingScreen';
 import { EmptyState } from '@components/EmptyState';
-import { Colors, Spacing, Layout } from '@constants/index';
+import { Spacing, Layout, Radius } from '@constants/index';
+import { useTheme } from '@hooks/useTheme';
 import { useAccountStore } from '@store/accountStore';
 import { useAuthStore } from '@store/authStore';
 import type { Transaction } from '@store/types';
 
-const SCREEN_CONSTANTS = {
-  greeting: (name: string) => `Hello, ${name.split(' ')[0]} 👋`,
-  sectionTitles: {
-    accounts: 'Accounts',
-    quickStats: 'This Month',
-    recent: 'Recent Activity',
-    spending: 'Where it went',
-  },
-} as const;
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const QUICK_ACTIONS: { icon: IoniconName; label: string; filled: boolean }[] = [
+  { icon: 'arrow-up',              label: 'Send',    filled: true  },
+  { icon: 'arrow-down-outline',    label: 'Top Up',  filled: false },
+  { icon: 'shuffle-outline',       label: 'Split',   filled: false },
+  { icon: 'document-text-outline', label: 'Request', filled: false },
+];
 
 export default function HomeScreen() {
+  const { colors, isDark } = useTheme();
   const { data, isLoading, isError, refresh } = useDashboardData();
-  const accounts = useAccountStore((s) => s.accounts);
-  const activeAccountId = useAccountStore((s) => s.activeAccountId);
-  const setActiveAccount = useAccountStore((s) => s.setActiveAccount);
   const user = useAuthStore((s) => s.user);
 
-  const handleTransactionPress = useCallback((tx: Transaction) => {
-    // Navigate to transaction detail — extend with expo-router dynamic route later
+  const handleTransactionPress = useCallback((_tx: Transaction) => {
     router.push('/transactions');
   }, []);
 
+  const initials = user?.fullName
+    ?.split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) ?? 'AM';
+
   if (isError) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <EmptyState
-          emoji="⚠️"
-          title="Something went wrong"
-          subtitle="Pull down to retry"
-        />
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background.primary }]}>
+        <EmptyState emoji="⚠️" title="Something went wrong" subtitle="Pull down to retry" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background.primary }]}
+      edges={['top']}
+    >
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -69,25 +72,39 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={isLoading && data !== null}
             onRefresh={refresh}
-            tintColor={Colors.brand.secondary}
+            tintColor={colors.brand.primary}
           />
         }
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <AppText variant="bodySM" color={Colors.text.secondary}>
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            </AppText>
-            <AppText variant="headingMD" color={Colors.text.primary}>
-              {user ? SCREEN_CONSTANTS.greeting(user.fullName) : 'Welcome back 👋'}
+          <View style={[styles.avatar, { backgroundColor: isDark ? colors.brand.primary + '30' : '#0A0A0A' }]}>
+            <AppText style={[styles.avatarText, { color: isDark ? colors.text.primary : '#FFFFFF' }]}>
+              {initials}
             </AppText>
           </View>
-          <View style={styles.avatarPlaceholder}>
-            <AppText style={styles.avatarText}>
-              {user?.fullName?.charAt(0) ?? 'A'}
+          <View style={styles.headerCenter}>
+            <AppText variant="caption" color={colors.text.secondary} style={styles.greeting}>
+              Welcome Back,
+            </AppText>
+            <AppText variant="headingSM" color={colors.text.primary} style={styles.userName}>
+              {user?.fullName?.split(' ')[0] ?? 'Alex'} {user?.fullName?.split(' ')[1] ?? 'Morgan'}
             </AppText>
           </View>
+          <Pressable
+            style={[styles.bellBtn, { backgroundColor: isDark ? colors.glass.background : colors.background.secondary, borderColor: colors.glass.border }]}
+          >
+            <Ionicons name="notifications-outline" size={20} color={colors.text.primary} />
+          </Pressable>
+        </View>
+
+        {/* Card section header */}
+        <View style={styles.cardHeader}>
+          <AppText variant="labelMD" color={colors.text.secondary}>MoneyCard</AppText>
+          <Pressable style={styles.addCardBtn}>
+            <Ionicons name="add-circle-outline" size={16} color={colors.text.secondary} />
+            <AppText variant="labelSM" color={colors.text.secondary}> Add Card</AppText>
+          </Pressable>
         </View>
 
         {/* Balance Card */}
@@ -103,34 +120,55 @@ export default function HomeScreen() {
           isLoading={isLoading}
         />
 
-        {/* Accounts */}
-        {accounts.length > 0 && (
-          <View style={styles.section}>
-            <AppText variant="headingSM" style={styles.sectionTitle}>
-              {SCREEN_CONSTANTS.sectionTitles.accounts}
-            </AppText>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.accountsRow}
-            >
-              {accounts.map((acc) => (
-                <AccountChip
-                  key={acc.id}
-                  account={acc}
-                  isActive={acc.id === activeAccountId}
-                  onPress={() => setActiveAccount(acc.id)}
-                />
-              ))}
-            </ScrollView>
-          </View>
-        )}
+        {/* Quick Actions */}
+        <View style={styles.actionsRow}>
+          {QUICK_ACTIONS.map(({ icon, label, filled }) => {
+            const btnBg = filled
+              ? (isDark ? colors.brand.primary : '#0A0A0A')
+              : (isDark ? colors.glass.background : colors.background.secondary);
+            const btnBorder = filled ? 'transparent' : colors.glass.border;
+            const iconColor = filled
+              ? (isDark ? colors.text.inverse : '#FFFFFF')
+              : colors.text.primary;
+
+            return (
+              <Pressable
+                key={label}
+                style={({ pressed }) => [
+                  styles.actionItem,
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.actionIconBox,
+                    {
+                      backgroundColor: btnBg,
+                      borderColor: btnBorder,
+                      borderWidth: filled ? 0 : 1,
+                      shadowColor: filled && !isDark ? '#000' : colors.brand.primary,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: filled ? 0.18 : 0,
+                      shadowRadius: 8,
+                      elevation: filled ? 4 : 0,
+                    },
+                  ]}
+                >
+                  <Ionicons name={icon} size={20} color={iconColor} />
+                </View>
+                <AppText variant="caption" color={colors.text.secondary} style={styles.actionLabel}>
+                  {label}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </View>
 
         {/* Quick Stats */}
         {data && (
           <View style={styles.section}>
-            <AppText variant="headingSM" style={styles.sectionTitle}>
-              {SCREEN_CONSTANTS.sectionTitles.quickStats}
+            <AppText variant="headingSM" color={colors.text.primary} style={styles.sectionTitle}>
+              This Month
             </AppText>
             <View style={styles.statsRow}>
               <QuickStatCard
@@ -151,24 +189,21 @@ export default function HomeScreen() {
 
         {/* Spending Chart */}
         <View style={styles.section}>
-          <AppText variant="headingSM" style={styles.sectionTitle}>
-            {SCREEN_CONSTANTS.sectionTitles.spending}
+          <AppText variant="headingSM" color={colors.text.primary} style={styles.sectionTitle}>
+            Where it went
           </AppText>
-          <SpendingChart
-            data={data?.spendingByCategory ?? []}
-            isLoading={isLoading}
-          />
+          <SpendingChart data={data?.spendingByCategory ?? []} isLoading={isLoading} />
         </View>
 
         {/* Recent Transactions */}
         {data && data.recentTransactions.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <AppText variant="headingSM">
-                {SCREEN_CONSTANTS.sectionTitles.recent}
+              <AppText variant="headingSM" color={colors.text.primary}>
+                Recent Activity
               </AppText>
               <Pressable onPress={() => router.push('/transactions')}>
-                <AppText variant="labelMD" color={Colors.brand.secondary}>
+                <AppText variant="labelMD" color={colors.brand.accent}>
                   See all
                 </AppText>
               </Pressable>
@@ -193,33 +228,77 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background.primary,
   },
   scroll: {
     paddingHorizontal: Spacing['5'],
-    paddingTop: Spacing['4'],
-    gap: 0,
+    paddingTop: Spacing['3'],
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing['5'],
+    gap: Spacing['3'],
   },
-  avatarPlaceholder: {
+  avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.brand.primary + '40',
-    borderWidth: 2,
-    borderColor: Colors.brand.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: 18,
-    color: Colors.white,
+    fontSize: 16,
     fontWeight: '700',
+  },
+  headerCenter: {
+    flex: 1,
+    gap: 1,
+  },
+  greeting: {
+    lineHeight: 16,
+  },
+  userName: {
+    lineHeight: 22,
+  },
+  bellBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing['3'],
+  },
+  addCardBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: Spacing['5'],
+    marginBottom: Spacing['2'],
+  },
+  actionItem: {
+    alignItems: 'center',
+    gap: Spacing['2'],
+    flex: 1,
+  },
+  actionIconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionLabel: {
+    letterSpacing: 0.2,
   },
   section: {
     marginTop: Spacing['6'],
@@ -232,10 +311,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing['3'],
-  },
-  accountsRow: {
-    gap: Spacing['3'],
-    paddingBottom: Spacing['1'],
   },
   statsRow: {
     flexDirection: 'row',

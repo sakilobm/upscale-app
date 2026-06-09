@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { TextStyle } from 'react-native';
 import { AppText } from './AppText';
-import { Colors, Typography } from '@constants/index';
+import { Typography } from '@constants/index';
+import { useTheme } from '@hooks/useTheme';
 import { CURRENCY_SYMBOLS, type CurrencyCode, type TransactionType } from '@store/types';
 
 interface AmountTextProps {
@@ -21,6 +22,7 @@ export const AmountText = memo(function AmountText({
   showSign = true,
   style,
 }: AmountTextProps) {
+  const { colors } = useTheme();
   const symbol = CURRENCY_SYMBOLS[currency];
   const absAmount = Math.abs(amount);
   const formatted = absAmount.toLocaleString('en-US', {
@@ -33,10 +35,10 @@ export const AmountText = memo(function AmountText({
     : '';
 
   const color =
-    type === 'income' ? Colors.status.income :
-    type === 'expense' ? Colors.status.expense :
-    type === 'savings' ? Colors.status.savings :
-    Colors.text.primary;
+    type === 'income' ? colors.status.income :
+    type === 'expense' ? colors.status.expense :
+    type === 'savings' ? colors.status.savings :
+    colors.text.primary;
 
   return (
     <AppText variant={variant} color={color} style={style}>

@@ -1,29 +1,38 @@
 import React, { useCallback } from 'react';
-import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Pressable,
+  Switch,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
 import { CustomButton } from '@components/CustomButton';
-import { Colors, Spacing, Radius, Layout } from '@constants/index';
+import { Spacing, Radius, Layout } from '@constants/index';
+import { useTheme } from '@hooks/useTheme';
 import { useAuth } from '@hooks/useAuth';
 import { CURRENCY_SYMBOLS } from '@store/types';
 
-const MENU_ITEMS = [
-  { emoji: '🔔', label: 'Notifications', onPress: () => {} },
-  { emoji: '💰', label: 'Currency & Region', onPress: () => {} },
-  { emoji: '🔐', label: 'Security & Privacy', onPress: () => {} },
-  { emoji: '☁️', label: 'Backup & Sync', onPress: () => {} },
-  { emoji: '📊', label: 'Export Data', onPress: () => {} },
-  { emoji: '❓', label: 'Help & Support', onPress: () => {} },
-] as const;
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const MENU_ITEMS: { icon: IoniconName; label: string }[] = [
+  { icon: 'notifications-outline',   label: 'Notifications'      },
+  { icon: 'globe-outline',           label: 'Currency & Region'  },
+  { icon: 'lock-closed-outline',     label: 'Security & Privacy' },
+  { icon: 'cloud-outline',           label: 'Backup & Sync'      },
+  { icon: 'download-outline',        label: 'Export Data'        },
+  { icon: 'help-circle-outline',     label: 'Help & Support'     },
+];
 
 export default function ProfileScreen() {
+  const { colors, isDark, toggle } = useTheme();
   const { user, signOut } = useAuth();
 
-  const handleSignOut = useCallback(() => {
-    signOut();
-  }, [signOut]);
+  const handleSignOut = useCallback(() => signOut(), [signOut]);
 
   const initials = user?.fullName
     ?.split(' ')
@@ -33,7 +42,7 @@ export default function ProfileScreen() {
     .slice(0, 2) ?? 'AM';
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background.primary }]} edges={['top']}>
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -41,7 +50,7 @@ export default function ProfileScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <AppText variant="headingLG" style={styles.title}>
+        <AppText variant="headingLG" color={colors.text.primary} style={styles.title}>
           Profile
         </AppText>
 
@@ -50,23 +59,48 @@ export default function ProfileScreen() {
           <View style={styles.profileInner}>
             <View style={styles.avatarWrapper}>
               <LinearGradient
-                colors={Colors.gradients.purpleBlue as unknown as [string, string]}
+                colors={colors.gradients.purpleBlue as unknown as [string, string]}
                 style={styles.avatarGradient}
               >
                 <AppText style={styles.avatarText}>{initials}</AppText>
               </LinearGradient>
             </View>
             <View style={styles.profileText}>
-              <AppText variant="headingMD">{user?.fullName ?? 'Guest'}</AppText>
-              <AppText variant="bodySM" color={Colors.text.secondary}>
+              <AppText variant="headingMD" color={colors.text.primary}>
+                {user?.fullName ?? 'Guest'}
+              </AppText>
+              <AppText variant="bodySM" color={colors.text.secondary}>
                 {user?.email ?? ''}
               </AppText>
-              <View style={styles.currencyBadge}>
-                <AppText variant="caption" color={Colors.brand.secondary}>
+              <View style={[styles.currencyBadge, { backgroundColor: colors.brand.accent + '20' }]}>
+                <AppText variant="caption" color={colors.brand.accent}>
                   {user?.currency ?? 'USD'} · {CURRENCY_SYMBOLS[user?.currency ?? 'USD']}
                 </AppText>
               </View>
             </View>
+          </View>
+        </GlassCard>
+
+        {/* Appearance */}
+        <GlassCard padding={0} style={styles.menuCard}>
+          <View style={[styles.menuItem, styles.menuItemBorder, { borderBottomColor: colors.glass.border }]}>
+            <View style={[styles.menuIconBox, { backgroundColor: isDark ? '#1A1040' : '#F0F0F0' }]}>
+              <Ionicons
+                name={isDark ? 'moon' : 'sunny'}
+                size={18}
+                color={isDark ? colors.brand.secondary : '#F59E0B'}
+              />
+            </View>
+            <AppText variant="labelLG" color={colors.text.primary} style={styles.menuLabel}>
+              {isDark ? 'Dark Mode' : 'Light Mode'}
+            </AppText>
+            <Switch
+              value={isDark}
+              onValueChange={toggle}
+              trackColor={{ false: colors.glass.border, true: colors.brand.primary }}
+              thumbColor={colors.white}
+              ios_backgroundColor={colors.glass.backgroundMid}
+            />
           </View>
         </GlassCard>
 
@@ -75,23 +109,24 @@ export default function ProfileScreen() {
           {MENU_ITEMS.map((item, index) => (
             <Pressable
               key={item.label}
-              onPress={item.onPress}
               style={({ pressed }) => [
                 styles.menuItem,
                 index < MENU_ITEMS.length - 1 && styles.menuItemBorder,
-                pressed && styles.menuItemPressed,
+                { borderBottomColor: colors.glass.border },
+                pressed && { backgroundColor: colors.glass.background },
               ]}
             >
-              <AppText style={styles.menuEmoji}>{item.emoji}</AppText>
-              <AppText variant="labelLG" color={Colors.text.primary} style={styles.menuLabel}>
+              <View style={[styles.menuIconBox, { backgroundColor: colors.glass.backgroundMid }]}>
+                <Ionicons name={item.icon} size={18} color={colors.text.secondary} />
+              </View>
+              <AppText variant="labelLG" color={colors.text.primary} style={styles.menuLabel}>
                 {item.label}
               </AppText>
-              <AppText color={Colors.text.tertiary}>›</AppText>
+              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
             </Pressable>
           ))}
         </GlassCard>
 
-        {/* Sign out */}
         <CustomButton
           label="Sign Out"
           variant="danger"
@@ -99,7 +134,7 @@ export default function ProfileScreen() {
           style={styles.signOut}
         />
 
-        <AppText variant="caption" color={Colors.text.tertiary} align="center">
+        <AppText variant="caption" color={colors.text.tertiary} align="center">
           MoneyApp v1.0.0
         </AppText>
       </ScrollView>
@@ -108,18 +143,13 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background.primary,
-  },
+  safeArea: { flex: 1 },
   scroll: {
     paddingHorizontal: Spacing['5'],
     paddingTop: Spacing['4'],
     gap: Spacing['4'],
   },
-  title: {
-    marginBottom: Spacing['2'],
-  },
+  title: { marginBottom: Spacing['2'] },
   profileCard: {},
   profileInner: {
     flexDirection: 'row',
@@ -140,14 +170,10 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 28,
     fontWeight: '800',
-    color: Colors.white,
+    color: '#FFFFFF',
   },
-  profileText: {
-    flex: 1,
-    gap: 4,
-  },
+  profileText: { flex: 1, gap: 4 },
   currencyBadge: {
-    backgroundColor: Colors.brand.primary + '25',
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -164,18 +190,14 @@ const styles = StyleSheet.create({
   },
   menuItemBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.glass.border,
   },
-  menuItemPressed: {
-    backgroundColor: Colors.glass.background,
+  menuIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  menuEmoji: {
-    fontSize: 20,
-  },
-  menuLabel: {
-    flex: 1,
-  },
-  signOut: {
-    marginTop: Spacing['2'],
-  },
+  menuLabel: { flex: 1 },
+  signOut: { marginTop: Spacing['2'] },
 });

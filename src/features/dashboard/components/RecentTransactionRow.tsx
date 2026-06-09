@@ -3,7 +3,8 @@ import { View, StyleSheet, Pressable } from 'react-native';
 import { CategoryIcon } from '@components/CategoryIcon';
 import { AppText } from '@components/AppText';
 import { AmountText } from '@components/AmountText';
-import { Colors, Spacing, Layout } from '@constants/index';
+import { Spacing, Layout } from '@constants/index';
+import { useTheme } from '@hooks/useTheme';
 import { format } from 'date-fns';
 import type { Transaction } from '@store/types';
 
@@ -16,6 +17,7 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
   transaction,
   onPress,
 }: RecentTransactionRowProps) {
+  const { colors } = useTheme();
   const formattedDate = format(new Date(transaction.date), 'MMM d');
 
   return (
@@ -23,20 +25,18 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
       onPress={() => onPress(transaction)}
       style={({ pressed }) => [
         styles.container,
-        { opacity: pressed ? 0.75 : 1 },
+        { borderBottomColor: colors.glass.border, opacity: pressed ? 0.75 : 1 },
       ]}
     >
       <CategoryIcon category={transaction.category} size={44} />
-
       <View style={styles.details}>
-        <AppText variant="labelMD" color={Colors.text.primary} numberOfLines={1}>
+        <AppText variant="labelMD" color={colors.text.primary} numberOfLines={1}>
           {transaction.description}
         </AppText>
-        <AppText variant="caption" color={Colors.text.secondary}>
+        <AppText variant="caption" color={colors.text.secondary}>
           {transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)} · {formattedDate}
         </AppText>
       </View>
-
       <AmountText
         amount={transaction.amount}
         currency={transaction.currency}
@@ -55,10 +55,6 @@ const styles = StyleSheet.create({
     gap: Spacing['3'],
     height: Layout.transactionRowHeight,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.glass.border,
   },
-  details: {
-    flex: 1,
-    gap: 3,
-  },
+  details: { flex: 1, gap: 3 },
 });

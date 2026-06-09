@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { Colors } from '@constants/index';
 import { AppText } from './AppText';
+import { useTheme } from '@hooks/useTheme';
 
 interface LoadingScreenProps {
   message?: string;
@@ -10,10 +10,11 @@ interface LoadingScreenProps {
 export const LoadingScreen = memo(function LoadingScreen({
   message = 'Loading...',
 }: LoadingScreenProps) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color={Colors.brand.primary} />
-      <AppText variant="bodySM" color={Colors.text.secondary} style={styles.text}>
+    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      <ActivityIndicator size="large" color={colors.brand.primary} />
+      <AppText variant="bodySM" color={colors.text.secondary} style={styles.text}>
         {message}
       </AppText>
     </View>
@@ -23,7 +24,6 @@ export const LoadingScreen = memo(function LoadingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.primary,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 16,

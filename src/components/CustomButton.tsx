@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Colors, Radius, Spacing, Typography } from '@constants/index';
+import { Radius, Spacing, Typography } from '@constants/index';
+import { useTheme } from '@hooks/useTheme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'income' | 'expense';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -29,42 +30,10 @@ interface CustomButtonProps {
   haptic?: boolean;
 }
 
-const CONSTANTS = {
-  variants: {
-    primary: {
-      gradient: Colors.gradients.purpleBlue as unknown as [string, string],
-      textColor: Colors.white,
-    },
-    secondary: {
-      gradient: null as null,
-      background: Colors.glass.backgroundMid,
-      textColor: Colors.text.primary,
-      borderColor: Colors.glass.border,
-    },
-    ghost: {
-      gradient: null as null,
-      background: Colors.transparent,
-      textColor: Colors.brand.secondary,
-      borderColor: Colors.transparent,
-    },
-    danger: {
-      gradient: Colors.gradients.orangeRed as unknown as [string, string],
-      textColor: Colors.white,
-    },
-    income: {
-      gradient: Colors.gradients.income as unknown as [string, string],
-      textColor: Colors.white,
-    },
-    expense: {
-      gradient: Colors.gradients.expense as unknown as [string, string],
-      textColor: Colors.white,
-    },
-  },
-  sizes: {
-    sm: { height: 38, paddingH: Spacing['4'], fontSize: 13, radius: Radius.md },
-    md: { height: 50, paddingH: Spacing['6'], fontSize: 15, radius: Radius.lg },
-    lg: { height: 58, paddingH: Spacing['7'], fontSize: 17, radius: Radius.xl },
-  },
+const SIZES = {
+  sm: { height: 38, paddingH: Spacing['4'], fontSize: 13, radius: Radius.md },
+  md: { height: 50, paddingH: Spacing['6'], fontSize: 15, radius: Radius.lg },
+  lg: { height: 58, paddingH: Spacing['7'], fontSize: 17, radius: Radius.xl },
 } as const;
 
 export const CustomButton = memo(function CustomButton({
@@ -80,9 +49,42 @@ export const CustomButton = memo(function CustomButton({
   labelStyle,
   haptic = true,
 }: CustomButtonProps) {
-  const variantConfig = CONSTANTS.variants[variant];
-  const sizeConfig = CONSTANTS.sizes[size];
+  const { colors } = useTheme();
+  const sizeConfig = SIZES[size];
   const isDisabled = disabled || isLoading;
+
+  const VARIANTS = {
+    primary: {
+      gradient: colors.gradients.purpleBlue as [string, string],
+      textColor: colors.white,
+    },
+    secondary: {
+      gradient: null as null,
+      background: colors.glass.backgroundMid,
+      textColor: colors.text.primary,
+      borderColor: colors.glass.border,
+    },
+    ghost: {
+      gradient: null as null,
+      background: colors.transparent,
+      textColor: colors.brand.accent,
+      borderColor: colors.transparent,
+    },
+    danger: {
+      gradient: colors.gradients.orangeRed as [string, string],
+      textColor: colors.white,
+    },
+    income: {
+      gradient: colors.gradients.income as [string, string],
+      textColor: colors.white,
+    },
+    expense: {
+      gradient: colors.gradients.expense as [string, string],
+      textColor: colors.white,
+    },
+  };
+
+  const variantConfig = VARIANTS[variant];
 
   const handlePress = useCallback(() => {
     if (haptic) {
@@ -117,10 +119,7 @@ export const CustomButton = memo(function CustomButton({
     <View style={innerStyle}>
       {!isLoading && leftIcon}
       {isLoading ? (
-        <ActivityIndicator
-          size="small"
-          color={variantConfig.textColor}
-        />
+        <ActivityIndicator size="small" color={variantConfig.textColor} />
       ) : (
         <Text style={[textStyle, labelStyle]}>{label}</Text>
       )}
@@ -135,7 +134,7 @@ export const CustomButton = memo(function CustomButton({
         disabled={isDisabled}
         style={({ pressed }) => [
           containerStyle,
-          styles.shadow,
+          styles.gradientShadow,
           { opacity: pressed ? 0.88 : isDisabled ? 0.5 : 1 },
           style,
         ]}
@@ -151,7 +150,7 @@ export const CustomButton = memo(function CustomButton({
     );
   }
 
-  const nonGradientVariant = variantConfig as {
+  const solidVariant = variantConfig as {
     gradient: null;
     background: string;
     textColor: string;
@@ -165,9 +164,9 @@ export const CustomButton = memo(function CustomButton({
       style={({ pressed }) => [
         containerStyle,
         {
-          backgroundColor: nonGradientVariant.background,
-          borderWidth: nonGradientVariant.borderColor !== Colors.transparent ? 1 : 0,
-          borderColor: nonGradientVariant.borderColor,
+          backgroundColor: solidVariant.background,
+          borderWidth: solidVariant.borderColor !== colors.transparent ? 1 : 0,
+          borderColor: solidVariant.borderColor,
           opacity: pressed ? 0.8 : isDisabled ? 0.5 : 1,
         },
         style,
@@ -179,8 +178,8 @@ export const CustomButton = memo(function CustomButton({
 });
 
 const styles = StyleSheet.create({
-  shadow: {
-    shadowColor: Colors.brand.primary,
+  gradientShadow: {
+    shadowColor: '#6C63FF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,

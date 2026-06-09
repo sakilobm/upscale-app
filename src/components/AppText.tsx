@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Text, TextStyle, TextProps } from 'react-native';
-import { Typography, Colors } from '@constants/index';
+import { Typography } from '@constants/index';
+import { useTheme } from '@hooks/useTheme';
 
 type TextVariant = keyof typeof Typography;
 
@@ -13,17 +14,18 @@ interface AppTextProps extends TextProps {
 
 export const AppText = memo(function AppText({
   variant = 'bodyMD',
-  color = Colors.text.primary,
+  color,
   align,
   style,
   children,
   ...rest
 }: AppTextProps) {
+  const { colors } = useTheme();
   return (
     <Text
       style={[
         Typography[variant],
-        { color, textAlign: align },
+        { color: color ?? colors.text.primary, textAlign: align },
         style,
       ]}
       {...rest}

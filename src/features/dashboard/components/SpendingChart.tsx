@@ -4,40 +4,30 @@ import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
 import { ProgressBar } from '@components/ProgressBar';
 import { CategoryIcon, CATEGORY_META } from '@components/CategoryIcon';
-import { Colors, Spacing, Radius } from '@constants/index';
+import { Spacing } from '@constants/index';
+import { useTheme } from '@hooks/useTheme';
 import type { SpendingChartProps } from '../types';
 
-const CONSTANTS = {
-  maxItems: 5,
-} as const;
+const MAX_ITEMS = 5;
 
 export const SpendingChart = memo(function SpendingChart({
   data,
   isLoading,
 }: SpendingChartProps) {
-  const items = data.slice(0, CONSTANTS.maxItems);
+  const { colors } = useTheme();
+  const items = data.slice(0, MAX_ITEMS);
 
   return (
     <GlassCard style={styles.card} padding={Spacing['5']}>
       <View style={styles.header}>
-        <AppText variant="headingSM">Spending Breakdown</AppText>
-        <AppText variant="labelSM" color={Colors.text.secondary}>
-          This Month
-        </AppText>
+        <AppText variant="headingSM" color={colors.text.primary}>Spending Breakdown</AppText>
+        <AppText variant="labelSM" color={colors.text.secondary}>This Month</AppText>
       </View>
 
       {isLoading ? (
-        <ActivityIndicator
-          color={Colors.brand.primary}
-          style={styles.loader}
-        />
+        <ActivityIndicator color={colors.brand.primary} style={styles.loader} />
       ) : items.length === 0 ? (
-        <AppText
-          variant="bodySM"
-          color={Colors.text.tertiary}
-          align="center"
-          style={styles.empty}
-        >
+        <AppText variant="bodySM" color={colors.text.tertiary} align="center" style={styles.empty}>
           No spending data yet
         </AppText>
       ) : (
@@ -50,10 +40,10 @@ export const SpendingChart = memo(function SpendingChart({
                 <CategoryIcon category={item.category} size={38} />
                 <View style={styles.rowContent}>
                   <View style={styles.rowHeader}>
-                    <AppText variant="labelMD" color={Colors.text.primary}>
+                    <AppText variant="labelMD" color={colors.text.primary}>
                       {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                     </AppText>
-                    <AppText variant="labelMD" color={Colors.text.primary}>
+                    <AppText variant="labelMD" color={colors.text.primary}>
                       ${item.amount.toFixed(0)}
                     </AppText>
                   </View>
@@ -63,7 +53,7 @@ export const SpendingChart = memo(function SpendingChart({
                     height={5}
                     style={styles.bar}
                   />
-                  <AppText variant="caption" color={Colors.text.tertiary}>
+                  <AppText variant="caption" color={colors.text.tertiary}>
                     {item.percentage.toFixed(1)}% of total
                   </AppText>
                 </View>
@@ -84,29 +74,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing['4'],
   },
-  loader: {
-    marginVertical: Spacing['8'],
-  },
-  empty: {
-    marginVertical: Spacing['8'],
-  },
-  list: {
-    gap: Spacing['4'],
-  },
+  loader: { marginVertical: Spacing['8'] },
+  empty: { marginVertical: Spacing['8'] },
+  list: { gap: Spacing['4'] },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing['3'],
   },
-  rowContent: {
-    flex: 1,
-    gap: 4,
-  },
+  rowContent: { flex: 1, gap: 4 },
   rowHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  bar: {
-    marginVertical: 2,
-  },
+  bar: { marginVertical: 2 },
 });

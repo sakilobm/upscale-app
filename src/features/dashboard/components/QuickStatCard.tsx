@@ -1,38 +1,40 @@
 import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
 import { AmountText } from '@components/AmountText';
-import { Colors, Radius, Spacing, Shadow } from '@constants/index';
+import { Radius, Spacing } from '@constants/index';
+import { useTheme } from '@hooks/useTheme';
 import type { QuickStatCardProps } from '../types';
 
-const GRADIENT_MAP = {
-  income: Colors.gradients.income,
-  expense: Colors.gradients.expense,
-  savings: Colors.gradients.savings,
-} as const;
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const ICON_MAP: Record<string, IoniconName> = {
+  income: 'arrow-down-circle',
+  expense: 'arrow-up-circle',
+  savings: 'wallet',
+};
 
 export const QuickStatCard = memo(function QuickStatCard({
   label,
   amount,
   type,
-  iconEmoji,
 }: QuickStatCardProps) {
-  const gradient = GRADIENT_MAP[type];
+  const { colors } = useTheme();
+  const gradient = type === 'income' ? colors.gradients.income :
+                   type === 'expense' ? colors.gradients.expense :
+                   colors.gradients.savings;
 
   return (
-    <GlassCard
-      style={styles.card}
-      padding={Spacing['4']}
-      borderRadius={Radius.lg}
-    >
+    <GlassCard style={styles.card} padding={Spacing['4']} borderRadius={Radius.lg}>
       <View style={styles.row}>
-        <View style={[styles.iconWrapper, { backgroundColor: gradient[0] + '25' }]}>
-          <AppText style={styles.emoji}>{iconEmoji}</AppText>
+        <View style={[styles.iconWrapper, { backgroundColor: gradient[0] + '22' }]}>
+          <Ionicons name={ICON_MAP[type]} size={20} color={gradient[0]} />
         </View>
         <View style={styles.textGroup}>
-          <AppText variant="labelSM" color={Colors.text.secondary}>
+          <AppText variant="labelSM" color={colors.text.secondary}>
             {label.toUpperCase()}
           </AppText>
           <AmountText
@@ -43,7 +45,6 @@ export const QuickStatCard = memo(function QuickStatCard({
           />
         </View>
       </View>
-      {/* Bottom gradient accent line */}
       <LinearGradient
         colors={[...gradient] as [string, string, ...string[]]}
         start={{ x: 0, y: 0 }}
@@ -55,10 +56,7 @@ export const QuickStatCard = memo(function QuickStatCard({
 });
 
 const styles = StyleSheet.create({
-  card: {
-    flex: 1,
-    minWidth: 140,
-  },
+  card: { flex: 1, minWidth: 140 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -71,13 +69,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emoji: {
-    fontSize: 20,
-  },
-  textGroup: {
-    flex: 1,
-    gap: 2,
-  },
+  textGroup: { flex: 1, gap: 2 },
   accent: {
     position: 'absolute',
     bottom: 0,

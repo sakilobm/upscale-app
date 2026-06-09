@@ -5,13 +5,13 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useCachedFonts } from '@hooks/useCachedFonts';
 import { useAuthStore } from '@store/authStore';
+import { useThemeStore } from '@store/themeStore';
 import { LoadingScreen } from '@components/LoadingScreen';
-import { Colors } from '@constants/index';
+import { DarkTheme, LightTheme } from '@constants/themes';
 import type { User } from '@store/types';
 
 SplashScreen.preventAutoHideAsync();
 
-// Seed a mock authenticated user immediately for demo purposes
 const DEMO_USER: User = {
   id: 'user-1',
   email: 'demo@moneyapp.com',
@@ -25,9 +25,10 @@ export default function RootLayout() {
   const { fontsLoaded, fontError } = useCachedFonts();
   const setUser = useAuthStore((s) => s.setUser);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const themeMode = useThemeStore((s) => s.mode);
+  const colors = themeMode === 'dark' ? DarkTheme : LightTheme;
 
   useEffect(() => {
-    // Simulate auth session restore
     const timer = setTimeout(() => {
       setUser(DEMO_USER);
     }, 300);
@@ -45,8 +46,8 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={styles.root}>
-      <StatusBar style="light" />
+    <GestureHandlerRootView style={[styles.root, { backgroundColor: colors.background.primary }]}>
+      <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
         <Stack.Screen name="(tabs)" />
       </Stack>
@@ -57,6 +58,5 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.background.primary,
   },
 });

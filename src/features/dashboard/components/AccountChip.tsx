@@ -3,7 +3,8 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AppText } from '@components/AppText';
 import { AmountText } from '@components/AmountText';
-import { Colors, Radius, Spacing } from '@constants/index';
+import { Radius, Spacing } from '@constants/index';
+import { useTheme } from '@hooks/useTheme';
 import type { AccountCardProps } from '../types';
 
 export const AccountChip = memo(function AccountChip({
@@ -11,13 +12,18 @@ export const AccountChip = memo(function AccountChip({
   isActive,
   onPress,
 }: AccountCardProps) {
+  const { colors } = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.container,
-        isActive && styles.activeContainer,
-        { opacity: pressed ? 0.85 : 1 },
+        {
+          borderColor: isActive ? colors.glass.borderStrong : colors.glass.border,
+          backgroundColor: colors.background.card,
+          opacity: pressed ? 0.85 : 1,
+        },
       ]}
     >
       {isActive && (
@@ -32,7 +38,7 @@ export const AccountChip = memo(function AccountChip({
       <View style={styles.text}>
         <AppText
           variant="labelSM"
-          color={isActive ? Colors.text.primary : Colors.text.secondary}
+          color={isActive ? colors.text.primary : colors.text.secondary}
           numberOfLines={1}
         >
           {account.name}
@@ -60,21 +66,16 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing['3'],
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: Colors.glass.border,
-    backgroundColor: Colors.glass.background,
     overflow: 'hidden',
     minWidth: 160,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  activeContainer: {
-    borderColor: Colors.glass.borderStrong,
-  },
-  icon: {
-    fontSize: 22,
-  },
-  text: {
-    flex: 1,
-    gap: 2,
-  },
+  icon: { fontSize: 22 },
+  text: { flex: 1, gap: 2 },
   activeDot: {
     width: 7,
     height: 7,

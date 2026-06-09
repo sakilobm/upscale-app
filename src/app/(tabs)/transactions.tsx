@@ -7,6 +7,7 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useTransactions } from '@features/transactions/hooks/useTransactions';
 import { TransactionListItem } from '@features/transactions/components/TransactionListItem';
 import { FilterBar } from '@features/transactions/components/FilterBar';
@@ -14,18 +15,13 @@ import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
 import { EmptyState } from '@components/EmptyState';
 import { LoadingScreen } from '@components/LoadingScreen';
-import { Colors, Spacing, Layout, Radius, Typography } from '@constants/index';
+import { Spacing, Layout, Radius, Typography } from '@constants/index';
+import { useTheme } from '@hooks/useTheme';
 import { useTransactionStore } from '@store/transactionStore';
 import type { Transaction } from '@store/types';
 
-const SCREEN_CONSTANTS = {
-  title: 'Transactions',
-  searchPlaceholder: 'Search transactions...',
-  emptyTitle: 'No transactions',
-  emptySubtitle: 'Add your first income or expense to get started.',
-} as const;
-
 export default function TransactionsScreen() {
+  const { colors } = useTheme();
   const {
     data: groups,
     isLoading,
@@ -39,15 +35,10 @@ export default function TransactionsScreen() {
   const filters = useTransactionStore((s) => s.filters);
   const setFilters = useTransactionStore((s) => s.setFilters);
 
-  const handleTransactionPress = useCallback((_tx: Transaction) => {
-    // Future: navigate to detail modal
-  }, []);
-
+  const handleTransactionPress = useCallback((_tx: Transaction) => {}, []);
   const handleLongPress = useCallback(
     async (tx: Transaction) => {
-      try {
-        await removeTransaction(tx.id);
-      } catch { /* swallow — UI feedback TBD */ }
+      try { await removeTransaction(tx.id); } catch { /* no-op */ }
     },
     [removeTransaction]
   );
@@ -64,38 +55,38 @@ export default function TransactionsScreen() {
     })) ?? [];
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* Header */}
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background.primary }]} edges={['top']}>
       <View style={styles.header}>
-        <AppText variant="headingLG">{SCREEN_CONSTANTS.title}</AppText>
+        <AppText variant="headingLG" color={colors.text.primary}>Transactions</AppText>
       </View>
 
-      {/* Search bar */}
+      {/* Search */}
       <View style={styles.searchWrapper}>
         <GlassCard padding={0} style={styles.searchCard} borderRadius={Radius.lg}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder={SCREEN_CONSTANTS.searchPlaceholder}
-            placeholderTextColor={Colors.text.tertiary}
-            value={filters.searchQuery}
-            onChangeText={(text) => setFilters({ searchQuery: text })}
-            returnKeyType="search"
-          />
+          <View style={styles.searchInner}>
+            <Ionicons name="search-outline" size={18} color={colors.text.tertiary} />
+            <TextInput
+              style={[styles.searchInput, { ...Typography.bodyMD, color: colors.text.primary }]}
+              placeholder="Search transactions..."
+              placeholderTextColor={colors.text.tertiary}
+              value={filters.searchQuery}
+              onChangeText={(text) => setFilters({ searchQuery: text })}
+              returnKeyType="search"
+            />
+          </View>
         </GlassCard>
       </View>
 
-      {/* Type filter */}
       <FilterBar
         activeType={filters.type}
         onTypeChange={(type) => setFilters({ type })}
       />
 
-      {/* List */}
       {isEmpty ? (
         <EmptyState
           emoji="📭"
-          title={SCREEN_CONSTANTS.emptyTitle}
-          subtitle={SCREEN_CONSTANTS.emptySubtitle}
+          title="No transactions"
+          subtitle="Add your first income or expense to get started."
         />
       ) : (
         <SectionList
@@ -110,21 +101,17 @@ export default function TransactionsScreen() {
             <RefreshControl
               refreshing={isLoading}
               onRefresh={refresh}
-              tintColor={Colors.brand.secondary}
+              tintColor={colors.brand.primary}
             />
           }
           renderSectionHeader={({ section }) => (
             <View style={styles.sectionHeader}>
-              <AppText variant="labelMD" color={Colors.text.secondary}>
+              <AppText variant="labelMD" color={colors.text.secondary}>
                 {formatDateHeader(section.title)}
               </AppText>
               <AppText
                 variant="labelMD"
-                color={
-                  section.totalAmount >= 0
-                    ? Colors.status.income
-                    : Colors.status.expense
-                }
+                color={section.totalAmount >= 0 ? colors.status.income : colors.status.expense}
               >
                 {section.totalAmount >= 0 ? '+' : '-'}$
                 {Math.abs(section.totalAmount).toFixed(2)}
@@ -145,10 +132,7 @@ export default function TransactionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background.primary,
-  },
+  safeArea: { flex: 1 },
   header: {
     paddingHorizontal: Spacing['5'],
     paddingTop: Spacing['4'],
@@ -161,11 +145,16 @@ const styles = StyleSheet.create({
   searchCard: {
     borderRadius: Radius.lg,
   },
-  searchInput: {
-    ...Typography.bodyMD,
-    color: Colors.text.primary,
+  searchInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: Spacing['4'],
     paddingVertical: Spacing['3'],
+    gap: Spacing['2'],
+    height: 46,
+  },
+  searchInput: {
+    flex: 1,
     height: 46,
   },
   listContent: {

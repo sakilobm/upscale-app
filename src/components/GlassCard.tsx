@@ -8,8 +8,9 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Radius, Shadow, Spacing } from '@constants/index';
+import { Radius, Spacing } from '@constants/index';
 import { BlurConfigs, type BlurConfigKey } from '@constants/BlurConfigs';
+import { useTheme } from '@hooks/useTheme';
 
 interface GlassCardProps extends Pick<PressableProps, 'onPress' | 'onLongPress'> {
   children: React.ReactNode;
@@ -25,7 +26,6 @@ interface GlassCardProps extends Pick<PressableProps, 'onPress' | 'onLongPress'>
 const CONSTANTS = {
   defaultPadding: Spacing['5'],
   defaultRadius: Radius.xl,
-  shimmerHeight: 1,
 } as const;
 
 export const GlassCard = memo(function GlassCard({
@@ -40,36 +40,51 @@ export const GlassCard = memo(function GlassCard({
   onLongPress,
   disabled = false,
 }: GlassCardProps) {
-  const { intensity, tint } = BlurConfigs[blurConfig];
+  const { isDark, colors } = useTheme();
+  const { intensity } = BlurConfigs[blurConfig];
 
   const containerStyle: ViewStyle = {
     borderRadius,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: borderGlow
-      ? Colors.glass.borderStrong
-      : Colors.glass.border,
+    borderColor: borderGlow ? colors.glass.borderStrong : colors.glass.border,
   };
 
-  const innerStyle: ViewStyle = {
-    padding,
+  const lightShadow: ViewStyle = {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
+    backgroundColor: colors.background.card,
   };
+
+  const darkShadow: ViewStyle = {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+  };
+
+  const innerStyle: ViewStyle = { padding };
 
   const content = (
-    <View style={[containerStyle, Shadow.md, StyleSheet.flatten(style)]}>
-      <BlurView intensity={intensity} tint={tint} style={StyleSheet.absoluteFill} />
+    <View style={[containerStyle, isDark ? darkShadow : lightShadow, StyleSheet.flatten(style)]}>
+      {isDark && (
+        <BlurView intensity={intensity} tint="dark" style={StyleSheet.absoluteFill} />
+      )}
       {gradient ? (
         <LinearGradient
           colors={gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[StyleSheet.absoluteFill, styles.gradientOverlay]}
+          style={[StyleSheet.absoluteFill, isDark ? styles.gradientOverlayDark : styles.gradientOverlayLight]}
         />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, styles.solidOverlay]} />
-      )}
-      {/* Top shine shimmer */}
-      <View style={[styles.shine, { borderRadius }]} />
+      ) : isDark ? (
+        <View style={[StyleSheet.absoluteFill, styles.solidOverlayDark]} />
+      ) : null}
+      {isDark && <View style={[styles.shine, { borderRadius }]} />}
       <View style={innerStyle}>{children}</View>
     </View>
   );
@@ -91,11 +106,14 @@ export const GlassCard = memo(function GlassCard({
 });
 
 const styles = StyleSheet.create({
-  gradientOverlay: {
+  gradientOverlayDark: {
     opacity: 0.15,
   },
-  solidOverlay: {
-    backgroundColor: Colors.glass.background,
+  gradientOverlayLight: {
+    opacity: 0.12,
+  },
+  solidOverlayDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   shine: {
     position: 'absolute',
@@ -103,6 +121,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: Colors.glass.shine,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
 });

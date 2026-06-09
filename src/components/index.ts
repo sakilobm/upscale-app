@@ -6,3 +6,4 @@ export * from './AmountText';
 export * from './LoadingScreen';
 export * from './EmptyState';
 export * from './ProgressBar';
+export * from './CustomTabBar';

@@ -1,0 +1,51 @@
+graph TD
+    %% Styling
+    classDef default fill:#1E293B,stroke:#475569,stroke-width:1px,color:#F1F5F9;
+    classDef entry fill:#4F46E5,stroke:#818CF8,stroke-width:2px,color:#FFFFFF;
+    classDef layout fill:#0284C7,stroke:#38BDF8,stroke-width:1px,color:#FFFFFF;
+    classDef component fill:#0F766E,stroke:#0D9488,stroke-width:1px,color:#FFFFFF;
+    classDef state fill:#B45309,stroke:#D97706,stroke-width:1px,color:#FFFFFF;
+
+    subgraph AppEntry["App Entry Layer"]
+        App["App.tsx"]:::entry
+        RootLayout["src/app/_layout.tsx"]:::layout
+    end
+
+    subgraph Routing["Routing Layer (Expo Router)"]
+        TabLayout["src/app/(tabs)/_layout.tsx"]:::layout
+        HomeScreen["src/app/(tabs)/index.tsx"]
+        ActivityScreen["src/app/(tabs)/transactions.tsx"]
+        BudgetScreen["src/app/(tabs)/budget.tsx"]
+        ProfileScreen["src/app/(tabs)/profile.tsx"]
+    end
+
+    subgraph UIComponents["UI Components Layer"]
+        CustomTabBar["src/components/CustomTabBar.tsx"]:::component
+        GlassCard["src/components/GlassCard.tsx"]:::component
+        CustomButton["src/components/CustomButton.tsx"]:::component
+        AppText["src/components/AppText.tsx"]:::component
+    end
+
+    subgraph StateAndHooks["State & Hooks Layer"]
+        ThemeStore["src/store/themeStore.ts"]:::state
+        AuthStore["src/store/authStore.ts"]:::state
+        UseTheme["src/hooks/useTheme.ts"]:::state
+    end
+
+    %% Relations
+    App --> RootLayout
+    RootLayout --> TabLayout
+    
+    TabLayout --> HomeScreen
+    TabLayout --> ActivityScreen
+    TabLayout --> BudgetScreen
+    TabLayout --> ProfileScreen
+    
+    TabLayout --> CustomTabBar
+    
+    CustomTabBar --> UseTheme
+    CustomTabBar --> AppText
+    
+    UseTheme --> ThemeStore
+    RootLayout --> AuthStore
+    RootLayout --> ThemeStore
