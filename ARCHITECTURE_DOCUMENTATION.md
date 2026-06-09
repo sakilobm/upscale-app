@@ -55,7 +55,18 @@ Instead of rendering static tabs, the layout renders `CustomTabBar` which fetche
   - Horizontal translation of the active indicator uses `withSpring`.
 - **Haptics**: Triggers selection feedback via `expo-haptics` to reassure user interactions.
 
+### GlassCard (`src/components/GlassCard.tsx`)
+- **Liquid Glassmorphic System**: Employs frosted glassmorphism across both themes (frosted white `tint="light"` in light mode, frosted black `tint="dark"` in dark mode).
+- **Refraction Gradients**: Combines `BlurView` with dynamic, subtle linear gradients overlaid underneath to simulate natural glass refraction.
+- **Top Shine Line**: Adds a 1px solid white reflection highlight bar with high opacity at the upper edge to resemble thick, polished sheet glass.
+- **Deep Shadows**: Implements multi-level, low-opacity drop shadows (`shadowRadius` up to 16) to give the illusion of elevation and tangible physical depth.
+
+### CategoryIcon (`src/components/CategoryIcon.tsx`)
+- **Professional Iconography**: Standardized on high-quality vector outline icons from `@expo/vector-icons/Ionicons` instead of generic platform emojis.
+- **Frosted Badges**: Each icon is centered inside a micro-bordered glassmorphic square container styled with a matching low-opacity background (18% opacity) and a thin translucent border matching the category's theme color.
+
 ---
+
 
 ## 4. Global State & Theme Integration
 

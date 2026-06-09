@@ -28,16 +28,17 @@ const TAB_ITEMS: Record<
   string,
   { label: string; icon: IoniconName; iconFocused: IoniconName }
 > = {
-  index: { label: 'Home', icon: 'home-outline', iconFocused: 'home' },
+  index:        { label: 'Home',     icon: 'home-outline',        iconFocused: 'home'        },
   transactions: { label: 'Activity', icon: 'stats-chart-outline', iconFocused: 'stats-chart' },
-  budget: { label: 'Budget', icon: 'wallet-outline', iconFocused: 'wallet' },
-  profile: { label: 'Profile', icon: 'person-outline', iconFocused: 'person' },
+  budget:       { label: 'Budget',   icon: 'wallet-outline',      iconFocused: 'wallet'      },
+  ledger:       { label: 'Ledger',   icon: 'people-outline',      iconFocused: 'people'      },
+  profile:      { label: 'Profile',  icon: 'person-outline',      iconFocused: 'person'      },
 };
 
 const CONTAINER_MARGIN = 20;
 const CONTAINER_PADDING = 8;
 const containerWidth = Screen.width - CONTAINER_MARGIN * 2;
-const tabWidth = (containerWidth - CONTAINER_PADDING * 2) / 4;
+const tabWidth = (containerWidth - CONTAINER_PADDING * 2) / 5;
 
 function TabButton({
   label,

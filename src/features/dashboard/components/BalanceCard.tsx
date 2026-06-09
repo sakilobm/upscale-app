@@ -33,17 +33,30 @@ const LightCard = memo(function LightCard({
   isLoading,
 }: BalanceCardProps) {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, lightStyles.container]}>
+      {/* Background neon gradient base */}
       <LinearGradient
-        colors={['#C4F135', '#D9FF5A']}
+        colors={['#C4F135', '#D9FF5A', '#E3FF8C']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[StyleSheet.absoluteFill, { borderRadius: Radius['2xl'] }]}
       />
 
-      {/* Decorative large asterisk */}
+      {/* Decorative large shapes placed behind the blur to appear as liquid refractive elements */}
       <Text style={styles.decorAsterisk} allowFontScaling={false}>✳</Text>
       <Text style={styles.decorAsteriskSm} allowFontScaling={false}>✳</Text>
+
+      {/* Glassmorphic frosted blur layer */}
+      <BlurView
+        intensity={70}
+        tint="light"
+        style={[StyleSheet.absoluteFill, { borderRadius: Radius['2xl'] }]}
+      />
+
+      {/* Liquid glow orbs to refract light */}
+      <View style={lightStyles.glowTopRight} />
+      <View style={lightStyles.glowBottomLeft} />
+      <View style={[lightStyles.border, { borderRadius: Radius['2xl'] }]} />
 
       <View style={styles.content}>
         {/* Top row: card name + currency */}
@@ -106,8 +119,9 @@ const DarkCard = memo(function DarkCard({
 }: BalanceCardProps) {
   return (
     <View style={[styles.container, darkStyles.container]}>
+      {/* Background gradient base */}
       <LinearGradient
-        colors={['#1A1040', '#0D0820', '#080C14']}
+        colors={['#18103A', '#0A051C', '#040712']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[StyleSheet.absoluteFill, { borderRadius: Radius['2xl'] }]}
@@ -321,3 +335,41 @@ const darkStyles = StyleSheet.create({
     marginHorizontal: Spacing['3'],
   },
 });
+
+const lightStyles = StyleSheet.create({
+  container: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
+    shadowColor: '#C4F135',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  glowTopRight: {
+    position: 'absolute',
+    top: -30,
+    right: -30,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#FFFFFF',
+    opacity: 0.35,
+  },
+  glowBottomLeft: {
+    position: 'absolute',
+    bottom: -20,
+    left: -20,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: '#38BDF8',
+    opacity: 0.20,
+  },
+  border: {
+    ...StyleSheet.absoluteFill,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.55)',
+  },
+});
+

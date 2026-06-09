@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-06-09
+
+### Added
+- Upgraded `src/components/GlassCard.tsx` to implement liquid glassmorphism, supporting active frosted `BlurView` overlays on both light and dark modes, double-layered drop shadows, and horizontal top reflection shine bars.
+- Replaced emoji-based category indicators in `src/components/CategoryIcon.tsx` with professional `Ionicons` vector icons (e.g. `home-outline`, `car-outline`, `medical-outline`, `laptop-outline`, `game-controller-outline`) framed in custom glassmorphic bordered square badges.
+- Redesigned `BalanceCard.tsx` balance indicators (both light and dark modes) as high-end frosted glass sheets with glowing background orbs that refract light through a frosted layer.
+
+### Architectural Decisions
+- **Unified Glass Blur**: Chose to run `BlurView` in both light mode (frosted white `tint="light"`) and dark mode (frosted black `tint="dark"`). This ensures consistent luxury visual feedback on iOS, and uses matching translucent gradient backgrounds on Android.
+- **Professional Iconography**: Decided to phase out emojis in favor of vector outline icons to establish a polished, professional fintech design aesthetic.
+
+### Rollback & Escape Plan
+- **Forward-fix path**: If text contrast or icon visibility is weak under specific lighting conditions or theme mode transitions, modify the opacity parameters in `GlassCard.tsx` or adjust border opacity settings in `CategoryIcon.tsx`.
+- **Rollback path**: Run `git checkout src/components/CategoryIcon.tsx src/components/GlassCard.tsx src/features/dashboard/components/BalanceCard.tsx` to revert the visual redesign.
+
 ## [1.1.0] - 2026-06-09
 
 ### Added

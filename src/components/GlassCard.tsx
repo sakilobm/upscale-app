@@ -47,33 +47,41 @@ export const GlassCard = memo(function GlassCard({
     borderRadius,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: borderGlow ? colors.glass.borderStrong : colors.glass.border,
+    borderColor: borderGlow
+      ? (isDark ? 'rgba(108, 99, 255, 0.35)' : 'rgba(108, 99, 255, 0.25)')
+      : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.06)'),
   };
 
   const lightShadow: ViewStyle = {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
+    shadowColor: '#1E293B',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
     elevation: 3,
-    backgroundColor: colors.background.card,
+    backgroundColor: 'rgba(255, 255, 255, 0.50)', // Translucent frosted light glass
   };
 
   const darkShadow: ViewStyle = {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
     elevation: 6,
+    backgroundColor: 'rgba(13, 18, 32, 0.40)', // Translucent frosted dark glass
   };
 
   const innerStyle: ViewStyle = { padding };
 
   const content = (
     <View style={[containerStyle, isDark ? darkShadow : lightShadow, StyleSheet.flatten(style)]}>
-      {isDark && (
-        <BlurView intensity={intensity} tint="dark" style={StyleSheet.absoluteFill} />
-      )}
+      {/* Real-time blur layer for iOS */}
+      <BlurView
+        intensity={intensity}
+        tint={isDark ? 'dark' : 'light'}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Glass gradient overlay to simulate light refraction */}
       {gradient ? (
         <LinearGradient
           colors={gradient}
@@ -81,10 +89,29 @@ export const GlassCard = memo(function GlassCard({
           end={{ x: 1, y: 1 }}
           style={[StyleSheet.absoluteFill, isDark ? styles.gradientOverlayDark : styles.gradientOverlayLight]}
         />
-      ) : isDark ? (
-        <View style={[StyleSheet.absoluteFill, styles.solidOverlayDark]} />
-      ) : null}
-      {isDark && <View style={[styles.shine, { borderRadius }]} />}
+      ) : (
+        <LinearGradient
+          colors={
+            isDark
+              ? ['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.015)']
+              : ['rgba(255, 255, 255, 0.65)', 'rgba(255, 255, 255, 0.20)']
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+
+      {/* Top light reflection border highlight */}
+      <View
+        style={[
+          styles.shine,
+          {
+            borderRadius,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.85)',
+          },
+        ]}
+      />
       <View style={innerStyle}>{children}</View>
     </View>
   );
@@ -112,15 +139,11 @@ const styles = StyleSheet.create({
   gradientOverlayLight: {
     opacity: 0.12,
   },
-  solidOverlayDark: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
   shine: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
 });

@@ -9,6 +9,7 @@ interface ProgressBarProps {
   height?: number;
   style?: ViewStyle;
   animated?: boolean;
+  trackColor?: string;
 }
 
 export const ProgressBar = memo(function ProgressBar({
@@ -17,6 +18,7 @@ export const ProgressBar = memo(function ProgressBar({
   height = 6,
   style,
   animated = true,
+  trackColor,
 }: ProgressBarProps) {
   const clampedProgress = Math.min(1, Math.max(0, progress));
   const widthAnim = useRef(new Animated.Value(0)).current;
@@ -36,7 +38,7 @@ export const ProgressBar = memo(function ProgressBar({
   const containerStyle: ViewStyle = {
     height,
     borderRadius: Radius.full,
-    backgroundColor: Colors.glass.backgroundMid,
+    backgroundColor: trackColor ?? Colors.glass.backgroundMid,
     overflow: 'hidden',
   };
 

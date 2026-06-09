@@ -29,6 +29,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="ledger"
+        options={{
+          title: 'Ledger',
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
