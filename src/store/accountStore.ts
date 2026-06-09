@@ -1,0 +1,57 @@
+import { create } from 'zustand';
+import type { Account } from './types';
+
+interface AccountState {
+  accounts: Account[];
+  activeAccountId: string | null;
+  isLoading: boolean;
+  isError: boolean;
+  error: string | null;
+  // Actions
+  setAccounts: (accounts: Account[]) => void;
+  addAccount: (account: Account) => void;
+  updateAccount: (id: string, updates: Partial<Account>) => void;
+  deleteAccount: (id: string) => void;
+  setActiveAccount: (id: string | null) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+}
+
+export const useAccountStore = create<AccountState>((set) => ({
+  accounts: [],
+  activeAccountId: null,
+  isLoading: false,
+  isError: false,
+  error: null,
+
+  setAccounts: (accounts) => {
+    const defaultAccount = accounts.find((a) => a.isDefault) ?? accounts[0] ?? null;
+    set({
+      accounts,
+      activeAccountId: defaultAccount?.id ?? null,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+  },
+
+  addAccount: (account) =>
+    set((state) => ({ accounts: [...state.accounts, account] })),
+
+  updateAccount: (id, updates) =>
+    set((state) => ({
+      accounts: state.accounts.map((a) => (a.id === id ? { ...a, ...updates } : a)),
+    })),
+
+  deleteAccount: (id) =>
+    set((state) => ({
+      accounts: state.accounts.filter((a) => a.id !== id),
+      activeAccountId: state.activeAccountId === id ? null : state.activeAccountId,
+    })),
+
+  setActiveAccount: (id) => set({ activeAccountId: id }),
+
+  setLoading: (isLoading) => set({ isLoading }),
+
+  setError: (error) => set({ error, isError: error !== null, isLoading: false }),
+}));

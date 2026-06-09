@@ -1,0 +1,124 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Expo Start",
+            "type": "shell",
+            "command": "npx expo start"
+        },
+        {
+            "label": "Npx Clear Cache",
+            "type": "shell",
+            "command": "npx clear-npx-cache"
+        },
+        {
+            "label": "Install Debug APK to Emulator",
+            "type": "shell",
+            "command": "adb install -r android/app/build/outputs/apk/debug/app-debug.apk"
+        },
+        {
+            "label": "Supabase Start",
+            "type": "shell",
+            "command": "supabase start"
+        },
+        {
+            "label": "Supabase Stop",
+            "type": "shell",
+            "command": "supabase stop"
+        },
+        {
+            "label": "Supabase Serve",
+            "type": "shell",
+            "command": "supabase functions serve"
+        },
+        {
+            "label": "Expo Run Android",
+            "type": "shell",
+            "command": "npx expo run:android"
+        },
+        {
+            "label": "Expo Dev Client Tunnel",
+            "type": "shell",
+            "command": "npx expo start --tunnel"
+        },
+        {
+            "label": "Expo Dev Client Start",
+            "type": "shell",
+            "command": "npx expo start --dev-client"
+        },
+        {
+            "label": "Gradlew Clean",
+            "type": "shell",
+            "command": "cd android; ./gradlew clean"
+        },
+        {
+            "label": "Kill Java & Gradle (Unlock)",
+            "type": "shell",
+            "command": "taskkill /f /im java.exe"
+        },
+        {
+            "label": "Fix Lock & Clean Prebuild",
+            "type": "shell",
+            "command": "taskkill /f /im java.exe & npx expo prebuild --clean"
+        },
+        {
+            "label": "Export DEBUG APK Local (assembleDebug-DEBUG)",
+            "type": "shell",
+            "command": "cd android; ./gradlew assembleDebug"
+        },
+        {
+            "label": "Export APK Local (assembleRelease-APK)",
+            "type": "shell",
+            "command": "cd android; ./gradlew assembleRelease"
+        },
+        {
+            "label": "Export ABB Local (bundleRelease-AAB)",
+            "type": "shell",
+            "command": "cd android; ./gradlew bundleRelease"
+        },
+        {
+            "label": "Prebuild Clean",
+            "type": "shell",
+            "command": "npx expo prebuild --clean"
+        },
+        {
+            "label": "Prebuild Android",
+            "type": "shell",
+            "command": "npx expo prebuild --platform android"
+        },
+        {
+            "label": "Export APK",
+            "type": "shell",
+            "command": "npx eas build --platform android --profile androidapk"
+        },
+        {
+            "label": "Export DEV CLIENT APK",
+            "type": "shell",
+            "command": "npx eas build --platform android --profile development"
+        },
+        {
+            "label": "Export AAB",
+            "type": "shell",
+            "command": "npx eas build --platform android --profile production"
+        },
+        {
+            "label": "Download EAS CREDENTIALS",
+            "type": "shell",
+            "command": "npx eas credentials -p android"
+        },
+        {
+            "label": "Force Kill Build Tasks (Java/ADB/Node)",
+            "type": "shell",
+            "command": "taskkill /F /IM java.exe /T /FI 'status eq running' 2>$null; taskkill /F /IM adb.exe /T /FI 'status eq running' 2>$null; taskkill /F /IM node.exe /T /FI 'status eq running' 2>$null; echo 'Cleanup complete'",
+            "problemMatcher": []
+        },
+        {
+            "label": "Expert Install Latest APK",
+            "type": "shell",
+            "command": "adb install -r android/app/build/outputs/apk/debug/app-debug.apk || npx expo run:android",
+            "problemMatcher": []
+        }
+    ]
+}
