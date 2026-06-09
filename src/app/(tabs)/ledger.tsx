@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
+import { AppHeader, HeaderIconBtn } from '@components/AppHeader';
 import { EmptyState } from '@components/EmptyState';
 import { useTheme } from '@hooks/useTheme';
 import { Spacing, Layout, Radius } from '@constants/Dimensions';
@@ -88,25 +89,13 @@ export default function LedgerScreen() {
       edges={['top']}
     >
       {/* Header */}
-      <View style={styles.header}>
-        <AppText variant="headingLG" color={colors.text.primary}>Ledger</AppText>
-        <Pressable
-          onPress={openAddSheet}
-          style={[
-            styles.addBtn,
-            {
-              backgroundColor: isDark ? colors.brand.primary + '22' : '#0A0A0A',
-              borderColor:     isDark ? colors.brand.primary + '55' : 'transparent',
-            },
-          ]}
-        >
-          <Ionicons
-            name="add"
-            size={20}
-            color={isDark ? colors.brand.primary : '#FFFFFF'}
-          />
-        </Pressable>
-      </View>
+      <AppHeader
+        title="Ledger"
+        subtitle="Hand-to-hand money tracker"
+        rightNode={
+          <HeaderIconBtn icon="add" onPress={openAddSheet} />
+        }
+      />
 
       <ScrollView
         contentContainerStyle={[
@@ -197,22 +186,6 @@ export default function LedgerScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  header: {
-    flexDirection:  'row',
-    justifyContent: 'space-between',
-    alignItems:     'center',
-    paddingHorizontal: Spacing['5'],
-    paddingTop:     Spacing['4'],
-    paddingBottom:  Spacing['3'],
-  },
-  addBtn: {
-    width:          38,
-    height:         38,
-    borderRadius:   Radius.lg,
-    alignItems:     'center',
-    justifyContent: 'center',
-    borderWidth:    1,
-  },
   scroll: {
     paddingHorizontal: Spacing['5'],
     paddingTop:        Spacing['2'],

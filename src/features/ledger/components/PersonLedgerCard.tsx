@@ -124,8 +124,8 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
   const handleDelete = () => onDelete(entry.id);
 
   const panGesture = Gesture.Pan()
-    .activeOffsetX([-8, 8])
-    .failOffsetY([-10, 10])
+    .activeOffsetX([-20, 20000])
+    .failOffsetY([-4, 4])
     .onUpdate((e) => {
       if (e.translationX < 0) {
         translateX.value = Math.max(e.translationX, -140);

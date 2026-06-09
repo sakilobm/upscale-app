@@ -3,14 +3,12 @@ import {
   View,
   StyleSheet,
   Pressable,
-  Dimensions,
   Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withSequence,
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
@@ -41,84 +39,93 @@ const CATEGORY_ICON: Record<string, IoniconName> = {
   other:         'ellipsis-horizontal-outline',
 };
 
+// ─── Row height ───────────────────────────────────────────────────────────────
+
+const ROW_HEIGHT = 76;
+const SWIPE_SETTLE = 72;
+
 // ─── Single payment row ───────────────────────────────────────────────────────
 
-const SWIPE_SETTLE_THRESHOLD = 80;
-
 interface PaymentRowProps {
-  payment:   PlannedPayment;
-  onSettle:  (id: string) => void;
-  onDelete:  (id: string) => void;
+  payment:  PlannedPayment;
+  onSettle: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
   const { colors, isDark } = useTheme();
 
-  const translateX = useSharedValue(0);
-  const opacity    = useSharedValue(1);
-  const height     = useSharedValue(68);
+  const translateX  = useSharedValue(0);
+  const rowOpacity  = useSharedValue(1);
+  const rowHeight   = useSharedValue(ROW_HEIGHT + Spacing['2']); // include gap
 
-  const days     = daysUntilDue(payment.dueDate);
-  const urgent   = isUrgent(payment.dueDate);
+  const days   = daysUntilDue(payment.dueDate);
+  const urgent = isUrgent(payment.dueDate);
 
   const dotColor =
     payment.status === 'SETTLED' ? colors.status.income :
     payment.status === 'OVERDUE' ? colors.status.expense :
     urgent ? '#F59E0B' : colors.status.info;
 
-  const handleSettle = () => {
-    // Animate out then settle
-    opacity.value = withTiming(0, { duration: 250 });
-    height.value  = withTiming(0, { duration: 300 }, () => {
-      runOnJS(onSettle)(payment.id);
+  const dismissRow = (action: () => void) => {
+    rowOpacity.value = withTiming(0, { duration: 220 });
+    rowHeight.value  = withTiming(0, { duration: 280 }, () => {
+      runOnJS(action)();
     });
   };
 
-  const handleDelete = () => {
-    opacity.value = withTiming(0, { duration: 250 });
-    height.value  = withTiming(0, { duration: 300 }, () => {
-      runOnJS(onDelete)(payment.id);
-    });
-  };
+  const handleSettle = () => dismissRow(() => onSettle(payment.id));
+  const handleDelete = () => dismissRow(() => onDelete(payment.id));
 
+  // ── Swipe-right → settle
+  // activeOffsetX: need 20px horizontal before activating
+  // failOffsetY:   fail immediately on 4px vertical → scroll wins
   const panGesture = Gesture.Pan()
-    .activeOffsetX([SWIPE_SETTLE_THRESHOLD, 1000])
-    .failOffsetY([-12, 12])
+    .minPointers(1)
+    .activeOffsetX([20, 20000])
+    .failOffsetY([-4, 4])
     .onUpdate((e) => {
-      translateX.value = Math.min(e.translationX, 150);
+      if (payment.status === 'SETTLED') return;
+      translateX.value = Math.min(Math.max(e.translationX, 0), 130);
     })
     .onEnd((e) => {
-      if (e.translationX > SWIPE_SETTLE_THRESHOLD && payment.status !== 'SETTLED') {
-        translateX.value = withSequence(
-          withTiming(160, { duration: 200 }),
-          withTiming(0, { duration: 0 })
-        );
+      if (e.translationX > SWIPE_SETTLE && payment.status !== 'SETTLED') {
+        translateX.value = withTiming(160, { duration: 180 });
         runOnJS(handleSettle)();
       } else {
-        translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
+        translateX.value = withSpring(0, { damping: 20, stiffness: 260 });
       }
     });
 
-  const rowStyle    = useAnimatedStyle(() => ({
+  const rowStyle   = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
   }));
-  const wrapStyle   = useAnimatedStyle(() => ({
-    opacity:  opacity.value,
-    height:   height.value,
-    overflow: 'hidden',
+  const wrapStyle  = useAnimatedStyle(() => ({
+    opacity:  rowOpacity.value,
+    height:   rowHeight.value,
+  }));
+  // underlay fades in as row moves right
+  const underlayStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(translateX.value / SWIPE_SETTLE, 1),
   }));
 
-  const cardBg = isDark
-    ? 'rgba(15, 21, 36, 0.85)'
-    : 'rgba(255, 255, 255, 0.95)';
+  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
 
   return (
     <Animated.View style={wrapStyle}>
-      {/* Swipe-right: settle revealed underlay */}
-      <View style={[styles.swipeUnderlay, { backgroundColor: colors.status.income }]}>
-        <Ionicons name="checkmark-circle" size={22} color="#fff" />
-        <AppText variant="labelSM" style={{ color: '#fff' }}>Settle</AppText>
-      </View>
+      {/* Settle underlay (revealed behind row on swipe right) */}
+      {payment.status !== 'SETTLED' && (
+        <Animated.View
+          style={[
+            styles.underlaySettle,
+            underlayStyle,
+            { backgroundColor: colors.status.income, height: ROW_HEIGHT },
+          ]}
+        >
+          <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
+          <AppText variant="labelSM" style={styles.underlayText}>Settle</AppText>
+        </Animated.View>
+      )}
 
       <GestureDetector gesture={panGesture}>
         <Animated.View
@@ -126,23 +133,17 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
             styles.row,
             rowStyle,
             {
+              height:          ROW_HEIGHT,
               backgroundColor: cardBg,
-              borderColor:     isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+              borderColor:     isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
             },
           ]}
         >
-          {/* Timeline dot + line */}
-          <View style={styles.timelineCol}>
-            <View style={[styles.dot, { backgroundColor: dotColor }]} />
-          </View>
+          {/* Timeline dot */}
+          <View style={[styles.dot, { backgroundColor: dotColor }]} />
 
-          {/* Icon box */}
-          <View
-            style={[
-              styles.iconBox,
-              { backgroundColor: dotColor + (isDark ? '28' : '18') },
-            ]}
-          >
+          {/* Category icon */}
+          <View style={[styles.iconBox, { backgroundColor: dotColor + (isDark ? '28' : '18') }]}>
             <Ionicons
               name={CATEGORY_ICON[payment.category] ?? 'ellipsis-horizontal-outline'}
               size={16}
@@ -150,25 +151,25 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
             />
           </View>
 
-          {/* Body */}
-          <View style={styles.rowBody}>
+          {/* Text body */}
+          <View style={styles.body}>
             <AppText variant="labelMD" color={colors.text.primary} numberOfLines={1}>
               {payment.title}
             </AppText>
             <AppText variant="caption" color={colors.text.tertiary}>
               {payment.status === 'SETTLED'
-                ? 'Settled'
+                ? '✓ Settled'
                 : payment.status === 'OVERDUE'
                 ? `${Math.abs(days)}d overdue`
                 : days === 0
                 ? 'Due today'
                 : `Due in ${days}d`}
-              {payment.isRecurring ? '  ·  ↻' : ''}
+              {payment.isRecurring ? '  ·  ↻ recurring' : ''}
             </AppText>
           </View>
 
-          {/* Amount */}
-          <View style={styles.rowRight}>
+          {/* Amount + delete */}
+          <View style={styles.right}>
             <AppText
               variant="labelLG"
               style={[
@@ -185,8 +186,12 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
               ${payment.amount.toFixed(2)}
             </AppText>
             {payment.status !== 'SETTLED' && (
-              <Pressable onPress={handleDelete} hitSlop={10}>
-                <Ionicons name="close" size={14} color={colors.text.tertiary} />
+              <Pressable
+                onPress={handleDelete}
+                hitSlop={12}
+                style={[styles.deleteBtn, { backgroundColor: colors.status.expense + '18' }]}
+              >
+                <Ionicons name="close" size={12} color={colors.status.expense} />
               </Pressable>
             )}
           </View>
@@ -196,12 +201,12 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
   );
 }
 
-// ─── Timeline list ────────────────────────────────────────────────────────────
+// ─── Timeline ─────────────────────────────────────────────────────────────────
 
 interface PlannedPaymentsTimelineProps {
-  payments:  PlannedPayment[];
-  onSettle:  (id: string) => void;
-  onDelete:  (id: string) => void;
+  payments: PlannedPayment[];
+  onSettle: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export function PlannedPaymentsTimeline({
@@ -221,13 +226,19 @@ export function PlannedPaymentsTimeline({
 
   return (
     <View style={styles.container}>
-      <AppText variant="headingSM" color={colors.text.primary} style={styles.title}>
-        Planned Payments
-      </AppText>
-      <AppText variant="caption" color={colors.text.tertiary} style={styles.subtitle}>
-        Swipe right to settle · Swipe left to reveal actions
-      </AppText>
+      {/* Section title */}
+      <View style={styles.titleRow}>
+        <AppText variant="headingSM" color={colors.text.primary}>
+          Planned Payments
+        </AppText>
+        <View style={[styles.hint, { backgroundColor: colors.brand.primary + '18' }]}>
+          <AppText variant="labelSM" style={{ color: colors.brand.accent, fontSize: 10 }}>
+            Swipe → to settle
+          </AppText>
+        </View>
+      </View>
 
+      {/* Rows */}
       <View style={styles.list}>
         {sorted.map((p) => (
           <PaymentRow
@@ -242,76 +253,91 @@ export function PlannedPaymentsTimeline({
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: {
-    marginTop: Spacing['2'],
+    gap: Spacing['3'],
   },
-  title: {
-    marginBottom: 4,
+  titleRow: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    justifyContent: 'space-between',
   },
-  subtitle: {
-    fontSize:     11,
-    marginBottom: Spacing['3'],
+  hint: {
+    paddingHorizontal: 10,
+    paddingVertical:   4,
+    borderRadius:      Radius.full,
   },
   list: {
     gap: Spacing['2'],
   },
-  swipeUnderlay: {
+  // ── Swipe underlay
+  underlaySettle: {
     position:       'absolute',
     left:           0,
     right:          0,
     top:            0,
-    bottom:         0,
-    borderRadius:   Radius.lg,
+    borderRadius:   Radius.xl,
     flexDirection:  'row',
     alignItems:     'center',
-    paddingLeft:    Spacing['4'],
+    paddingLeft:    Spacing['5'],
     gap:            Spacing['2'],
   },
+  underlayText: {
+    color:      '#FFFFFF',
+    fontWeight: '700',
+  },
+  // ── Row card
   row: {
-    flexDirection: 'row',
-    alignItems:    'center',
-    gap:           Spacing['3'],
-    paddingVertical:   Spacing['3'],
-    paddingHorizontal: Spacing['3'],
-    borderRadius:  Radius.lg,
-    borderWidth:   1,
+    flexDirection:     'row',
+    alignItems:        'center',
+    gap:               Spacing['3'],
+    paddingHorizontal: Spacing['4'],
+    borderRadius:      Radius.xl,
+    borderWidth:       1,
     ...Platform.select({
       ios: {
+        shadowColor:   '#000',
         shadowOffset:  { width: 0, height: 2 },
         shadowOpacity: 0.06,
-        shadowRadius:  6,
-        shadowColor:   '#000',
+        shadowRadius:  8,
       },
       android: { elevation: 1 },
     }),
-  },
-  timelineCol: {
-    alignItems:     'center',
-    width:          10,
   },
   dot: {
     width:        8,
     height:       8,
     borderRadius: 4,
+    flexShrink:   0,
   },
   iconBox: {
-    width:          34,
-    height:         34,
+    width:          36,
+    height:         36,
     borderRadius:   Radius.md,
     alignItems:     'center',
     justifyContent: 'center',
+    flexShrink:     0,
   },
-  rowBody: {
+  body: {
     flex: 1,
-    gap:  2,
+    gap:  3,
   },
-  rowRight: {
+  right: {
     alignItems: 'flex-end',
-    gap:        4,
+    gap:        5,
+    flexShrink: 0,
   },
   amount: {
     fontSize:   14,
     fontWeight: '700',
+  },
+  deleteBtn: {
+    width:          22,
+    height:         22,
+    borderRadius:   11,
+    alignItems:     'center',
+    justifyContent: 'center',
   },
 });

@@ -1,6 +1,7 @@
 export * from './GlassCard';
 export * from './CustomButton';
 export * from './AppText';
+export * from './AppHeader';
 export * from './CategoryIcon';
 export * from './AmountText';
 export * from './LoadingScreen';

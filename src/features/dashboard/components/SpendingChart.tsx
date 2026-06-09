@@ -1,10 +1,9 @@
 import React, { memo } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { GlassCard } from '@components/GlassCard';
+import { View, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { AppText } from '@components/AppText';
 import { ProgressBar } from '@components/ProgressBar';
 import { CategoryIcon, CATEGORY_META } from '@components/CategoryIcon';
-import { Spacing } from '@constants/index';
+import { Spacing, Radius } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
 import type { SpendingChartProps } from '../types';
 
@@ -14,14 +13,26 @@ export const SpendingChart = memo(function SpendingChart({
   data,
   isLoading,
 }: SpendingChartProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const items = data.slice(0, MAX_ITEMS);
 
   return (
-    <GlassCard style={styles.card} padding={Spacing['5']}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: isDark ? colors.background.secondary : '#FFFFFF',
+          borderColor:     isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        },
+      ]}
+    >
       <View style={styles.header}>
         <AppText variant="headingSM" color={colors.text.primary}>Spending Breakdown</AppText>
-        <AppText variant="labelSM" color={colors.text.secondary}>This Month</AppText>
+        <View style={[styles.monthPill, { backgroundColor: colors.brand.primary + (isDark ? '28' : '18') }]}>
+          <AppText variant="labelSM" style={{ color: isDark ? colors.brand.secondary : colors.brand.accent, fontSize: 11 }}>
+            This Month
+          </AppText>
+        </View>
       </View>
 
       {isLoading ? (
@@ -32,18 +43,18 @@ export const SpendingChart = memo(function SpendingChart({
         </AppText>
       ) : (
         <View style={styles.list}>
-          {items.map((item) => {
+          {items.map((item, idx) => {
             const meta = CATEGORY_META[item.category];
             const gradient: [string, string] = [meta.color, meta.color + '80'];
             return (
-              <View key={item.category} style={styles.row}>
+              <View key={item.category} style={[styles.row, idx < items.length - 1 && { borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}>
                 <CategoryIcon category={item.category} size={38} />
                 <View style={styles.rowContent}>
                   <View style={styles.rowHeader}>
                     <AppText variant="labelMD" color={colors.text.primary}>
                       {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                     </AppText>
-                    <AppText variant="labelMD" color={colors.text.primary}>
+                    <AppText variant="labelMD" color={colors.text.primary} style={styles.rowAmount}>
                       ${item.amount.toFixed(0)}
                     </AppText>
                   </View>
@@ -62,30 +73,54 @@ export const SpendingChart = memo(function SpendingChart({
           })}
         </View>
       )}
-    </GlassCard>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
-  card: {},
+  card: {
+    borderRadius: Radius.xl,
+    borderWidth:  1,
+    overflow:     'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor:   '#000',
+        shadowOffset:  { width: 0, height: 2 },
+        shadowOpacity: 0.07,
+        shadowRadius:  12,
+      },
+      android: { elevation: 2 },
+    }),
+  },
   header: {
-    flexDirection: 'row',
+    flexDirection:  'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing['4'],
+    alignItems:     'center',
+    padding:        Spacing['5'],
+    paddingBottom:  Spacing['3'],
+  },
+  monthPill: {
+    paddingHorizontal: 10,
+    paddingVertical:   4,
+    borderRadius:      Radius.full,
   },
   loader: { marginVertical: Spacing['8'] },
-  empty: { marginVertical: Spacing['8'] },
-  list: { gap: Spacing['4'] },
+  empty:  { marginVertical: Spacing['8'] },
+  list:   {},
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing['3'],
+    flexDirection:  'row',
+    alignItems:     'center',
+    gap:            Spacing['3'],
+    paddingVertical: Spacing['3'],
+    paddingHorizontal: Spacing['5'],
   },
   rowContent: { flex: 1, gap: 4 },
   rowHeader: {
-    flexDirection: 'row',
+    flexDirection:  'row',
     justifyContent: 'space-between',
+  },
+  rowAmount: {
+    fontWeight: '700',
   },
   bar: { marginVertical: 2 },
 });

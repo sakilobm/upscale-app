@@ -14,7 +14,7 @@ export const TransactionListItem = memo(function TransactionListItem({
   onPress,
   onLongPress,
 }: TransactionListItemProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const date = format(new Date(transaction.date), 'h:mm a');
   const isIncome = transaction.type === 'income';
 
@@ -27,7 +27,11 @@ export const TransactionListItem = memo(function TransactionListItem({
       }}
       style={({ pressed }) => [
         styles.container,
-        { backgroundColor: pressed ? colors.glass.background : 'transparent' },
+        {
+          backgroundColor: pressed
+            ? (isDark ? colors.glass.background : 'rgba(0,0,0,0.04)')
+            : 'transparent',
+        },
       ]}
     >
       <CategoryIcon category={transaction.category} size={46} />

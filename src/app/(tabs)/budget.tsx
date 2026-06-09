@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { AppHeader } from '@components/AppHeader';
 import { useBudgets } from '@features/budget/hooks/useBudgets';
 import { ProgressRingMatrix } from '@features/budget/components/ProgressRingMatrix';
 import { PlannedPaymentsTimeline } from '@features/budget/components/PlannedPaymentsTimeline';
@@ -51,10 +52,10 @@ export default function BudgetScreen() {
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <AppText variant="headingLG" color={colors.text.primary}>Budget</AppText>
-        </View>
+        <AppHeader
+          title="Budget"
+          subtitle="Monthly spending limits"
+        />
 
         {/* Monthly overview card */}
         {summary && (
@@ -126,14 +127,10 @@ const styles = StyleSheet.create({
   safeArea:  { flex: 1 },
   scroll: {
     paddingHorizontal: Spacing['5'],
+    paddingTop:        Spacing['2'],
+    gap:               Spacing['4'],
   },
-  header: {
-    paddingTop:    Spacing['4'],
-    paddingBottom: Spacing['3'],
-  },
-  overviewCard: {
-    marginBottom: Spacing['4'],
-  },
+  overviewCard: {},
   overviewRow: {
     flexDirection:  'row',
     justifyContent: 'space-between',
@@ -148,7 +145,5 @@ const styles = StyleSheet.create({
   },
   overviewBar: { marginTop: Spacing['2'] },
   loader: { marginTop: Spacing['10'] },
-  timelineWrapper: {
-    marginTop: Spacing['5'],
-  },
+  timelineWrapper: {},
 });

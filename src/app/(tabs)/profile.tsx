@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
+import { AppHeader } from '@components/AppHeader';
 import { CustomButton } from '@components/CustomButton';
 import { Spacing, Radius, Layout } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
@@ -50,9 +51,7 @@ export default function ProfileScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <AppText variant="headingLG" color={colors.text.primary} style={styles.title}>
-          Profile
-        </AppText>
+        <AppHeader title="Profile" subtitle={user?.email ?? ''} />
 
         {/* Avatar + Name */}
         <GlassCard style={styles.profileCard} borderGlow>
@@ -149,7 +148,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing['4'],
     gap: Spacing['4'],
   },
-  title: { marginBottom: Spacing['2'] },
+  title: { marginBottom: 0 },
   profileCard: {},
   profileInner: {
     flexDirection: 'row',

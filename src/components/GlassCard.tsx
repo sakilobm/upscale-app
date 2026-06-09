@@ -13,106 +13,128 @@ import { BlurConfigs, type BlurConfigKey } from '@constants/BlurConfigs';
 import { useTheme } from '@hooks/useTheme';
 
 interface GlassCardProps extends Pick<PressableProps, 'onPress' | 'onLongPress'> {
-  children: React.ReactNode;
-  style?: ViewStyle | ViewStyle[];
-  blurConfig?: BlurConfigKey;
-  borderGlow?: boolean;
-  gradient?: readonly [string, string, ...string[]];
-  padding?: number;
+  children:     React.ReactNode;
+  style?:       ViewStyle | ViewStyle[];
+  blurConfig?:  BlurConfigKey;
+  borderGlow?:  boolean;
+  gradient?:    readonly [string, string, ...string[]];
+  padding?:     number;
   borderRadius?: number;
-  disabled?: boolean;
+  disabled?:    boolean;
 }
 
 const CONSTANTS = {
   defaultPadding: Spacing['5'],
-  defaultRadius: Radius.xl,
+  defaultRadius:  Radius.xl,
 } as const;
 
 export const GlassCard = memo(function GlassCard({
   children,
   style,
-  blurConfig = 'card',
-  borderGlow = false,
+  blurConfig    = 'card',
+  borderGlow    = false,
   gradient,
-  padding = CONSTANTS.defaultPadding,
-  borderRadius = CONSTANTS.defaultRadius,
+  padding       = CONSTANTS.defaultPadding,
+  borderRadius  = CONSTANTS.defaultRadius,
   onPress,
   onLongPress,
-  disabled = false,
+  disabled      = false,
 }: GlassCardProps) {
   const { isDark, colors } = useTheme();
   const { intensity } = BlurConfigs[blurConfig];
 
+  // ─── LIGHT MODE — crisp white card ───────────────────────────────────────
+  if (!isDark) {
+    const borderColor = borderGlow
+      ? colors.brand.primary + '60'
+      : 'rgba(0, 0, 0, 0.06)';
+
+    const shadowStyle: ViewStyle = {
+      shadowColor:  '#64748B',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.10,
+      shadowRadius: 14,
+      elevation:    3,
+    };
+
+    const containerStyle: ViewStyle = {
+      backgroundColor: '#FFFFFF',
+      borderRadius,
+      borderWidth: 1,
+      borderColor,
+      overflow: 'hidden',
+      ...shadowStyle,
+    };
+
+    const inner = (
+      <View style={[containerStyle, StyleSheet.flatten(style)]}>
+        {/* Subtle top-to-bottom depth gradient */}
+        <LinearGradient
+          colors={gradient ?? ['#FFFFFF', '#F8FAFC']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        {/* Inner content */}
+        <View style={{ padding }}>{children}</View>
+      </View>
+    );
+
+    if (onPress || onLongPress) {
+      return (
+        <Pressable
+          onPress={onPress}
+          onLongPress={onLongPress}
+          disabled={disabled}
+          style={({ pressed }) => [{ opacity: pressed ? 0.82 : 1 }]}
+        >
+          {inner}
+        </Pressable>
+      );
+    }
+    return inner;
+  }
+
+  // ─── DARK MODE — frosted glassmorphism ────────────────────────────────────
   const containerStyle: ViewStyle = {
     borderRadius,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: borderGlow
-      ? (isDark ? 'rgba(108, 99, 255, 0.35)' : 'rgba(108, 99, 255, 0.25)')
-      : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.06)'),
-  };
-
-  const lightShadow: ViewStyle = {
-    shadowColor: '#1E293B',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.50)', // Translucent frosted light glass
-  };
-
-  const darkShadow: ViewStyle = {
-    shadowColor: '#000000',
+      ? 'rgba(108, 99, 255, 0.35)'
+      : 'rgba(255, 255, 255, 0.10)',
+    shadowColor:  '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.28,
     shadowRadius: 14,
-    elevation: 6,
-    backgroundColor: 'rgba(13, 18, 32, 0.40)', // Translucent frosted dark glass
+    elevation:    6,
+    backgroundColor: 'rgba(13, 18, 32, 0.40)',
   };
 
-  const innerStyle: ViewStyle = { padding };
-
-  const content = (
-    <View style={[containerStyle, isDark ? darkShadow : lightShadow, StyleSheet.flatten(style)]}>
-      {/* Real-time blur layer for iOS */}
+  const darkContent = (
+    <View style={[containerStyle, StyleSheet.flatten(style)]}>
       <BlurView
         intensity={intensity}
-        tint={isDark ? 'dark' : 'light'}
+        tint="dark"
         style={StyleSheet.absoluteFill}
       />
-
-      {/* Glass gradient overlay to simulate light refraction */}
-      {gradient ? (
-        <LinearGradient
-          colors={gradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[StyleSheet.absoluteFill, isDark ? styles.gradientOverlayDark : styles.gradientOverlayLight]}
-        />
-      ) : (
-        <LinearGradient
-          colors={
-            isDark
-              ? ['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.015)']
-              : ['rgba(255, 255, 255, 0.65)', 'rgba(255, 255, 255, 0.20)']
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
-
-      {/* Top light reflection border highlight */}
+      <LinearGradient
+        colors={gradient ?? ['rgba(255,255,255,0.06)', 'rgba(255,255,255,0.015)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      {/* Top-edge shine */}
       <View
         style={[
           styles.shine,
           {
             borderRadius,
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.85)',
+            backgroundColor: 'rgba(255,255,255,0.18)',
           },
         ]}
       />
-      <View style={innerStyle}>{children}</View>
+      <View style={{ padding }}>{children}</View>
     </View>
   );
 
@@ -124,26 +146,20 @@ export const GlassCard = memo(function GlassCard({
         disabled={disabled}
         style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
       >
-        {content}
+        {darkContent}
       </Pressable>
     );
   }
 
-  return content;
+  return darkContent;
 });
 
 const styles = StyleSheet.create({
-  gradientOverlayDark: {
-    opacity: 0.15,
-  },
-  gradientOverlayLight: {
-    opacity: 0.12,
-  },
   shine: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
+    top:      0,
+    left:     0,
+    right:    0,
+    height:   1,
   },
 });

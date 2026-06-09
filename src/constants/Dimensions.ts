@@ -92,7 +92,7 @@ export const Shadow = {
 export const Layout = {
   screenPaddingH: Spacing['5'],
   screenPaddingV: Spacing['6'],
-  tabBarHeight: Platform.select({ ios: 84, android: 64, default: 64 }) as number,
+  tabBarHeight: Platform.select({ ios: 104, android: 80, default: 80 }) as number,
   headerHeight: Platform.select({ ios: 96, android: 72, default: 72 }) as number,
   cardMinHeight: 120,
   balanceCardHeight: 220,
