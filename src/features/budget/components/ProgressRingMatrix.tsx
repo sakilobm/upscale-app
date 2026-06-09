@@ -114,13 +114,14 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap:      'wrap',
-    gap:           Spacing['2'],
+    rowGap:        Spacing['4'],
+    columnGap:     0,
   },
   cell: {
-    alignItems:     'center',
-    width:          '30%',
+    alignItems:      'center',
+    width:           '33.333%',
     paddingVertical: Spacing['2'],
-    gap:            4,
+    gap:             4,
   },
   cellName: {
     fontSize:    12,

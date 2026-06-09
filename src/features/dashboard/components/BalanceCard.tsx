@@ -1,11 +1,13 @@
 import React, { memo } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Text, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { AppText } from '@components/AppText';
 import { Radius, Spacing, BlurConfigs } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
 import type { BalanceCardProps } from '../types';
+
+const CARD_HEIGHT = Math.max(Math.round(Dimensions.get('window').height * 0.22), 200);
 
 function formatBalance(amount: number): string {
   return amount.toLocaleString('en-US', {
@@ -181,7 +183,7 @@ const DarkCard = memo(function DarkCard({
 
 const styles = StyleSheet.create({
   container: {
-    height: 210,
+    height: CARD_HEIGHT,
     borderRadius: Radius['2xl'],
     overflow: 'hidden',
   },

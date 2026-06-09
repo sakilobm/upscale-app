@@ -51,7 +51,7 @@ export default function ProfileScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <AppHeader title="Profile" subtitle={user?.email ?? ''} />
+        <AppHeader title="Profile" subtitle={user?.email ?? ''} noPadding />
 
         {/* Avatar + Name */}
         <GlassCard style={styles.profileCard} borderGlow>

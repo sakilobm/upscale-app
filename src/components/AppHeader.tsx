@@ -7,13 +7,15 @@ import { useTheme } from '@hooks/useTheme';
 import { Spacing, Radius } from '@constants/Dimensions';
 
 interface AppHeaderProps {
-  title:       string;
-  subtitle?:   string;
-  rightNode?:  React.ReactNode;
+  title:        string;
+  subtitle?:    string;
+  rightNode?:   React.ReactNode;
   /** Show a gradient accent line at the bottom */
-  accentLine?: boolean;
+  accentLine?:  boolean;
   /** Show a pill-badge count next to title */
-  badge?:      number;
+  badge?:       number;
+  /** Set true when AppHeader is already inside a horizontally-padded container */
+  noPadding?:   boolean;
 }
 
 export function AppHeader({
@@ -22,11 +24,12 @@ export function AppHeader({
   rightNode,
   accentLine = true,
   badge,
+  noPadding = false,
 }: AppHeaderProps) {
   const { colors, isDark } = useTheme();
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, noPadding && styles.wrapperNoPadding]}>
       <View style={styles.row}>
         {/* Left: title + subtitle */}
         <View style={styles.titleBlock}>
@@ -118,9 +121,13 @@ export function HeaderIconBtn({ icon, onPress }: HeaderIconBtnProps) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    paddingTop:    Spacing['4'],
-    paddingBottom: Spacing['1'],
-    gap:           Spacing['2'],
+    paddingTop:        Spacing['4'],
+    paddingBottom:     Spacing['1'],
+    paddingHorizontal: Spacing['5'],
+    gap:               Spacing['2'],
+  },
+  wrapperNoPadding: {
+    paddingHorizontal: 0,
   },
   row: {
     flexDirection:  'row',

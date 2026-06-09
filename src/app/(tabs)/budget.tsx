@@ -55,6 +55,7 @@ export default function BudgetScreen() {
         <AppHeader
           title="Budget"
           subtitle="Monthly spending limits"
+          noPadding
         />
 
         {/* Monthly overview card */}
