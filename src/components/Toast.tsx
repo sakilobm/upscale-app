@@ -1,0 +1,182 @@
+import React, { useEffect, memo } from 'react';
+import { View, StyleSheet, Pressable, Platform } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AppText } from './AppText';
+import { useTheme } from '@hooks/useTheme';
+import { useToastStore } from '@store/toastStore';
+import { Radius, Spacing, Layout } from '@constants/index';
+import type { ToastItem, ToastType } from '@store/toastStore';
+
+// ─── Config per type ──────────────────────────────────────────────────────────
+
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const TYPE_CONFIG: Record<ToastType, { icon: IoniconName; color: string }> = {
+  success: { icon: 'checkmark-circle',  color: '#10B981' },
+  error:   { icon: 'close-circle',      color: '#EF4444' },
+  warning: { icon: 'warning',           color: '#F59E0B' },
+  info:    { icon: 'information-circle',color: '#6C63FF' },
+};
+
+// ─── Single toast chip ────────────────────────────────────────────────────────
+
+interface ChipProps {
+  item:      ToastItem;
+  onDismiss: () => void;
+}
+
+const ToastChip = memo(function ToastChip({ item, onDismiss }: ChipProps) {
+  const { colors, isDark } = useTheme();
+  const { icon, color } = TYPE_CONFIG[item.type];
+
+  const ty      = useSharedValue(90);
+  const opacity = useSharedValue(0);
+  const scale   = useSharedValue(0.88);
+
+  useEffect(() => {
+    // ── Entrance
+    ty.value      = withSpring(0,   { damping: 22, stiffness: 220, mass: 0.85 });
+    opacity.value = withTiming(1,   { duration: 220 });
+    scale.value   = withSpring(1,   { damping: 18, stiffness: 240 });
+
+    // ── Exit
+    const exitAt = Math.max(item.duration - 320, 300);
+    const timer = setTimeout(() => {
+      opacity.value = withTiming(0, { duration: 260 });
+      ty.value      = withTiming(80, { duration: 280 });
+      scale.value   = withTiming(0.90, { duration: 260 }, () => {
+        runOnJS(onDismiss)();
+      });
+    }, exitAt);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity:   opacity.value,
+    transform: [{ translateY: ty.value }, { scale: scale.value }],
+  }));
+
+  const bg     = isDark ? 'rgba(15,21,36,0.96)' : '#FFFFFF';
+  const border = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)';
+
+  return (
+    <Animated.View style={animStyle}>
+      <Pressable
+        onPress={onDismiss}
+        style={[
+          styles.chip,
+          {
+            backgroundColor: bg,
+            borderColor:     border,
+            shadowColor:     color,
+          },
+        ]}
+      >
+        {/* Left accent bar */}
+        <View style={[styles.accentBar, { backgroundColor: color }]} />
+
+        {/* Icon */}
+        <View style={[styles.iconWrap, { backgroundColor: color + '1A' }]}>
+          <Ionicons name={icon} size={18} color={color} />
+        </View>
+
+        {/* Message */}
+        <AppText
+          variant="labelMD"
+          color={colors.text.primary}
+          style={styles.message}
+          numberOfLines={2}
+        >
+          {item.message}
+        </AppText>
+
+        {/* Dismiss × */}
+        <Ionicons name="close" size={14} color={colors.text.tertiary} />
+      </Pressable>
+    </Animated.View>
+  );
+});
+
+// ─── Container ────────────────────────────────────────────────────────────────
+
+export function ToastContainer() {
+  const toasts = useToastStore((s) => s.toasts);
+  const hide   = useToastStore((s) => s.hide);
+  const insets = useSafeAreaInsets();
+
+  if (!toasts.length) return null;
+
+  const bottomOffset = Layout.tabBarHeight + insets.bottom + Spacing['3'];
+
+  return (
+    <View
+      style={[styles.container, { bottom: bottomOffset }]}
+      pointerEvents="box-none"
+    >
+      {toasts.map((item) => (
+        <ToastChip
+          key={item.id}
+          item={item}
+          onDismiss={() => hide(item.id)}
+        />
+      ))}
+    </View>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  container: {
+    position:          'absolute',
+    left:              Spacing['4'],
+    right:             Spacing['4'],
+    gap:               Spacing['2'],
+    zIndex:            9999,
+    pointerEvents:     'box-none',
+  },
+  chip: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    gap:            Spacing['3'],
+    borderRadius:   Radius.xl,
+    borderWidth:    1,
+    overflow:       'hidden',
+    paddingRight:   Spacing['4'],
+    paddingVertical: Spacing['3'],
+    ...Platform.select({
+      ios: {
+        shadowOffset:  { width: 0, height: 6 },
+        shadowOpacity: 0.25,
+        shadowRadius:  14,
+      },
+      android: { elevation: 10 },
+    }),
+  },
+  accentBar: {
+    width:  4,
+    alignSelf: 'stretch',
+  },
+  iconWrap: {
+    width:          34,
+    height:         34,
+    borderRadius:   17,
+    alignItems:     'center',
+    justifyContent: 'center',
+    flexShrink:     0,
+  },
+  message: {
+    flex:       1,
+    lineHeight: 20,
+    fontWeight: '600',
+  },
+});

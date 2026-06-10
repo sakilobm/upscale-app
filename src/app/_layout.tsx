@@ -7,6 +7,7 @@ import { useCachedFonts } from '@hooks/useCachedFonts';
 import { useAuthStore } from '@store/authStore';
 import { useThemeStore } from '@store/themeStore';
 import { LoadingScreen } from '@components/LoadingScreen';
+import { ToastContainer } from '@components/Toast';
 import { DarkTheme, LightTheme } from '@constants/themes';
 import type { User } from '@store/types';
 
@@ -51,6 +52,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
         <Stack.Screen name="(tabs)" />
       </Stack>
+      <ToastContainer />
     </GestureHandlerRootView>
   );
 }
