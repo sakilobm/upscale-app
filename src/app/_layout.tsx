@@ -14,8 +14,8 @@ SplashScreen.preventAutoHideAsync();
 
 const DEMO_USER: User = {
   id: 'user-1',
-  email: 'demo@moneyapp.com',
-  fullName: 'Alex Morgan',
+  email: 'master@gmail.com',
+  fullName: 'Sakil Master',
   avatarUrl: null,
   currency: 'USD',
   createdAt: '2024-01-01T00:00:00Z',

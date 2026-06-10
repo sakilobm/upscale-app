@@ -27,9 +27,9 @@ import type { Transaction } from '@store/types';
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const QUICK_ACTIONS: { icon: IoniconName; label: string }[] = [
-  { icon: 'arrow-up',              label: 'Send'    },
-  { icon: 'arrow-down-outline',    label: 'Top Up'  },
-  { icon: 'shuffle-outline',       label: 'Split'   },
+  { icon: 'arrow-up', label: 'Send' },
+  { icon: 'arrow-down-outline', label: 'Top Up' },
+  { icon: 'shuffle-outline', label: 'Split' },
   { icon: 'document-text-outline', label: 'Request' },
 ];
 
@@ -42,13 +42,13 @@ export default function HomeScreen() {
     router.push('/transactions');
   }, []);
 
-  const firstName = user?.fullName?.split(' ')[0] ?? 'Alex';
-  const initials  = user?.fullName
+  const firstName = user?.fullName?.split(' ')[0] ?? 'Sakil';
+  const initials = user?.fullName
     ?.split(' ')
     .map((n) => n[0])
     .join('')
     .toUpperCase()
-    .slice(0, 2) ?? 'AM';
+    .slice(0, 2) ?? 'SK';
 
   if (isError) {
     return (
@@ -131,10 +131,10 @@ export default function HomeScreen() {
                 opacity: pressed ? 0.65 : 1,
                 ...Platform.select({
                   ios: {
-                    shadowColor:   '#000',
-                    shadowOffset:  { width: 0, height: 2 },
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: isDark ? 0 : 0.07,
-                    shadowRadius:  6,
+                    shadowRadius: 6,
                   },
                   android: { elevation: isDark ? 0 : 2 },
                 }),
@@ -157,10 +157,10 @@ export default function HomeScreen() {
         <BalanceCard
           totalBalance={data?.totalBalance ?? 0}
           monthSummary={data?.monthSummary ?? {
-            month:            '',
-            totalIncome:      0,
-            totalExpense:     0,
-            netSavings:       0,
+            month: '',
+            totalIncome: 0,
+            totalExpense: 0,
+            netSavings: 0,
             transactionCount: 0,
           }}
           isLoading={isLoading}
@@ -185,18 +185,18 @@ export default function HomeScreen() {
                       backgroundColor: isPrimary
                         ? isDark ? colors.brand.primary : '#111827'
                         : isDark
-                        ? colors.glass.backgroundMid
-                        : '#FFFFFF',
-                      borderWidth:  isPrimary ? 0 : 1,
-                      borderColor:  isDark
+                          ? colors.glass.backgroundMid
+                          : '#FFFFFF',
+                      borderWidth: isPrimary ? 0 : 1,
+                      borderColor: isDark
                         ? colors.glass.border
                         : 'rgba(0,0,0,0.08)',
                       ...Platform.select({
                         ios: {
-                          shadowColor:   '#000',
-                          shadowOffset:  { width: 0, height: isPrimary ? 4 : 2 },
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: isPrimary ? 4 : 2 },
                           shadowOpacity: isPrimary ? (isDark ? 0.4 : 0.20) : 0.06,
-                          shadowRadius:  isPrimary ? 10 : 6,
+                          shadowRadius: isPrimary ? 10 : 6,
                         },
                         android: { elevation: isPrimary ? 6 : 2 },
                       }),
@@ -284,8 +284,8 @@ function SectionTitle({
   action,
   onAction,
 }: {
-  title:     string;
-  action?:   string;
+  title: string;
+  action?: string;
   onAction?: () => void;
 }) {
   const { colors } = useTheme();
@@ -306,74 +306,74 @@ function SectionTitle({
 }
 
 const styles = StyleSheet.create({
-  safeArea:       { flex: 1 },
+  safeArea: { flex: 1 },
   scroll: {
     paddingHorizontal: Spacing['5'],
-    paddingTop:        Spacing['3'],
+    paddingTop: Spacing['3'],
   },
   // ── Header
   header: {
-    flexDirection:  'row',
-    alignItems:     'center',
-    marginBottom:   Spacing['5'],
-    gap:            Spacing['3'],
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing['5'],
+    gap: Spacing['3'],
   },
   avatar: {
-    width:          46,
-    height:         46,
-    borderRadius:   23,
-    borderWidth:    1.5,
-    alignItems:     'center',
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1.5,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize:   15,
+    fontSize: 15,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
   greetingBlock: {
     flex: 1,
-    gap:  1,
+    gap: 1,
   },
   greetingName: {
     lineHeight: 22,
   },
   headerAction: {
-    width:          40,
-    height:         40,
-    borderRadius:   20,
-    borderWidth:    1,
-    alignItems:     'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   // ── Card label
   sectionHeader: {
-    flexDirection:  'row',
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems:     'center',
-    marginBottom:   Spacing['3'],
+    alignItems: 'center',
+    marginBottom: Spacing['3'],
   },
   // ── Quick Actions
   actionsRow: {
-    flexDirection:  'row',
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop:      Spacing['5'],
-    marginBottom:   Spacing['1'],
+    marginTop: Spacing['5'],
+    marginBottom: Spacing['1'],
   },
   actionItem: {
     alignItems: 'center',
-    gap:        Spacing['2'],
-    flex:       1,
+    gap: Spacing['2'],
+    flex: 1,
   },
   actionIconBox: {
-    width:          54,
-    height:         54,
-    borderRadius:   Radius.xl,
-    alignItems:     'center',
+    width: 54,
+    height: 54,
+    borderRadius: Radius.xl,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   actionLabel: {
-    fontSize:     11,
+    fontSize: 11,
     letterSpacing: 0.2,
   },
   // ── Sections
@@ -381,14 +381,14 @@ const styles = StyleSheet.create({
     marginTop: Spacing['6'],
   },
   sectionTitleRow: {
-    flexDirection:  'row',
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems:     'center',
-    marginBottom:   Spacing['3'],
+    alignItems: 'center',
+    marginBottom: Spacing['3'],
   },
   statsRow: {
     flexDirection: 'row',
-    gap:           Spacing['3'],
+    gap: Spacing['3'],
   },
   txRow: {
     paddingHorizontal: Spacing['4'],
