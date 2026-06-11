@@ -9,20 +9,17 @@ import {
   Modal,
   TextInput,
   Dimensions,
-  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
   Easing,
-  FadeIn,
-  FadeInDown,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useDashboardData } from '@features/dashboard/hooks/useDashboardData';
@@ -40,7 +37,7 @@ import { useAuthStore } from '@store/authStore';
 import { useAccountStore } from '@store/accountStore';
 import { useTransactionStore } from '@store/transactionStore';
 import { toast } from '@store/toastStore';
-import type { Transaction, TransactionCategory, TransactionType } from '@store/types';
+import type { Transaction, TransactionCategory } from '@store/types';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 const { height: SH } = Dimensions.get('window');
@@ -418,11 +415,11 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
-  const quickActions: { icon: IoniconName; label: string; color?: string; action: () => void }[] = [
-    { icon: 'remove-circle-outline', label: 'Expense', color: '#EF4444', action: () => openAdd('expense') },
-    { icon: 'add-circle-outline',    label: 'Income',  color: '#10B981', action: () => openAdd('income') },
-    { icon: 'shuffle-outline',        label: 'Split',                     action: () => toast.info('Split expenses — coming soon') },
-    { icon: 'bar-chart-outline',      label: 'Activity',                  action: () => router.push('/(tabs)/transactions') },
+  const quickActions: { icon: IoniconName; label: string; color: string; action: () => void }[] = [
+    { icon: 'trending-down',  label: 'Expense',  color: '#EF4444',            action: () => openAdd('expense') },
+    { icon: 'trending-up',    label: 'Income',   color: '#10B981',            action: () => openAdd('income') },
+    { icon: 'shuffle',        label: 'Split',    color: colors.brand.primary, action: () => toast.info('Split expenses — coming soon') },
+    { icon: 'receipt',        label: 'Activity', color: '#F59E0B',            action: () => router.push('/(tabs)/transactions') },
   ];
 
   const firstName = user?.fullName?.split(' ')[0] ?? 'Sakil';
@@ -525,40 +522,45 @@ export default function HomeScreen() {
 
         {/* ── Quick Actions ────────────────────────────────────────── */}
         <View style={styles.actionsRow}>
-          {quickActions.map(({ icon, label, color, action }, i) => {
-            const isExpense = label === 'Expense';
-            const isIncome  = label === 'Income';
-            const isPrimary = isExpense || isIncome;
-            const bgColor   = isPrimary ? (color! + (isDark ? '22' : '18')) : (isDark ? colors.glass.backgroundMid : '#FFFFFF');
-            const iconColor = isPrimary ? color! : colors.text.primary;
-            return (
-              <Pressable
-                key={label}
-                onPress={action}
-                style={({ pressed }) => [styles.actionItem, { opacity: pressed ? 0.7 : 1 }]}
-              >
-                <View
-                  style={[
-                    styles.actionIconBox,
-                    {
-                      backgroundColor: bgColor,
-                      borderWidth: isPrimary ? 1.5 : 1,
-                      borderColor: isPrimary ? color! + '40' : (isDark ? colors.glass.border : 'rgba(0,0,0,0.08)'),
-                      ...Platform.select({
-                        ios: { shadowColor: isPrimary ? color : '#000', shadowOffset: { width: 0, height: isPrimary ? 4 : 2 }, shadowOpacity: isPrimary ? 0.25 : 0.06, shadowRadius: isPrimary ? 10 : 6 },
-                        android: { elevation: isPrimary ? 4 : 2 },
-                      }),
-                    },
-                  ]}
-                >
-                  <Ionicons name={icon} size={22} color={iconColor} />
+          {quickActions.map(({ icon, label, color, action }) => (
+            <Pressable
+              key={label}
+              onPress={action}
+              style={({ pressed }) => [styles.actionItem, { opacity: pressed ? 0.75 : 1 }]}
+            >
+              {/* Outer: border ring only — no overflow:hidden so iOS blur works */}
+              <View style={[styles.actionIconOuter, { borderColor: color + '55' }]}>
+                {/* Inner clip: rounds the blur/gradient to the box */}
+                <View style={styles.actionIconClip}>
+                  {/* 1. Frosted glass base */}
+                  <BlurView
+                    intensity={isDark ? 50 : 70}
+                    tint={isDark ? 'dark' : 'light'}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  {/* 2. Liquid color gradient */}
+                  <LinearGradient
+                    colors={[color + '70', color + '28']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  {/* 3. Top-edge shine — glass refraction */}
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0.42)', 'rgba(255,255,255,0.00)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0.6, y: 1 }}
+                    style={styles.actionIconShine}
+                  />
+                  {/* 4. Icon */}
+                  <Ionicons name={icon} size={24} color={color} />
                 </View>
-                <AppText variant="caption" color={colors.text.secondary} style={styles.actionLabel}>
-                  {label}
-                </AppText>
-              </Pressable>
-            );
-          })}
+              </View>
+              <AppText variant="caption" style={[styles.actionLabel, { color: colors.text.secondary }]}>
+                {label}
+              </AppText>
+            </Pressable>
+          ))}
         </View>
 
         {/* ── This Month ───────────────────────────────────────────── */}
@@ -684,16 +686,43 @@ const styles = StyleSheet.create({
   actionItem: {
     flex: 1,
     alignItems: 'center',
-    gap: Spacing['2'],
+    gap: 7,
   },
   actionIconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: Radius.xl,
+    width: 58,
+    height: 58,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionLabel: { fontSize: 11, textAlign: 'center' },
+  actionIconOuter: {
+    width: 62,
+    height: 62,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    padding: 2,
+  },
+  actionIconClip: {
+    flex: 1,
+    borderRadius: 17,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionIconShine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 30,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 16,
+  },
+  actionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
 
   // Sections
   section: { marginTop: Spacing['6'] },
