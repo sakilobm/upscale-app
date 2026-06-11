@@ -6,11 +6,32 @@ import { createAsyncState } from '@store/types';
 import type { TransactionGroupHeader } from '../types';
 import { format, isToday, isYesterday } from 'date-fns';
 
-function groupTransactionsByDate(transactions: Transaction[]): TransactionGroupHeader[] {
+function buildBalanceLookup(
+  allTransactions: Transaction[],
+  accountId?: string | null,
+): Map<string, number> {
+  // Optionally scope to a single account so per-account balance is accurate.
+  const src = accountId
+    ? allTransactions.filter((t) => t.accountId === accountId)
+    : allTransactions;
+  const sorted = [...src].sort((a, b) => a.date.localeCompare(b.date));
+  const lookup = new Map<string, number>();
+  let running = 0;
+  for (const tx of sorted) {
+    running += tx.type === 'income' ? tx.amount : -tx.amount;
+    lookup.set(tx.date.slice(0, 10), running);
+  }
+  return lookup;
+}
+
+function groupTransactionsByDate(
+  transactions: Transaction[],
+  balanceLookup: Map<string, number>,
+): TransactionGroupHeader[] {
   const groups = new Map<string, Transaction[]>();
 
   for (const tx of transactions) {
-    const dateKey = tx.date.slice(0, 10); // 'YYYY-MM-DD'
+    const dateKey = tx.date.slice(0, 10);
     const existing = groups.get(dateKey) ?? [];
     groups.set(dateKey, [...existing, tx]);
   }
@@ -21,6 +42,7 @@ function groupTransactionsByDate(transactions: Transaction[]): TransactionGroupH
       (sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount),
       0
     ),
+    balanceAfter: balanceLookup.get(date) ?? 0,
     transactions: txs,
   }));
 }
@@ -87,6 +109,7 @@ export function useTransactions(): UseTransactionsReturn {
     if (filters.type !== 'all') txs = txs.filter((t) => t.type === filters.type);
     if (filters.category !== 'all') txs = txs.filter((t) => t.category === filters.category);
     if (filters.month) txs = txs.filter((t) => t.date.startsWith(filters.month!));
+    if (filters.accountId) txs = txs.filter((t) => t.accountId === filters.accountId);
     if (filters.searchQuery) {
       const q = filters.searchQuery.toLowerCase();
       txs = txs.filter(
@@ -98,7 +121,16 @@ export function useTransactions(): UseTransactionsReturn {
     return txs;
   }, [storeTransactions, filters]);
 
-  const grouped = useMemo(() => groupTransactionsByDate(filtered), [filtered]);
+  // Balance lookup is scoped to the active account when one is selected.
+  const balanceLookup = useMemo(
+    () => buildBalanceLookup(storeTransactions, filters.accountId),
+    [storeTransactions, filters.accountId],
+  );
+
+  const grouped = useMemo(
+    () => groupTransactionsByDate(filtered, balanceLookup),
+    [filtered, balanceLookup],
+  );
 
   return {
     data: grouped,

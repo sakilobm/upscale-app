@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchDashboardData } from '../services/dashboardService';
+import { fetchDashboardData, MOCK_TRANSACTIONS } from '../services/dashboardService';
 import { useTransactionStore } from '@store/transactionStore';
-import { useAccountStore } from '@store/accountStore';
 import type { DashboardViewModel } from '../types';
 import type { AsyncState } from '@store/types';
 import { createAsyncState } from '@store/types';
@@ -16,7 +15,6 @@ export function useDashboardData(): UseDashboardDataReturn {
   );
 
   const setTransactions = useTransactionStore((s) => s.setTransactions);
-  const setAccounts = useAccountStore((s) => s.setAccounts);
 
   const load = useCallback(async () => {
     setState(createAsyncState({ isLoading: true }));
@@ -24,9 +22,8 @@ export function useDashboardData(): UseDashboardDataReturn {
     try {
       const dashboard = await fetchDashboardData();
 
-      // Hydrate global stores
-      setTransactions(dashboard.recentTransactions);
-      setAccounts(dashboard.accounts);
+      // Seed transaction store with all mock data (only if empty, to preserve user additions)
+      setTransactions(MOCK_TRANSACTIONS);
 
       const vm: DashboardViewModel = {
         totalBalance: dashboard.totalBalance,
@@ -53,7 +50,7 @@ export function useDashboardData(): UseDashboardDataReturn {
         error: message,
       });
     }
-  }, [setTransactions, setAccounts]);
+  }, [setTransactions]);
 
   useEffect(() => {
     load();

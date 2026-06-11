@@ -23,8 +23,8 @@ import type { LedgerEntry } from '@store/ledgerStore';
 
 // ─── Avatar ring ─────────────────────────────────────────────────────────────
 
-const RING_SIZE     = 52;
-const AVATAR_INNER  = RING_SIZE - 4;
+const RING_SIZE = 52;
+const AVATAR_INNER = RING_SIZE - 4;
 const RING_THICKNESS = 2;
 
 function AvatarRing({
@@ -33,30 +33,30 @@ function AvatarRing({
   status,
 }: {
   initials: string;
-  color:    string;
-  status:   LedgerEntry['status'];
+  color: string;
+  status: LedgerEntry['status'];
 }) {
   const { colors, isDark } = useTheme();
   const ringColor =
     status === 'SETTLED' ? colors.text.tertiary :
-    status === 'OVERDUE' ? colors.status.expense :
-    color;
+      status === 'OVERDUE' ? colors.status.expense :
+        color;
 
   return (
     <View
       style={[
         styles.avatarRing,
         {
-          width:        RING_SIZE,
-          height:       RING_SIZE,
+          width: RING_SIZE,
+          height: RING_SIZE,
           borderRadius: RING_SIZE / 2,
-          borderColor:  ringColor,
-          borderWidth:  RING_THICKNESS,
-          shadowColor:  ringColor,
+          borderColor: ringColor,
+          borderWidth: RING_THICKNESS,
+          shadowColor: ringColor,
           shadowOpacity: status !== 'SETTLED' ? (isDark ? 0.55 : 0.3) : 0,
           shadowRadius: 8,
           shadowOffset: { width: 0, height: 0 },
-          elevation:    status !== 'SETTLED' ? 4 : 0,
+          elevation: status !== 'SETTLED' ? 4 : 0,
         },
       ]}
     >
@@ -64,10 +64,10 @@ function AvatarRing({
         style={[
           styles.avatarInner,
           {
-            width:             AVATAR_INNER,
-            height:            AVATAR_INNER,
-            borderRadius:      AVATAR_INNER / 2,
-            backgroundColor:   color + (status === 'SETTLED' ? '28' : '38'),
+            width: AVATAR_INNER,
+            height: AVATAR_INNER,
+            borderRadius: AVATAR_INNER / 2,
+            backgroundColor: color + (status === 'SETTLED' ? '28' : '38'),
           },
         ]}
       >
@@ -88,8 +88,8 @@ function StatusChip({ status }: { status: LedgerEntry['status'] }) {
   const { colors } = useTheme();
   const chipColor =
     status === 'SETTLED' ? colors.status.income :
-    status === 'OVERDUE' ? colors.status.expense :
-    colors.status.info;
+      status === 'OVERDUE' ? colors.status.expense :
+        colors.status.info;
 
   const label = status === 'SETTLED' ? 'Settled' : status === 'OVERDUE' ? 'Overdue' : 'Active';
 
@@ -107,18 +107,18 @@ function StatusChip({ status }: { status: LedgerEntry['status'] }) {
 const SWIPE_THRESHOLD = -80;
 
 interface PersonLedgerCardProps {
-  entry:       LedgerEntry;
-  onPress:     (entry: LedgerEntry) => void;
-  onSettle:    (id: string) => void;
-  onDelete:    (id: string) => void;
+  entry: LedgerEntry;
+  onPress: (entry: LedgerEntry) => void;
+  onSettle: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonLedgerCardProps) {
   const { colors, isDark } = useTheme();
 
-  const translateX  = useSharedValue(0);
-  const rowHeight   = useSharedValue(80);
-  const opacity     = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const rowHeight = useSharedValue(80);
+  const opacity = useSharedValue(1);
 
   const handleSettle = () => onSettle(entry.id);
   const handleDelete = () => onDelete(entry.id);
@@ -145,15 +145,13 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
     transform: [{ translateX: translateX.value }],
   }));
 
-  const remaining    = entry.totalAmount - entry.amountReturned;
-  const progressPct  = entry.totalAmount > 0 ? entry.amountReturned / entry.totalAmount : 0;
+  const remaining = entry.totalAmount - entry.amountReturned;
+  const progressPct = entry.totalAmount > 0 ? entry.amountReturned / entry.totalAmount : 0;
 
   const dirColor =
     entry.direction === 'OWED_TO_ME' ? colors.status.income : colors.status.expense;
 
-  const cardBg = isDark
-    ? 'rgba(15, 21, 36, 0.90)'
-    : 'rgba(255, 255, 255, 0.96)';
+  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
 
   return (
     <View style={styles.swipeContainer}>
@@ -183,8 +181,8 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
             cardStyle,
             {
               backgroundColor: cardBg,
-              borderColor:     isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-              shadowColor:     isDark ? '#000' : '#000',
+              borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+              shadowColor: isDark ? '#000' : '#000',
             },
           ]}
         >
@@ -230,7 +228,7 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
                     style={[
                       styles.progressFill,
                       {
-                        width:           `${progressPct * 100}%` as any,
+                        width: `${progressPct * 100}%` as any,
                         backgroundColor: entry.personColor,
                       },
                     ]}
@@ -255,77 +253,78 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
 
 const styles = StyleSheet.create({
   swipeContainer: {
-    position:     'relative',
+    position: 'relative',
     marginBottom: Spacing['2'],
+    overflow: 'hidden',   // prevent action btns bleeding through card bg
   },
   actions: {
-    position:       'absolute',
-    right:          0,
-    top:            0,
-    bottom:         0,
-    flexDirection:  'row',
-    alignItems:     'center',
-    gap:            8,
-    paddingRight:   8,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 8,
   },
   actionBtn: {
-    width:          46,
-    height:         46,
-    borderRadius:   Radius.lg,
-    alignItems:     'center',
+    width: 46,
+    height: 46,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   card: {
     borderRadius: Radius.xl,
-    borderWidth:  1,
-    overflow:     'hidden',
+    borderWidth: 1,
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
-        shadowOffset:  { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.07,
-        shadowRadius:  8,
+        shadowRadius: 8,
       },
       android: { elevation: 2 },
     }),
   },
   cardContent: {
     flexDirection: 'row',
-    alignItems:    'center',
-    padding:       Spacing['4'],
-    gap:           Spacing['3'],
+    alignItems: 'center',
+    padding: Spacing['4'],
+    gap: Spacing['3'],
   },
   avatarRing: {
-    alignItems:     'center',
+    alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInner: {
-    alignItems:     'center',
+    alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
-    fontSize:   15,
+    fontSize: 15,
     fontWeight: '700',
   },
   chip: {
     paddingHorizontal: 7,
-    paddingVertical:   2,
-    borderRadius:      999,
+    paddingVertical: 2,
+    borderRadius: 999,
   },
   body: {
     flex: 1,
-    gap:  3,
+    gap: 3,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems:    'flex-start',
+    alignItems: 'flex-start',
   },
   nameRow: {
     flexDirection: 'row',
-    alignItems:    'center',
-    gap:           6,
-    flex:          1,
-    flexWrap:      'wrap',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    flexWrap: 'wrap',
   },
   name: {
     fontSize: 15,
@@ -338,18 +337,18 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   progressTrack: {
-    height:       3,
+    height: 3,
     borderRadius: 2,
-    marginTop:    6,
-    overflow:     'hidden',
+    marginTop: 6,
+    overflow: 'hidden',
   },
   progressFill: {
-    height:       3,
+    height: 3,
     borderRadius: 2,
   },
   right: {
     alignItems: 'center',
-    gap:        4,
+    gap: 4,
   },
   total: {
     fontSize: 10,

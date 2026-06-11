@@ -21,6 +21,7 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { format } from 'date-fns';
 import { AppText } from '@components/AppText';
 import { ConfirmModal } from '@components/ConfirmModal';
@@ -591,6 +592,13 @@ export default function ProfileScreen() {
 
         {/* Account */}
         <SectionCard title="Account" delay={160}>
+          <SettingRow
+            icon="wallet-outline"
+            iconColor="#6C63FF"
+            label="Manage Accounts"
+            subtitle="Add, edit, or delete accounts"
+            onPress={() => router.push('/accounts')}
+          />
           <SettingRow
             icon="notifications-outline"
             iconColor="#F97316"

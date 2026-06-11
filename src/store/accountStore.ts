@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Account } from './types';
+import { MOCK_ACCOUNTS } from '@features/dashboard/services/dashboardService';
 
 interface AccountState {
   accounts: Account[];
@@ -18,8 +19,8 @@ interface AccountState {
 }
 
 export const useAccountStore = create<AccountState>((set) => ({
-  accounts: [],
-  activeAccountId: null,
+  accounts: MOCK_ACCOUNTS,
+  activeAccountId: MOCK_ACCOUNTS.find((a) => a.isDefault)?.id ?? null,
   isLoading: false,
   isError: false,
   error: null,

@@ -49,8 +49,9 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={[styles.root, { backgroundColor: colors.background.primary }]}>
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
-        <Stack.Screen name="(tabs)" />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+        <Stack.Screen name="accounts" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
       </Stack>
       <ToastContainer />
     </GestureHandlerRootView>

@@ -14,6 +14,7 @@ export interface FilterBarProps {
 export interface TransactionGroupHeader {
   date: string;
   totalAmount: number;
+  balanceAfter: number;   // cumulative balance at end of this day (all tx, no filter)
   transactions: Transaction[];
 }
 

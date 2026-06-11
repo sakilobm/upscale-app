@@ -25,8 +25,8 @@ import type { LedgerTab } from '@features/ledger/types';
 
 const SEGMENTS = [
   { key: 'owed_to_me', label: 'Owed to Me' },
-  { key: 'i_owe',      label: 'I Owe'      },
-  { key: 'loans',      label: 'Loans'      },
+  { key: 'i_owe', label: 'I Owe' },
+  { key: 'loans', label: 'Loans' },
 ] as const;
 
 type SheetMode = 'add' | 'partial';
@@ -36,8 +36,8 @@ export default function LedgerScreen() {
   const [activeTab, setActiveTab] = useState<LedgerTab>('owed_to_me');
 
   const [sheetVisible, setSheetVisible] = useState(false);
-  const [sheetMode,    setSheetMode]    = useState<SheetMode>('add');
-  const [sheetEntry,   setSheetEntry]   = useState<LedgerEntry | undefined>();
+  const [sheetMode, setSheetMode] = useState<SheetMode>('add');
+  const [sheetEntry, setSheetEntry] = useState<LedgerEntry | undefined>();
 
   const {
     entries: owedToMeEntries,
@@ -54,10 +54,10 @@ export default function LedgerScreen() {
   const directionEntries = activeTab === 'owed_to_me'
     ? owedToMeEntries.filter((e) => e.direction === 'OWED_TO_ME')
     : activeTab === 'i_owe'
-    ? owedToMeEntries.filter((e) => e.direction === 'I_OWE')
-    : [];
+      ? owedToMeEntries.filter((e) => e.direction === 'I_OWE')
+      : [];
 
-  const activeEntries  = directionEntries.filter((e) => e.status !== 'SETTLED');
+  const activeEntries = directionEntries.filter((e) => e.status !== 'SETTLED');
   const settledEntries = directionEntries.filter((e) => e.status === 'SETTLED');
 
   const openAddSheet = () => {
@@ -79,7 +79,7 @@ export default function LedgerScreen() {
   };
 
   const sections = [
-    ...(activeEntries.length > 0  ? [{ title: 'Active',  data: activeEntries  }] : []),
+    ...(activeEntries.length > 0 ? [{ title: 'Active', data: activeEntries }] : []),
     ...(settledEntries.length > 0 ? [{ title: 'Settled', data: settledEntries }] : []),
   ];
 
@@ -129,7 +129,9 @@ export default function LedgerScreen() {
                 subtitle="Track mortgages, car loans, or money you've lent"
               />
             ) : (
-              <DebtHorizonStack loans={loans} onRecordPayment={recordPayment} />
+              <View style={styles.debtStack}>
+                <DebtHorizonStack loans={loans} onRecordPayment={recordPayment} />
+              </View>
             )}
           </View>
         ) : sections.length === 0 ? (
@@ -174,8 +176,8 @@ export default function LedgerScreen() {
           addEntry({
             ...data,
             personInitials: data.personName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2),
-            personColor:    '#6C63FF',
-            date:           new Date().toISOString().slice(0, 10),
+            personColor: '#6C63FF',
+            date: new Date().toISOString().slice(0, 10),
           });
         }}
         onPartialReturn={addPartialReturn}
@@ -188,7 +190,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scroll: {
     paddingHorizontal: Spacing['5'],
-    paddingTop:        Spacing['2'],
+    paddingTop: Spacing['2'],
   },
   segmentWrapper: {
     marginBottom: Spacing['5'],
@@ -203,8 +205,8 @@ const styles = StyleSheet.create({
     gap: Spacing['2'],
   },
   sectionLabel: {
-    fontSize:      11,
+    fontSize: 11,
     letterSpacing: 1,
-    marginBottom:  Spacing['1'],
+    marginBottom: Spacing['1'],
   },
 });
