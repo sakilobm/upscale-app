@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   Pressable,
   Dimensions,
+  Modal,
+  TextInput,
+  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import Animated, {
@@ -28,9 +31,9 @@ const { width: SW } = Dimensions.get('window');
 type ApplicableTo = 'expense' | 'income' | 'both';
 
 const ICON_CELL = (SW - Spacing['5'] * 2 - Spacing['2'] * 9) / 10;
-const GRID_COLS  = 4;
-const CARD_GAP   = Spacing['3'];
-const CARD_W     = (SW - Spacing['5'] * 2 - CARD_GAP * (GRID_COLS - 1)) / GRID_COLS;
+const GRID_COLS = 4;
+const CARD_GAP = Spacing['3'];
+const CARD_W = (SW - Spacing['5'] * 2 - CARD_GAP * (GRID_COLS - 1)) / GRID_COLS;
 
 // ─── Category Form Modal ──────────────────────────────────────────────────────
 
@@ -39,18 +42,18 @@ function CategoryFormModal({
   target,
   onClose,
 }: {
-  visible:  boolean;
-  target:   CategoryDef | null;
-  onClose:  () => void;
+  visible: boolean;
+  target: CategoryDef | null;
+  onClose: () => void;
 }) {
   const { colors, isDark } = useTheme();
-  const insets             = useSafeAreaInsets();
-  const addCategory        = useCategoryStore((s) => s.addCategory);
-  const updateCategory     = useCategoryStore((s) => s.updateCategory);
+  const insets = useSafeAreaInsets();
+  const addCategory = useCategoryStore((s) => s.addCategory);
+  const updateCategory = useCategoryStore((s) => s.updateCategory);
 
-  const [label,        setLabel]        = useState('');
-  const [icon,         setIcon]         = useState('cube');
-  const [color,        setColor]        = useState(PRESET_COLORS[0]);
+  const [label, setLabel] = useState('');
+  const [icon, setIcon] = useState('cube');
+  const [color, setColor] = useState(PRESET_COLORS[0]);
   const [applicableTo, setApplicableTo] = useState<ApplicableTo>('expense');
 
   const slideY = useSharedValue(600);
@@ -59,7 +62,7 @@ function CategoryFormModal({
   useEffect(() => {
     if (visible) {
       setLabel(target?.label ?? '');
-      setIcon(target?.icon  ?? 'cube');
+      setIcon(target?.icon ?? 'cube');
       setColor(target?.color ?? PRESET_COLORS[0]);
       setApplicableTo(target?.applicableTo ?? 'expense');
       slideY.value = withTiming(0, { duration: 380 });
@@ -83,7 +86,7 @@ function CategoryFormModal({
 
   const sheetBg = isDark ? '#0F1524' : '#FFFFFF';
   const inputBg = isDark ? '#1A2235' : '#F3F4F6';
-  const isEdit  = !!target;
+  const isEdit = !!target;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -159,10 +162,10 @@ function CategoryFormModal({
               <AppText variant="labelSM" color={colors.text.tertiary} style={styles.sectionLabel}>APPLIES TO</AppText>
               <View style={styles.applyRow}>
                 {(['expense', 'income', 'both'] as ApplicableTo[]).map((opt) => {
-                  const active    = applicableTo === opt;
-                  const optColor  = opt === 'expense' ? '#EF4444' : opt === 'income' ? '#10B981' : colors.brand.primary;
-                  const optLabel  = opt === 'both' ? 'Both' : opt.charAt(0).toUpperCase() + opt.slice(1);
-                  const optIcon   = opt === 'expense' ? 'trending-down' : opt === 'income' ? 'trending-up' : 'swap-horizontal';
+                  const active = applicableTo === opt;
+                  const optColor = opt === 'expense' ? '#EF4444' : opt === 'income' ? '#10B981' : colors.brand.primary;
+                  const optLabel = opt === 'both' ? 'Both' : opt.charAt(0).toUpperCase() + opt.slice(1);
+                  const optIcon = opt === 'expense' ? 'trending-down' : opt === 'income' ? 'trending-up' : 'swap-horizontal';
                   return (
                     <Pressable
                       key={opt}
@@ -171,7 +174,7 @@ function CategoryFormModal({
                         styles.applyChip,
                         {
                           backgroundColor: active ? optColor + '18' : inputBg,
-                          borderColor:     active ? optColor + '50' : 'transparent',
+                          borderColor: active ? optColor + '50' : 'transparent',
                           borderWidth: 1.5,
                         },
                       ]}
@@ -202,7 +205,7 @@ function CategoryFormModal({
                       style={[
                         styles.iconCell,
                         {
-                          width:  ICON_CELL,
+                          width: ICON_CELL,
                           height: ICON_CELL,
                           backgroundColor: selected ? color + '22' : inputBg,
                           borderWidth: selected ? 2 : 0,
@@ -248,8 +251,8 @@ function CategoryCard({
   onEdit,
   onDelete,
 }: {
-  cat:      CategoryDef;
-  onEdit:   (c: CategoryDef) => void;
+  cat: CategoryDef;
+  onEdit: (c: CategoryDef) => void;
   onDelete: (c: CategoryDef) => void;
 }) {
   const { colors, isDark } = useTheme();
@@ -276,7 +279,7 @@ function CategoryCard({
             styles.catCard,
             {
               backgroundColor: cat.color + '16',
-              borderColor:     cat.color + (showActions ? '60' : '30'),
+              borderColor: cat.color + (showActions ? '60' : '30'),
               opacity: pressed && !showActions ? 0.75 : 1,
             },
           ]}
@@ -343,13 +346,13 @@ export default function CategoriesScreen() {
   const { categories, deleteCategory } = useCategoryStore();
 
   const [formVisible, setFormVisible] = useState(false);
-  const [editTarget,  setEditTarget]  = useState<CategoryDef | null>(null);
+  const [editTarget, setEditTarget] = useState<CategoryDef | null>(null);
 
   const builtIn = categories.filter((c) => !c.isCustom);
-  const custom  = categories.filter((c) =>  c.isCustom);
+  const custom = categories.filter((c) => c.isCustom);
 
   const openCreate = () => { setEditTarget(null); setFormVisible(true); };
-  const openEdit   = (cat: CategoryDef) => { setEditTarget(cat); setFormVisible(true); };
+  const openEdit = (cat: CategoryDef) => { setEditTarget(cat); setFormVisible(true); };
   const handleDelete = (cat: CategoryDef) => {
     deleteCategory(cat.id);
     toast.info(`"${cat.label}" removed`);
@@ -460,7 +463,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing['5'], paddingVertical: Spacing['4'], gap: Spacing['3'],
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  addBtn:  {
+  addBtn: {
     width: 36, height: 36, borderRadius: 18,
     borderWidth: 1, alignItems: 'center', justifyContent: 'center',
   },
@@ -470,7 +473,7 @@ const styles = StyleSheet.create({
 
   // Section
   sectionRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing['2'], marginBottom: Spacing['3'] },
-  countPill:  { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
+  countPill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
 
   // Grid
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP },
@@ -507,30 +510,30 @@ const styles = StyleSheet.create({
 
   // Form sheet
   formSheet: {
-    borderTopLeftRadius:  Radius['2xl'],
+    borderTopLeftRadius: Radius['2xl'],
     borderTopRightRadius: Radius['2xl'],
-    paddingHorizontal:    Spacing['5'],
-    paddingTop:           Spacing['3'],
-    maxHeight:            '92%',
+    paddingHorizontal: Spacing['5'],
+    paddingTop: Spacing['3'],
+    maxHeight: '92%',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.18, shadowRadius: 24 },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.18, shadowRadius: 24 },
       android: { elevation: 28 },
     }),
   },
-  handle:     { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, marginBottom: Spacing['2'] },
+  handle: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, marginBottom: Spacing['2'] },
   formHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: Spacing['4'] },
-  closeBtn:   { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  closeBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   formScroll: { gap: Spacing['4'], paddingBottom: Spacing['2'] },
 
   // Form fields
-  previewRow:   { flexDirection: 'row', alignItems: 'center', gap: Spacing['3'] },
-  iconPreview:  { width: 62, height: 62, borderRadius: 18, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  nameInput:    { height: 50, borderRadius: Radius.lg, paddingHorizontal: Spacing['4'], fontSize: 15 },
+  previewRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing['3'] },
+  iconPreview: { width: 62, height: 62, borderRadius: 18, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  nameInput: { height: 50, borderRadius: Radius.lg, paddingHorizontal: Spacing['4'], fontSize: 15 },
   sectionLabel: { fontSize: 10, letterSpacing: 0.8, marginBottom: -Spacing['1'] },
 
-  colorRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing['3'] },
-  colorDot:      { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  colorDotActive:{ borderWidth: 3, borderColor: '#FFFFFF', transform: [{ scale: 1.12 }] },
+  colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing['3'] },
+  colorDot: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  colorDotActive: { borderWidth: 3, borderColor: '#FFFFFF', transform: [{ scale: 1.12 }] },
 
   applyRow: { flexDirection: 'row', gap: Spacing['2'] },
   applyChip: {
@@ -541,6 +544,6 @@ const styles = StyleSheet.create({
   iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing['2'] },
   iconCell: { borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
 
-  saveBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing['2'], height: 52, borderRadius: Radius.xl },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing['2'], height: 52, borderRadius: Radius.xl },
   saveBtnText: { color: '#FFF', fontWeight: '700', fontSize: 15 },
 });

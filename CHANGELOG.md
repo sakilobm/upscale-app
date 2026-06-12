@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-06-12
+
+### Fixed
+- Fixed missing React Native imports (`Modal`, `TextInput`, `Platform`) and safe area hook (`useSafeAreaInsets`) in `src/app/categories.tsx` to resolve TypeScript compilation errors (`Cannot find name`).
+
+### Architectural Decisions
+- **Standard Dependency Alignment**: Resolved syntax errors using standard, non-invasive imports from peer dependencies `react-native` and `react-native-safe-area-context` to maintain compatibility with existing navigation and custom layouts.
+
+### Rollback & Escape Plan
+- **Forward-fix path**: If React Native or Expo versions change in the future and cause import conflicts, review the peer dependency specifications in `package.json` or run `npx expo install` to ensure library compatibility.
+- **Rollback path**: Run `git checkout src/app/categories.tsx` to undo the added imports. No state or database configurations are impacted.
+
 ## [1.3.1] - 2026-06-12
 
 ### Added
