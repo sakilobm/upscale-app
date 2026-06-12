@@ -600,6 +600,13 @@ export default function ProfileScreen() {
             onPress={() => router.push('/accounts')}
           />
           <SettingRow
+            icon="grid-outline"
+            iconColor="#10B981"
+            label="Manage Categories"
+            subtitle="Create & customize spending categories"
+            onPress={() => router.push('/categories')}
+          />
+          <SettingRow
             icon="notifications-outline"
             iconColor="#F97316"
             label="Notifications"

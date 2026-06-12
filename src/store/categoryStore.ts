@@ -15,40 +15,23 @@ export const PRESET_COLORS = [
   '#22C55E', '#E11D48', '#0EA5E9', '#A855F7', '#94A3B8',
 ];
 
-export const ICON_OPTIONS = [
-  // Finance
-  'wallet',      'cash',          'card',           'trending-up',    'trending-down',
-  'stats-chart', 'bar-chart',     'pie-chart',      'business',       'receipt',
-  // Home & Utilities
-  'home',        'bed',           'construct',      'bulb',           'water',
-  'flame',       'tv',            'key',            'shield',         'lock-closed',
-  // Food & Drink
-  'fast-food',   'restaurant',    'cafe',           'wine',           'nutrition',
-  'pizza',       'beer',          'ice-cream',      'fish',           'leaf',
-  // Transport
-  'car',         'bus',           'airplane',       'bicycle',        'boat',
-  'train',       'walk',          'navigate',       'location',       'map',
-  // Health & Fitness
-  'medkit',      'fitness',       'heart',          'bandage',        'pulse',
-  'body',        'glasses',       'footsteps',      'bicycle',        'basketball',
-  // Shopping
-  'bag-handle',  'cart',          'pricetag',       'gift',           'shirt',
-  'storefront',  'diamond',       'ribbon',         'star',           'bookmark',
-  // Education
-  'book',        'school',        'library',        'pencil',         'newspaper',
-  'flask',       'calculator',    'clipboard',      'document-text',  'reader',
-  // Entertainment
-  'game-controller', 'film',      'musical-notes',  'headset',        'camera',
-  'images',      'mic',           'radio',          'telescope',      'color-palette',
-  // Tech
-  'laptop',      'phone-portrait','desktop',        'hardware-chip',  'wifi',
-  'bluetooth',   'cube',          'layers',         'code-slash',     'terminal',
-  // People & Life
-  'people',      'person',        'happy',          'paw',            'flower',
-  'umbrella',    'sunny',         'moon',           'globe',          'earth',
-] as const;
+export const ICON_GROUPS: { label: string; icons: string[] }[] = [
+  { label: 'Finance',       icons: ['wallet', 'cash', 'card', 'trending-up', 'trending-down', 'stats-chart', 'bar-chart', 'pie-chart', 'business', 'receipt'] },
+  { label: 'Home',          icons: ['home', 'bed', 'construct', 'bulb', 'water', 'flame', 'tv', 'key', 'shield'] },
+  { label: 'Food & Drink',  icons: ['fast-food', 'restaurant', 'cafe', 'wine', 'nutrition', 'pizza', 'beer', 'ice-cream', 'fish'] },
+  { label: 'Transport',     icons: ['car', 'bus', 'airplane', 'bicycle', 'boat', 'train', 'walk', 'navigate', 'location', 'map'] },
+  { label: 'Health',        icons: ['medkit', 'fitness', 'heart', 'bandage', 'pulse', 'body', 'glasses', 'footsteps', 'basketball', 'barbell'] },
+  { label: 'Shopping',      icons: ['bag-handle', 'cart', 'pricetag', 'gift', 'shirt', 'storefront', 'diamond', 'ribbon', 'star', 'bookmark'] },
+  { label: 'Education',     icons: ['book', 'school', 'library', 'pencil', 'newspaper', 'flask', 'calculator', 'clipboard', 'document-text', 'reader'] },
+  { label: 'Entertainment', icons: ['game-controller', 'film', 'musical-notes', 'headset', 'camera', 'images', 'mic', 'radio', 'color-palette', 'ticket'] },
+  { label: 'Tech',          icons: ['laptop', 'phone-portrait', 'desktop', 'hardware-chip', 'wifi', 'bluetooth', 'cube', 'layers', 'code-slash', 'terminal'] },
+  { label: 'Life',          icons: ['people', 'person', 'happy', 'paw', 'leaf', 'umbrella', 'sunny', 'moon', 'globe', 'earth'] },
+];
 
-export type IoniconOption = typeof ICON_OPTIONS[number];
+// Derived flat list — guaranteed unique
+export const ICON_OPTIONS: string[] = [
+  ...new Set(ICON_GROUPS.flatMap((g) => g.icons)),
+];
 
 const BUILT_IN: CategoryDef[] = [
   { id: 'housing',       label: 'Housing',       icon: 'home',            color: '#6366F1', isCustom: false, applicableTo: 'expense' },

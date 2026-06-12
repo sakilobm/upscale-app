@@ -31,6 +31,7 @@ import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
 import { EmptyState } from '@components/EmptyState';
 import { useCategoryStore } from '@store/categoryStore';
+import { CategoryFormSheet } from '@components/CategoryFormSheet';
 import { Spacing, Layout, Radius } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@store/authStore';

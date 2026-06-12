@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Stack, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -51,7 +51,8 @@ export default function RootLayout() {
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-        <Stack.Screen name="accounts" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+        <Stack.Screen name="accounts"    options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+        <Stack.Screen name="categories" options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
       </Stack>
       <ToastContainer />
     </GestureHandlerRootView>
