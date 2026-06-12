@@ -6,39 +6,23 @@ import { GlassCard } from '@components/GlassCard';
 import { useTheme } from '@hooks/useTheme';
 import { Spacing, Radius } from '@constants/Dimensions';
 import type { Budget } from '@store/types';
-
-// ─── Category icon map ────────────────────────────────────────────────────────
-
-const CATEGORY_EMOJI: Record<string, string> = {
-  housing:       '🏠',
-  food:          '🍔',
-  transport:     '🚗',
-  health:        '🏥',
-  entertainment: '🎬',
-  shopping:      '🛍',
-  education:     '📚',
-  savings:       '💰',
-  investment:    '📈',
-  salary:        '💼',
-  freelance:     '💻',
-  gift:          '🎁',
-  other:         '📦',
-};
+import { getCategoryById } from '@store/categoryStore';
 
 // ─── Single Ring Cell ─────────────────────────────────────────────────────────
 
 interface RingCellProps {
-  budget:  Budget;
+  budget: Budget;
   onPress: (b: Budget) => void;
 }
 
 function RingCell({ budget, onPress }: RingCellProps) {
   const { colors, isDark } = useTheme();
-  const pct       = budget.limit > 0 ? budget.spent / budget.limit : 0;
-  const isOver    = pct > 1;
+  const pct = budget.limit > 0 ? budget.spent / budget.limit : 0;
+  const isOver = pct > 1;
   const remaining = Math.max(budget.limit - budget.spent, 0);
 
   const ringColor = budget.color;
+  const catIcon = getCategoryById(budget.category).icon;
 
   return (
     <Pressable
@@ -51,7 +35,7 @@ function RingCell({ budget, onPress }: RingCellProps) {
         strokeWidth={6}
         color={budget.color}
         label={`${Math.round(pct * 100)}%`}
-        sublabel={CATEGORY_EMOJI[budget.category] ?? ''}
+        icon={catIcon as any}
         animated
       />
       <AppText
@@ -81,7 +65,7 @@ function RingCell({ budget, onPress }: RingCellProps) {
 // ─── Matrix grid ─────────────────────────────────────────────────────────────
 
 interface ProgressRingMatrixProps {
-  budgets:  Budget[];
+  budgets: Budget[];
   onPress?: (b: Budget) => void;
 }
 
@@ -113,20 +97,20 @@ const styles = StyleSheet.create({
   },
   grid: {
     flexDirection: 'row',
-    flexWrap:      'wrap',
-    rowGap:        Spacing['4'],
-    columnGap:     0,
+    flexWrap: 'wrap',
+    rowGap: Spacing['4'],
+    columnGap: 0,
   },
   cell: {
-    alignItems:      'center',
-    width:           '33.333%',
+    alignItems: 'center',
+    width: '33.333%',
     paddingVertical: Spacing['2'],
-    gap:             4,
+    gap: 4,
   },
   cellName: {
-    fontSize:    12,
-    fontWeight:  '600',
-    textAlign:   'center',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   cellSub: {
     fontSize: 10,

@@ -30,31 +30,17 @@ import { RecentTransactionRow } from '@features/dashboard/components/RecentTrans
 import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
 import { EmptyState } from '@components/EmptyState';
-import { CATEGORY_META } from '@components/CategoryIcon';
+import { useCategoryStore } from '@store/categoryStore';
 import { Spacing, Layout, Radius } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@store/authStore';
 import { useAccountStore } from '@store/accountStore';
 import { useTransactionStore } from '@store/transactionStore';
 import { toast } from '@store/toastStore';
-import type { Transaction, TransactionCategory } from '@store/types';
+import type { Transaction } from '@store/types';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 const { height: SH } = Dimensions.get('window');
-
-// ─── Category config per type ─────────────────────────────────────────────────
-
-const EXPENSE_CATS: TransactionCategory[] = [
-  'food', 'housing', 'transport', 'health', 'entertainment', 'shopping', 'education', 'other',
-];
-const INCOME_CATS: TransactionCategory[] = [
-  'salary', 'freelance', 'gift', 'investment', 'savings', 'other',
-];
-const CAT_LABELS: Record<TransactionCategory, string> = {
-  food: 'Food', housing: 'Home', transport: 'Travel', health: 'Health',
-  entertainment: 'Fun', shopping: 'Shop', education: 'Study', savings: 'Save',
-  investment: 'Invest', salary: 'Salary', freelance: 'Freelance', gift: 'Gift', other: 'Other',
-};
 
 // ─── Numpad ───────────────────────────────────────────────────────────────────
 
@@ -87,10 +73,11 @@ function QuickAddSheet({
   const defaultAccount = accounts.find((a) => a.isDefault) ?? accounts[0] ?? null;
 
   const addTransaction = useTransactionStore((s) => s.addTransaction);
+  const allCategories = useCategoryStore((s) => s.categories);
 
   const [type, setType] = useState<'expense' | 'income'>(initialType);
   const [amountStr, setAmountStr] = useState('0');
-  const [category, setCategory] = useState<TransactionCategory>('food');
+  const [category, setCategory] = useState('food');
   const [accountId, setAccountId] = useState(defaultAccount?.id ?? '');
   const [note, setNote] = useState('');
 
@@ -127,7 +114,7 @@ function QuickAddSheet({
       category,
       amount,
       currency: account.currency,
-      description: note.trim() || CAT_LABELS[category],
+      description: note.trim() || (allCategories.find((c) => c.id === category)?.label ?? category),
       note: note.trim() || null,
       date: now,
       accountId,
@@ -146,7 +133,10 @@ function QuickAddSheet({
   };
 
   const accentColor = type === 'expense' ? '#EF4444' : '#10B981';
-  const cats = type === 'expense' ? EXPENSE_CATS : INCOME_CATS;
+  const cats = allCategories.filter((c) =>
+    type === 'expense' ? c.applicableTo === 'expense' || c.applicableTo === 'both'
+                       : c.applicableTo === 'income'  || c.applicableTo === 'both'
+  );
   const sheetBg = isDark ? '#131722' : '#FFFFFF';
   const inputBg = isDark ? colors.background.primary : '#F3F4F6';
 
@@ -265,37 +255,36 @@ function QuickAddSheet({
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.qaCatScroll}
           >
-            {cats.map((cat) => {
-              const meta = CATEGORY_META[cat];
-              const active = category === cat;
+            {cats.map((catDef) => {
+              const active = category === catDef.id;
               return (
                 <Pressable
-                  key={cat}
+                  key={catDef.id}
                   onPress={() => {
-                    setCategory(cat);
+                    setCategory(catDef.id);
                     Haptics.selectionAsync();
                   }}
                   style={[
                     styles.qaCatChip,
                     {
-                      backgroundColor: active ? meta.color + '20' : inputBg,
-                      borderColor: active ? meta.color + '50' : 'transparent',
+                      backgroundColor: active ? catDef.color + '20' : inputBg,
+                      borderColor: active ? catDef.color + '50' : 'transparent',
                       borderWidth: 1.5,
                     },
                   ]}
                 >
-                  <View style={[styles.qaCatIcon, { backgroundColor: meta.bg }]}>
-                    <Ionicons name={meta.icon} size={15} color={meta.color} />
+                  <View style={[styles.qaCatIcon, { backgroundColor: catDef.color + '20' }]}>
+                    <Ionicons name={catDef.icon as any} size={15} color={catDef.color} />
                   </View>
                   <AppText
                     variant="labelSM"
                     style={{
-                      color: active ? meta.color : colors.text.secondary,
+                      color: active ? catDef.color : colors.text.secondary,
                       fontWeight: active ? '700' : '500',
                       fontSize: 11,
                     }}
                   >
-                    {CAT_LABELS[cat]}
+                    {catDef.label}
                   </AppText>
                 </Pressable>
               );

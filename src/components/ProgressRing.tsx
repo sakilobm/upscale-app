@@ -7,8 +7,11 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
 import { useTheme } from '@hooks/useTheme';
+
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -28,6 +31,7 @@ interface ProgressRingProps {
   strokeWidth?: number;
   label?:       string;
   sublabel?:    string;
+  icon?:        IoniconName;
   /** override auto color-by-utilization */
   color?:       string;
   animated?:    boolean;
@@ -41,10 +45,11 @@ export function ProgressRing({
   strokeWidth = 7,
   label,
   sublabel,
+  icon,
   color,
   animated    = true,
 }: ProgressRingProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const radius      = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -92,23 +97,43 @@ export function ProgressRing({
       </Svg>
 
       {/* Center label */}
-      {(label || sublabel) && (
+      {(label || sublabel || icon) && (
         <View style={styles.labelContainer}>
           {label && (
             <AppText
               variant="labelMD"
-              style={[styles.label, { color: ringColor, fontSize: size < 70 ? 11 : 13 }]}
+              style={[styles.label, { color: ringColor, fontSize: size < 70 ? 10 : 13, marginBottom: size < 70 ? 0 : 2 }]}
             >
               {label}
             </AppText>
           )}
-          {sublabel && (
-            <AppText
-              variant="caption"
-              style={[styles.sublabel, { color: colors.text.tertiary, fontSize: size < 70 ? 9 : 10 }]}
-            >
-              {sublabel}
-            </AppText>
+          {icon ? (
+            <View style={[
+              styles.iconWrapper,
+              {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(255, 255, 255, 0.70)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.08)',
+                width: size * 0.32,
+                height: size * 0.32,
+                borderRadius: (size * 0.32) / 2,
+                shadowColor: ringColor,
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.15,
+                shadowRadius: 2,
+                elevation: 1,
+              }
+            ]}>
+              <Ionicons name={icon} size={size * 0.18} color={ringColor} />
+            </View>
+          ) : (
+            sublabel && (
+              <AppText
+                variant="caption"
+                style={[styles.sublabel, { color: colors.text.tertiary, fontSize: size < 70 ? 9 : 10 }]}
+              >
+                {sublabel}
+              </AppText>
+            )
           )}
         </View>
       )}
@@ -125,14 +150,20 @@ const styles = StyleSheet.create({
     position:       'absolute',
     alignItems:     'center',
     justifyContent: 'center',
+    gap:            1,
   },
   label: {
     fontWeight:  '700',
-    lineHeight:  16,
+    lineHeight:  14,
     letterSpacing: -0.3,
   },
   sublabel: {
     lineHeight: 12,
     letterSpacing: 0.2,
+  },
+  iconWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
 });

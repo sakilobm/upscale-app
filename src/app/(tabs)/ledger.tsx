@@ -198,6 +198,9 @@ const styles = StyleSheet.create({
   loansSection: {
     marginTop: Spacing['2'],
   },
+  debtStack: {
+    gap: Spacing['3'],
+  },
   listSection: {
     gap: Spacing['4'],
   },

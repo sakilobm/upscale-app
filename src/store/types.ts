@@ -25,20 +25,7 @@ export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
 
 export type TransactionType = 'income' | 'expense' | 'transfer';
 
-export type TransactionCategory =
-  | 'housing'
-  | 'food'
-  | 'transport'
-  | 'health'
-  | 'entertainment'
-  | 'shopping'
-  | 'education'
-  | 'savings'
-  | 'investment'
-  | 'salary'
-  | 'freelance'
-  | 'gift'
-  | 'other';
+export type TransactionCategory = string;
 
 export interface Transaction {
   id: string;

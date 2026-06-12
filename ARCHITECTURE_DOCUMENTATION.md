@@ -65,6 +65,15 @@ Instead of rendering static tabs, the layout renders `CustomTabBar` which fetche
 - **Professional Iconography**: Standardized on high-quality vector outline icons from `@expo/vector-icons/Ionicons` instead of generic platform emojis.
 - **Frosted Badges**: Each icon is centered inside a micro-bordered glassmorphic square container styled with a matching low-opacity background (18% opacity) and a thin translucent border matching the category's theme color.
 
+### ProgressRing (`src/components/ProgressRing.tsx`)
+- **Center Vector Badge**: Renders category-specific vector icons centered within the SVG circle, styled inside a micro circular liquid-glassmorphic badge (translucent backdrop, border, and custom-colored drop shadow glow).
+- **Utilization Colors**: Dynamically adapts the stroke color based on utilization percentages or custom theme overrides.
+
+### Budget Monthly Overview Card (`src/app/(tabs)/budget.tsx`)
+- **Interactive State-Based Iconography**: Integrates an `AnimatedIcon` that changes based on budget utilization (normal `wallet`, warning `trending-up` at 85%, and red `alert-circle` over-budget). The alert icon loops a scale pulse animation to draw attention.
+- **Worklet-Driven Spring Animations**: Offloads animations (progress bar filling and entrance layout transitions) to Reanimated worklets on the native UI thread, achieving smooth 60 FPS performance.
+- **Staggered Entrances**: Staggers entrance animations for the Overview card, Progress Rings, and Planned Payments timeline to create a premium, polished dashboard transition.
+
 ---
 
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -14,10 +14,15 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withTiming,
+  withRepeat,
+  withSequence,
+  FadeInDown,
 } from 'react-native-reanimated';
 import { AppHeader, HeaderIconBtn } from '@components/AppHeader';
 import { useBudgets } from '@features/budget/hooks/useBudgets';
@@ -237,6 +242,43 @@ function AddPaymentSheet({ visible, onClose, onSubmit }: AddPaymentSheetProps) {
   );
 }
 
+// ─── Animated Overview Icon ──────────────────────────────────────────────────
+interface AnimatedIconProps {
+  iconName: any;
+  iconColor: string;
+  badgeBg: string;
+  isOver: boolean;
+}
+
+function AnimatedIcon({ iconName, iconColor, badgeBg, isOver }: AnimatedIconProps) {
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    if (isOver) {
+      scale.value = withRepeat(
+        withSequence(
+          withTiming(1.15, { duration: 600 }),
+          withTiming(1.0, { duration: 600 })
+        ),
+        -1,
+        true
+      );
+    } else {
+      scale.value = withSpring(1);
+    }
+  }, [isOver, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View style={[styles.iconBadge, { backgroundColor: badgeBg }, animatedStyle]}>
+      <Ionicons name={iconName} size={18} color={iconColor} />
+    </Animated.View>
+  );
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function BudgetScreen() {
@@ -251,10 +293,53 @@ export default function BudgetScreen() {
 
   const [addVisible, setAddVisible] = useState(false);
 
-  const overviewGradient: [string, string] =
-    summary && summary.percentUsed > 100
-      ? [colors.status.expense, colors.status.expense]
+  const percent = summary ? summary.percentUsed : 0;
+  const isOver = percent > 100;
+  const isWarning = percent >= 85 && percent <= 100;
+
+  // Dynamically set colors and icon name depending on budget utilization state
+  let iconName: any = 'wallet-outline';
+  let iconColor = colors.brand.primary;
+  let badgeBg = colors.brand.primary + '18';
+
+  if (isOver) {
+    iconName = 'alert-circle';
+    iconColor = colors.status.expense;
+    badgeBg = colors.status.expense + '20';
+  } else if (isWarning) {
+    iconName = 'trending-up';
+    iconColor = '#F59E0B'; // Amber warning color
+    badgeBg = '#F59E0B20';
+  }
+
+  const dynamicBorderColor = isOver
+    ? colors.status.expense + '50'
+    : isWarning
+      ? '#F59E0B60'
+      : colors.brand.primary + '30';
+
+  const overviewGradient: [string, string] = isOver
+    ? [colors.status.expense, colors.status.expense]
+    : isWarning
+      ? ['#F59E0B', '#D97706']
       : [colors.brand.primary, colors.brand.accent];
+
+  // Reanimated shared progress value for smooth fill animations
+  const progressShared = useSharedValue(0);
+  useEffect(() => {
+    if (summary) {
+      progressShared.value = withSpring(Math.min(summary.percentUsed / 100, 1), {
+        damping: 18,
+        stiffness: 120,
+      });
+    }
+  }, [summary?.percentUsed]);
+
+  const animatedProgressStyle = useAnimatedStyle(() => ({
+    width: `${progressShared.value * 100}%`,
+  }));
+
+  const remaining = summary ? summary.totalLimit - summary.totalSpent : 0;
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background.primary }]} edges={['top']}>
@@ -281,45 +366,96 @@ export default function BudgetScreen() {
           }
         />
 
-        {/* Monthly overview card */}
+        {/* Monthly overview card with spring entrance animation */}
         {summary && (
-          <GlassCard padding={Spacing['5']} borderRadius={Radius.xl} borderGlow style={styles.overviewCard}>
-            <AppText variant="labelMD" color={colors.text.secondary}>Monthly Overview</AppText>
-            <View style={styles.overviewRow}>
-              <View>
-                <AppText variant="numericLG" color={colors.text.primary}>
-                  ${summary.totalSpent.toFixed(0)}
-                </AppText>
-                <AppText variant="caption" color={colors.text.secondary}>
-                  of ${summary.totalLimit.toFixed(0)} total
-                </AppText>
-              </View>
-              <View style={styles.overviewRight}>
-                <AppText
-                  variant="headingMD"
-                  color={summary.percentUsed > 100 ? colors.status.expense : colors.status.income}
-                >
-                  {summary.percentUsed.toFixed(0)}%
-                </AppText>
-                {summary.overBudgetCount > 0 && (
-                  <View style={[styles.overBudgetBadge, { backgroundColor: colors.status.expense + '20' }]}>
-                    <AppText variant="caption" color={colors.status.expense}>
-                      {summary.overBudgetCount} over budget
-                    </AppText>
+          <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120)}>
+            <GlassCard
+              padding={Spacing['5']}
+              borderRadius={Radius.xl}
+              borderGlow={isOver || isWarning}
+              style={[
+                styles.overviewCard,
+                { borderColor: dynamicBorderColor }
+              ]}
+            >
+              {/* Header section with modern animated status icon badge */}
+              <View style={styles.cardHeader}>
+                <View style={styles.cardHeaderLeft}>
+                  <AnimatedIcon
+                    iconName={iconName}
+                    iconColor={iconColor}
+                    badgeBg={badgeBg}
+                    isOver={isOver}
+                  />
+                  <View>
+                    <AppText variant="labelMD" color={colors.text.secondary}>Monthly Overview</AppText>
+                    <AppText variant="caption" color={colors.text.tertiary}>Tracking period: Current Month</AppText>
                   </View>
-                )}
+                </View>
+                <View style={styles.overviewRight}>
+                  <AppText
+                    variant="headingMD"
+                    color={isOver ? colors.status.expense : isWarning ? '#F59E0B' : colors.status.income}
+                  >
+                    {summary.percentUsed.toFixed(0)}%
+                  </AppText>
+                </View>
               </View>
-            </View>
-            <ProgressBar
-              progress={Math.min(summary.percentUsed / 100, 1)}
-              gradient={overviewGradient}
-              height={8}
-              style={styles.overviewBar}
-            />
-          </GlassCard>
+
+              {/* Numerical stats row */}
+              <View style={styles.metricsRow}>
+                <View>
+                  <AppText variant="numericLG" color={colors.text.primary}>
+                    ${summary.totalSpent.toFixed(0)}
+                  </AppText>
+                  <AppText variant="caption" color={colors.text.secondary}>
+                    spent of ${summary.totalLimit.toFixed(0)}
+                  </AppText>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <AppText
+                    variant="numeric"
+                    color={isOver ? colors.status.expense : colors.status.income}
+                  >
+                    {isOver ? '-' : ''}${Math.abs(remaining).toFixed(0)}
+                  </AppText>
+                  <AppText variant="caption" color={colors.text.secondary}>
+                    {isOver ? 'over budget' : 'remaining'}
+                  </AppText>
+                </View>
+              </View>
+
+              {/* Custom Spring Animated Progress Bar */}
+              <View style={[styles.progressContainer, { backgroundColor: colors.glass.backgroundMid }]}>
+                <Animated.View
+                  style={[
+                    styles.progressBarFill,
+                    animatedProgressStyle,
+                  ]}
+                >
+                  <LinearGradient
+                    colors={overviewGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
+              </View>
+
+              {/* Dynamic warning status footer */}
+              {summary.overBudgetCount > 0 && (
+                <View style={styles.cardFooter}>
+                  <Ionicons name="warning" size={14} color={colors.status.expense} />
+                  <AppText variant="caption" style={{ color: colors.status.expense, fontWeight: '600' }}>
+                    {summary.overBudgetCount} category budget{summary.overBudgetCount > 1 ? 's' : ''} exceeded
+                  </AppText>
+                </View>
+              )}
+            </GlassCard>
+          </Animated.View>
         )}
 
-        {/* Progress Ring Matrix */}
+        {/* Progress Ring Matrix with entrance fade delay */}
         {isLoading && !budgets.length ? (
           <ActivityIndicator color={colors.brand.primary} style={styles.loader} />
         ) : isEmpty ? (
@@ -329,17 +465,19 @@ export default function BudgetScreen() {
             subtitle="Set spending limits to track your habits."
           />
         ) : (
-          <ProgressRingMatrix budgets={budgets} />
+          <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120).delay(100)}>
+            <ProgressRingMatrix budgets={budgets} />
+          </Animated.View>
         )}
 
-        {/* Planned Payments Timeline */}
-        <View style={styles.timelineWrapper}>
+        {/* Planned Payments Timeline with entrance fade delay */}
+        <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120).delay(200)} style={styles.timelineWrapper}>
           <PlannedPaymentsTimeline
             payments={payments}
             onSettle={settlePayment}
             onDelete={deletePayment}
           />
-        </View>
+        </Animated.View>
       </ScrollView>
 
       <AddPaymentSheet
@@ -364,13 +502,47 @@ const styles = StyleSheet.create({
     gap:               Spacing['4'],
   },
   overviewCard: {},
-  overviewRow: {
-    flexDirection:  'row',
+  cardHeader: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems:     'flex-end',
-    marginVertical: Spacing['3'],
+    alignItems: 'center',
+    marginBottom: Spacing['4'],
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['3'],
+  },
+  iconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   overviewRight: { alignItems: 'flex-end', gap: 4 },
+  metricsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: Spacing['4'],
+  },
+  progressContainer: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: Spacing['4'],
+  },
   overBudgetBadge: {
     paddingHorizontal: 8,
     paddingVertical:   2,

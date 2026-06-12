@@ -2,7 +2,8 @@ import React, { memo } from 'react';
 import { View, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { AppText } from '@components/AppText';
 import { ProgressBar } from '@components/ProgressBar';
-import { CategoryIcon, CATEGORY_META } from '@components/CategoryIcon';
+import { CategoryIcon } from '@components/CategoryIcon';
+import { getCategoryById } from '@store/categoryStore';
 import { Spacing, Radius } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
 import type { SpendingChartProps } from '../types';
@@ -44,8 +45,8 @@ export const SpendingChart = memo(function SpendingChart({
       ) : (
         <View style={styles.list}>
           {items.map((item, idx) => {
-            const meta = CATEGORY_META[item.category];
-            const gradient: [string, string] = [meta.color, meta.color + '80'];
+            const catColor = getCategoryById(item.category).color;
+            const gradient: [string, string] = [catColor, catColor + '80'];
             return (
               <View key={item.category} style={[styles.row, idx < items.length - 1 && { borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}>
                 <CategoryIcon category={item.category} size={38} />

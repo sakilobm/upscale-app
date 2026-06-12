@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-06-12
+
+### Added
+- Replaced the category emojis inside the center of the `ProgressRing` budget circles with polished, modern vector `Ionicons` icons.
+- Engineered a circular liquid-glassmorphic center badge in `src/components/ProgressRing.tsx` that renders the category vector icon over a blurred/translucent glass background, micro borders, and subtle drop shadows.
+- Integrated category icon mapping by reading directly from `CATEGORY_META` inside `src/features/budget/components/ProgressRingMatrix.tsx`.
+
+### Architectural Decisions
+- **Unified Vector Visuals**: Phased out all raw emojis inside progress circles in favor of high-fidelity vector outline icons to maintain fintech professionalism and high-end aesthetics.
+- **Glassmorphic Badge Refraction**: Chose a semi-translucent backdrop (`rgba(255, 255, 255, 0.70)`) with drop shadow overlays in the center of SVG rings to preserve design continuity.
+
+### Rollback & Escape Plan
+- **Forward-fix path**: Tweak the layout percentage bounds (`size * 0.32`) or padding in `src/components/ProgressRing.tsx` if the center badge overflows the text label on smaller device screen sizes.
+- **Rollback path**: Run `git checkout src/components/ProgressRing.tsx src/features/budget/components/ProgressRingMatrix.tsx` to restore original emoji labels inside the budget overview rings. No database operations are affected.
+
+## [1.3.0] - 2026-06-12
+
+### Added
+- Integrated a dynamic status icon badge (using `Ionicons`) in the Monthly Overview header of the Budget screen (`src/app/(tabs)/budget.tsx`) that changes state dynamically based on user spending (e.g. standard `wallet` for healthy, yellow `trending-up` for caution, red `alert-circle` for over-budget).
+- Added a soft, looping pulse micro-animation (using Reanimated `withRepeat` and `withSequence`) to the caution icon when a user is over budget.
+- Added smooth, staggered screen-entrance animations (`FadeInDown.springify()`) for the overview card, the progress rings matrix, and the planned payments timeline on the Budget screen.
+- Upgraded the static budget overview progress bar to a native spring-animated progress bar powered by `react-native-reanimated` shared values.
+- Polished the layout of the Overview card, incorporating dynamic border glows (red/yellow/indigo), secondary metrics like total remaining budget, and an alert footer for exceeded category budgets.
+
+### Fixed
+- Fixed compilation error `TS2339` in `src/app/(tabs)/ledger.tsx` by adding the missing `debtStack` stylesheet definition.
+
+### Architectural Decisions
+- **Native-Driven Shared-Value Springs**: Opted for Reanimated worklets and `useSharedValue` to drive the overview progress bar and icon scaling. This offloads visual frame updates from the React Native JavaScript thread to the main UI thread, ensuring smooth 60 FPS transitions.
+- **Dynamic State Visual Cues**: Engineered the visual indicators (badges, border glow, gradients) to adapt to utilization states (normal, warning at 85%, over-budget at 100%) for instant user recognition of spending health.
+
+### Rollback & Escape Plan
+- **Forward-fix path**: Adjust spring animation parameters (`damping`, `stiffness`) or layout delay intervals in `src/app/(tabs)/budget.tsx` if render performance or layout stuttering is observed on low-end target devices.
+- **Rollback path**: Run `git checkout src/app/(tabs)/budget.tsx src/app/(tabs)/ledger.tsx` to restore previous static layouts and icons. No database migrations or persistent storage changes were introduced.
+
 ## [1.2.0] - 2026-06-09
 
 ### Added
