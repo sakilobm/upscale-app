@@ -119,7 +119,7 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>()(
         }));
       },
 
-      reset: () => set({ payments: buildSeed() }),
+      reset: () => set({ payments: [] }),
     }),
     {
       name: 'wc-planned-payments',

@@ -91,7 +91,7 @@ export const useLoansStore = create<LoansState>()(
         }));
       },
 
-      reset: () => set({ loans: buildSeed() }),
+      reset: () => set({ loans: [] }),
     }),
     {
       name: 'wc-loans',

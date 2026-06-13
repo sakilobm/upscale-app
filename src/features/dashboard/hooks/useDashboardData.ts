@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { fetchDashboardData, MOCK_TRANSACTIONS } from '../services/dashboardService';
+import { useMemo } from 'react';
+import { format } from 'date-fns';
 import { useTransactionStore } from '@store/transactionStore';
+import { useAccountStore } from '@store/accountStore';
+import { computeMonthSummary, computeSpendingByCategory } from '../services/dashboardService';
 import type { DashboardViewModel } from '../types';
 import type { AsyncState } from '@store/types';
 import { createAsyncState } from '@store/types';
@@ -10,51 +12,27 @@ type UseDashboardDataReturn = AsyncState<DashboardViewModel> & {
 };
 
 export function useDashboardData(): UseDashboardDataReturn {
-  const [state, setState] = useState<AsyncState<DashboardViewModel>>(
-    createAsyncState({ isLoading: true })
-  );
+  const transactions = useTransactionStore((s) => s.transactions);
+  const accounts = useAccountStore((s) => s.accounts);
 
-  const setTransactions = useTransactionStore((s) => s.setTransactions);
+  const vm = useMemo<DashboardViewModel>(() => {
+    const currentMonth = format(new Date(), 'yyyy-MM');
+    const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+    const monthSummary = computeMonthSummary(transactions, currentMonth);
+    const spendingByCategory = computeSpendingByCategory(transactions);
+    const recentTransactions = [...transactions]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
 
-  const load = useCallback(async () => {
-    setState(createAsyncState({ isLoading: true }));
+    return { totalBalance, monthSummary, spendingByCategory, recentTransactions, accounts };
+  }, [transactions, accounts]);
 
-    try {
-      const dashboard = await fetchDashboardData();
-
-      // Seed transaction store with all mock data (only if empty, to preserve user additions)
-      setTransactions(MOCK_TRANSACTIONS);
-
-      const vm: DashboardViewModel = {
-        totalBalance: dashboard.totalBalance,
-        monthSummary: dashboard.monthSummary,
-        spendingByCategory: dashboard.spendingByCategory,
-        recentTransactions: dashboard.recentTransactions,
-        accounts: dashboard.accounts,
-      };
-
-      setState({
-        data: vm,
-        isLoading: false,
-        isError: false,
-        isEmpty: dashboard.recentTransactions.length === 0,
-        error: null,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load dashboard';
-      setState({
-        data: null,
-        isLoading: false,
-        isError: true,
-        isEmpty: true,
-        error: message,
-      });
-    }
-  }, [setTransactions]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { ...state, refresh: load };
+  return {
+    data: vm,
+    isLoading: false,
+    isError: false,
+    isEmpty: transactions.length === 0 && accounts.length === 0,
+    error: null,
+    refresh: async () => {},
+  };
 }

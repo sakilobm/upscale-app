@@ -101,7 +101,7 @@ const MOCK_TRANSACTIONS: Transaction[] = [
 
 // ─── Computation helpers ─────────────────────────────────────────────────────
 
-function computeSpendingByCategory(transactions: Transaction[]): SpendingByCategory[] {
+export function computeSpendingByCategory(transactions: Transaction[]): SpendingByCategory[] {
   const expenses = transactions.filter((t) => t.type === 'expense');
   const total = expenses.reduce((sum, t) => sum + t.amount, 0);
 
@@ -120,7 +120,7 @@ function computeSpendingByCategory(transactions: Transaction[]): SpendingByCateg
     .sort((a, b) => b.amount - a.amount);
 }
 
-function computeMonthSummary(transactions: Transaction[], month: string): MonthSummary {
+export function computeMonthSummary(transactions: Transaction[], month: string): MonthSummary {
   const monthTx = transactions.filter((t) => t.date.startsWith(month));
   const totalIncome = monthTx
     .filter((t) => t.type === 'income')

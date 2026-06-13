@@ -576,7 +576,7 @@ export default function ProfileScreen() {
     resetLedger();
     resetLoans();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    toast.success('All data cleared and reset to demo');
+    toast.success('All data cleared successfully');
   }, [resetTransactions, resetAccounts, resetCategories, resetBudgets, resetPlannedPayments, resetLedger, resetLoans]);
 
   const handleSignOutConfirm = useCallback(() => {
@@ -778,7 +778,7 @@ export default function ProfileScreen() {
       <ConfirmModal
         visible={clearDataConfirm}
         title="Clear All Data?"
-        message="This will erase all transactions, budgets, ledger entries and planned payments, and reset to demo data. This cannot be undone."
+        message="This will permanently erase all transactions, accounts, budgets, ledger entries and planned payments. This cannot be undone."
         confirmLabel="Clear Everything"
         cancelLabel="Cancel"
         danger

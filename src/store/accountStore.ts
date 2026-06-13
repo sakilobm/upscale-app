@@ -54,7 +54,7 @@ export const useAccountStore = create<AccountState>()(
 
       setError: (error) => set({ error, isError: error !== null, isLoading: false }),
 
-      reset: () => set({ accounts: MOCK_ACCOUNTS, activeAccountId: MOCK_ACCOUNTS.find((a) => a.isDefault)?.id ?? null }),
+      reset: () => set({ accounts: [], activeAccountId: null }),
     }),
     {
       name: 'wc-accounts',

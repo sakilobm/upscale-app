@@ -122,7 +122,7 @@ export const useLedgerStore = create<LedgerState>()(
         set((s) => ({ entries: s.entries.map((e) => ({ ...e, status: computeStatus(e) })) }));
       },
 
-      reset: () => set({ entries: buildSeed() }),
+      reset: () => set({ entries: [] }),
     }),
     {
       name: 'wc-ledger',
