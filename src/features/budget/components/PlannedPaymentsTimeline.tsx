@@ -28,27 +28,27 @@ import type { PlannedPayment } from '@store/plannedPaymentsStore';
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const CATEGORY_ICON: Record<string, IoniconName> = {
-  housing:       'home-outline',
-  food:          'restaurant-outline',
-  transport:     'car-outline',
-  health:        'fitness-outline',
+  housing: 'home-outline',
+  food: 'restaurant-outline',
+  transport: 'car-outline',
+  health: 'fitness-outline',
   entertainment: 'film-outline',
-  shopping:      'bag-handle-outline',
-  education:     'school-outline',
-  savings:       'wallet-outline',
-  other:         'ellipsis-horizontal-outline',
+  shopping: 'bag-handle-outline',
+  education: 'school-outline',
+  savings: 'wallet-outline',
+  other: 'ellipsis-horizontal-outline',
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ROW_HEIGHT   = 76;
+const ROW_HEIGHT = 76;
 const SWIPE_SETTLE = 80;  // px to trigger settle
-const LOCK_MS      = 3000; // auto-lock after 3 s if not swiped
+const LOCK_MS = 3000; // auto-lock after 3 s if not swiped
 
 // ─── Single payment row ───────────────────────────────────────────────────────
 
 interface PaymentRowProps {
-  payment:  PlannedPayment;
+  payment: PlannedPayment;
   onSettle: (id: string) => void;
   onDelete: (id: string) => void;
 }
@@ -58,25 +58,25 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
 
   const translateX = useSharedValue(0);
   const rowOpacity = useSharedValue(1);
-  const rowHeight  = useSharedValue(ROW_HEIGHT + Spacing['2']);
-  const glowOp     = useSharedValue(0); // pulse glow when unlocked
+  const rowHeight = useSharedValue(ROW_HEIGHT + Spacing['2']);
+  const glowOp = useSharedValue(0); // pulse glow when unlocked
 
   // JS-thread unlock flag — drives enabled state of pan gesture
   const [isUnlocked, setIsUnlocked] = useState(false);
   const lockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const days   = daysUntilDue(payment.dueDate);
+  const days = daysUntilDue(payment.dueDate);
   const urgent = isUrgent(payment.dueDate);
 
   const dotColor =
     payment.status === 'SETTLED' ? colors.status.income :
-    payment.status === 'OVERDUE' ? colors.status.expense :
-    urgent ? '#F59E0B' : colors.status.info;
+      payment.status === 'OVERDUE' ? colors.status.expense :
+        urgent ? '#F59E0B' : colors.status.info;
 
   // ── Collapse row then call action
   const dismissRow = (action: () => void) => {
     rowOpacity.value = withTiming(0, { duration: 220 });
-    rowHeight.value  = withTiming(0, { duration: 300 });
+    rowHeight.value = withTiming(0, { duration: 300 });
     setTimeout(action, 300);
   };
 
@@ -129,10 +129,10 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
     });
 
   // ── Animated styles
-  const rowStyle    = useAnimatedStyle(() => ({ transform: [{ translateX: translateX.value }] }));
-  const wrapStyle   = useAnimatedStyle(() => ({ opacity: rowOpacity.value, height: rowHeight.value }));
-  const underlayOp  = useAnimatedStyle(() => ({ opacity: Math.min(translateX.value / SWIPE_SETTLE, 1) }));
-  const glowStyle   = useAnimatedStyle(() => ({ opacity: glowOp.value }));
+  const rowStyle = useAnimatedStyle(() => ({ transform: [{ translateX: translateX.value }] }));
+  const wrapStyle = useAnimatedStyle(() => ({ opacity: rowOpacity.value, height: rowHeight.value }));
+  const underlayOp = useAnimatedStyle(() => ({ opacity: Math.min(translateX.value / SWIPE_SETTLE, 1) }));
+  const glowStyle = useAnimatedStyle(() => ({ opacity: glowOp.value }));
 
   const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
 
@@ -177,9 +177,9 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
               styles.row,
               rowStyle,
               {
-                height:          ROW_HEIGHT,
+                height: ROW_HEIGHT,
                 backgroundColor: cardBg,
-                borderColor:     isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+                borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
               },
             ]}
           >
@@ -216,10 +216,10 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
                   {payment.status === 'SETTLED'
                     ? '✓ Settled'
                     : payment.status === 'OVERDUE'
-                    ? `${Math.abs(days)}d overdue`
-                    : days === 0
-                    ? 'Due today'
-                    : `Due in ${days}d`}
+                      ? `${Math.abs(days)}d overdue`
+                      : days === 0
+                        ? 'Due today'
+                        : `Due in ${days}d`}
                   {payment.isRecurring ? '  ·  ↻' : ''}
                 </AppText>
                 {/* Hold hint — only shows when row is NOT unlocked */}
@@ -252,8 +252,8 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
                     color: payment.status === 'SETTLED'
                       ? colors.status.income
                       : payment.status === 'OVERDUE'
-                      ? colors.status.expense
-                      : colors.text.primary,
+                        ? colors.status.expense
+                        : colors.text.primary,
                   },
                 ]}
               >
@@ -312,85 +312,85 @@ export function PlannedPaymentsTimeline({ payments, onSettle, onDelete }: Planne
 const styles = StyleSheet.create({
   container: { gap: Spacing['3'] },
   titleRow: {
-    flexDirection:  'row',
-    alignItems:     'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
   },
   hint: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    gap:               5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 10,
-    paddingVertical:   4,
-    borderRadius:      Radius.full,
-    borderWidth:       1,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   list: { gap: Spacing['2'] },
 
   // Swipe underlay
   underlaySettle: {
-    position:      'absolute',
-    left:          0,
-    right:         0,
-    top:           0,
-    borderRadius:  Radius.xl,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    borderRadius: Radius.xl,
     flexDirection: 'row',
-    alignItems:    'center',
-    paddingLeft:   Spacing['5'],
-    gap:           Spacing['2'],
+    alignItems: 'center',
+    paddingLeft: Spacing['5'],
+    gap: Spacing['2'],
   },
   underlayText: { color: '#FFFFFF', fontWeight: '700' },
 
   // Unlock glow ring (border highlight when hold is active)
   unlockGlow: {
-    position:     'absolute',
-    left:         0,
-    right:        0,
-    top:          0,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
     borderRadius: Radius.xl,
-    borderWidth:  2,
-    zIndex:       2,
+    borderWidth: 2,
+    zIndex: 2,
   },
 
   // Row card
   row: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    gap:               Spacing['3'],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['3'],
     paddingHorizontal: Spacing['4'],
-    borderRadius:      Radius.xl,
-    borderWidth:       1,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
       android: { elevation: 1 },
     }),
   },
-  dot:    { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
+  dot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
   iconBox: {
     width: 36, height: 36, borderRadius: Radius.md,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  body:        { flex: 1, gap: 3 },
+  body: { flex: 1, gap: 3 },
   subtitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   holdHint: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    gap:               3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     paddingHorizontal: 6,
-    paddingVertical:   2,
-    borderRadius:      4,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
-  right:  { alignItems: 'flex-end', flexShrink: 0, paddingRight: 4 },
+  right: { alignItems: 'flex-end', flexShrink: 0, paddingRight: 4 },
   amount: { fontSize: 14, fontWeight: '700' },
   cornerDelete: {
-    position:       'absolute',
-    top:            7,
-    right:          7,
-    width:          20,
-    height:         20,
-    borderRadius:   10,
-    alignItems:     'center',
+    position: 'absolute',
+    top: 7,
+    right: 7,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
     justifyContent: 'center',
-    zIndex:         10,
+    zIndex: 10,
   },
 });

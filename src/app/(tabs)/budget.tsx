@@ -24,7 +24,8 @@ import Animated, {
   withSequence,
   FadeInDown,
 } from 'react-native-reanimated';
-import { AppHeader, HeaderIconBtn } from '@components/AppHeader';
+import { AppHeader } from '@components/AppHeader';
+import { FAB } from '@components/FAB';
 import { useBudgets } from '@features/budget/hooks/useBudgets';
 import { ProgressRingMatrix } from '@features/budget/components/ProgressRingMatrix';
 import { PlannedPaymentsTimeline } from '@features/budget/components/PlannedPaymentsTimeline';
@@ -324,7 +325,6 @@ export default function BudgetScreen() {
           title="Budget"
           subtitle="Monthly spending limits"
           noPadding
-          rightNode={<HeaderIconBtn icon="add" onPress={() => setAddVisible(true)} />}
         />
 
         {summary && (
@@ -407,6 +407,8 @@ export default function BudgetScreen() {
           toast.success(`"${title}" added to planned payments`);
         }}
       />
+
+      <FAB icon="add" label="Payment" onPress={() => setAddVisible(true)} />
     </SafeAreaView>
   );
 }
