@@ -107,6 +107,7 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
   // ── Pan: only moves when unlocked
   const panGesture = Gesture.Pan()
     .enabled(isUnlocked && payment.status !== 'SETTLED')
+    .runOnJS(true)
     .activeOffsetX([8, 8000])
     .failOffsetY([-8, 8])
     .onUpdate((e) => {
@@ -182,6 +183,17 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
               },
             ]}
           >
+            {/* Corner delete */}
+            {payment.status !== 'SETTLED' && (
+              <Pressable
+                onPress={handleDelete}
+                hitSlop={8}
+                style={[styles.cornerDelete, { backgroundColor: colors.status.expense + '14' }]}
+              >
+                <Ionicons name="trash-outline" size={11} color={colors.status.expense} />
+              </Pressable>
+            )}
+
             {/* Timeline dot */}
             <View style={[styles.dot, { backgroundColor: dotColor }]} />
 
@@ -230,7 +242,7 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
               </View>
             </View>
 
-            {/* Amount + delete */}
+            {/* Amount */}
             <View style={styles.right}>
               <AppText
                 variant="labelLG"
@@ -247,15 +259,6 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
               >
                 ${payment.amount.toFixed(2)}
               </AppText>
-              {payment.status !== 'SETTLED' && (
-                <Pressable
-                  onPress={handleDelete}
-                  hitSlop={12}
-                  style={[styles.deleteBtn, { backgroundColor: colors.status.expense + '18' }]}
-                >
-                  <Ionicons name="close" size={12} color={colors.status.expense} />
-                </Pressable>
-              )}
             </View>
           </Animated.View>
         </Pressable>
@@ -377,10 +380,17 @@ const styles = StyleSheet.create({
     paddingVertical:   2,
     borderRadius:      4,
   },
-  right:  { alignItems: 'flex-end', gap: 5, flexShrink: 0 },
+  right:  { alignItems: 'flex-end', flexShrink: 0, paddingRight: 4 },
   amount: { fontSize: 14, fontWeight: '700' },
-  deleteBtn: {
-    width: 22, height: 22, borderRadius: 11,
-    alignItems: 'center', justifyContent: 'center',
+  cornerDelete: {
+    position:       'absolute',
+    top:            7,
+    right:          7,
+    width:          20,
+    height:         20,
+    borderRadius:   10,
+    alignItems:     'center',
+    justifyContent: 'center',
+    zIndex:         10,
   },
 });

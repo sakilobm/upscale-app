@@ -3,8 +3,6 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  Pressable,
-  SectionList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -223,13 +221,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing['1'],
   },
   swipeHint: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    gap:               6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: Spacing['3'],
-    paddingVertical:   Spacing['2'],
-    borderRadius:      Radius.lg,
-    borderWidth:       1,
-    marginBottom:      Spacing['1'],
+    paddingVertical: Spacing['2'],
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing['2'],
   },
 });

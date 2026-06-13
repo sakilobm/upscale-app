@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -120,13 +120,19 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
   const rowHeight = useSharedValue(80);
   const opacity = useSharedValue(1);
 
+  // Track whether a meaningful swipe has occurred to suppress the onPress
+  const swipedRef = useRef(false);
+
   const handleSettle = () => onSettle(entry.id);
   const handleDelete = () => onDelete(entry.id);
 
   const panGesture = Gesture.Pan()
-    .activeOffsetX([-20, 20000])
-    .failOffsetY([-4, 4])
+    .runOnJS(true)
+    .activeOffsetX([-12, 12000])
+    .failOffsetY([-10, 10])
+    .onBegin(() => { swipedRef.current = false; })
     .onUpdate((e) => {
+      if (e.translationX < -6) swipedRef.current = true;
       if (e.translationX < 0) {
         translateX.value = Math.max(e.translationX, -140);
       } else {
@@ -138,6 +144,7 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
         translateX.value = withSpring(-120, { damping: 20, stiffness: 180 });
       } else {
         translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
+        setTimeout(() => { swipedRef.current = false; }, 150);
       }
     });
 
@@ -187,7 +194,14 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
           ]}
         >
           <Pressable
-            onPress={() => onPress(entry)}
+            onPress={() => {
+              if (swipedRef.current) {
+                translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
+                setTimeout(() => { swipedRef.current = false; }, 150);
+              } else {
+                onPress(entry);
+              }
+            }}
             style={styles.cardContent}
             android_ripple={{ color: 'rgba(255,255,255,0.05)' }}
           >

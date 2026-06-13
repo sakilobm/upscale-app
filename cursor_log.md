@@ -44,3 +44,8 @@
 - **Action**: Updated `app.json`, `package.json`, `package-lock.json`, `src/app/(tabs)/profile.tsx`, and `ARCHITECTURE_DOCUMENTATION.md` to rename the application from `MoneyApp` to `WhereCash`.
 - **Validation Run**: Regenerated native directories using `npx expo prebuild` and executed TypeScript compiler checks via `testing/run_all_test_scripts.sh`.
 - **Result**: Success (All native prebuild tasks and TypeScript compile checks passed cleanly).
+
+## [2026-06-13 18:30] Search Input Centering Fix
+- **Action**: Modified `src/app/(tabs)/transactions.tsx` to override `lineHeight: undefined` and use `paddingVertical: 0` instead of a hardcoded height, enabling clean vertical centering of text.
+- **Validation Run**: Executed compile validation via `testing/run_all_test_scripts.sh`.
+- **Result**: Success (All checks passed cleanly).

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-06-13
+
+### Fixed
+- Fixed vertical alignment of placeholder text and entered text inside the transactions search `TextInput` in `src/app/(tabs)/transactions.tsx`.
+
+### Architectural Decisions
+- **Removing Line Height Conflicts**: Overrode `lineHeight` inheritance to `undefined` for `TextInput` component text layouts to prevent platform-specific baseline offset issues on iOS/Android.
+- **Dynamic Flex Height Alignment**: Replaced parent-matching duplicate hardcoded height constraints with `paddingVertical: 0` to let the search input expand inside its flexbox container naturally.
+
+### Rollback & Escape Plan
+- **Forward-fix path**: If text sizing issues surface, re-verify line-height values or text wrapping rules on older Android SDK versions.
+- **Rollback path**: Run `git checkout src/app/(tabs)/transactions.tsx` to restore previous style configurations.
+
 ## [1.4.0] - 2026-06-13
 
 ### Changed
