@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2026-06-13
+
+### Changed
+- Increased the gap between elements in the fixed top area (Top Card, Searchbar, Accounts Bar, and Filter Bar) to `Spacing['4']` (16px) in `src/app/(tabs)/transactions.tsx`.
+- Removed `marginBottom: Spacing['3']` from `src/features/transactions/components/FilterBar.tsx` and reduced `listContent`'s `paddingTop` to `Spacing['2']` (8px) in `src/app/(tabs)/transactions.tsx` to pull the transactions list up and reduce extra bottom space.
+
+### Architectural Decisions
+- **Standardized Grid Alignment**: Swapped asymmetric/cramped spacing (12px) for standard 16px grid intervals (`Spacing['4']`) inside the fixed header, aligning it with premium mobile spacing guides.
+- **De-duplicating Stack Spacing**: Eliminated overlapping vertical padding/margins between separate component hierarchies (`FilterBar` internal margins, `topArea` gap, and list container offset padding) to keep list view layouts predictable.
+
+### Rollback & Escape Plan
+- **Forward-fix path**: If spacing constraints shift on smaller device types (like iPhone SE), adjust layout gap in `src/app/(tabs)/transactions.tsx`.
+- **Rollback path**: Run `git checkout src/app/(tabs)/transactions.tsx src/features/transactions/components/FilterBar.tsx`.
+
 ## [1.4.1] - 2026-06-13
 
 ### Fixed

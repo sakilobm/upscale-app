@@ -49,3 +49,11 @@
 - **Action**: Modified `src/app/(tabs)/transactions.tsx` to override `lineHeight: undefined` and use `paddingVertical: 0` instead of a hardcoded height, enabling clean vertical centering of text.
 - **Validation Run**: Executed compile validation via `testing/run_all_test_scripts.sh`.
 - **Result**: Success (All checks passed cleanly).
+
+## [2026-06-13 18:38] Fixed Spacing in Header and List padding
+- **Action**:
+  - Increased header gap to `Spacing['4']` (16px) inside `topArea` in `src/app/(tabs)/transactions.tsx`.
+  - Removed internal `marginBottom` from `FilterBar.tsx`.
+  - Reduced `paddingTop` to `Spacing['2']` (8px) on the transactions list container in `src/app/(tabs)/transactions.tsx`.
+- **Validation Run**: Executed compile validation via `testing/run_all_test_scripts.sh`.
+- **Result**: Success (All checks passed cleanly).

@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
 
   // Top fixed area
   topArea: {
-    gap: Spacing['3'],
+    gap: Spacing['4'],
     paddingBottom: Spacing['2'],
   },
 
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
   // Tx list
   listContent: {
     paddingHorizontal: Spacing['5'],
-    paddingTop: Spacing['4'],
+    paddingTop: Spacing['2'],
     gap: Spacing['4'],
   },
   section: {
