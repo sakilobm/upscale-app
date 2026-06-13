@@ -42,8 +42,11 @@ const CATEGORY_ICON: Record<string, IoniconName> = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ROW_HEIGHT = 76;
-const SWIPE_SETTLE = 80;  // px to trigger settle
-const LOCK_MS = 3000; // auto-lock after 3 s if not swiped
+const SWIPE_SETTLE = 80;   // px rightward to trigger settle (after unlock)
+const LOCK_MS = 3000; // auto-lock after 3 s
+const TX_DELETE_W = 84;   // width of the revealed delete zone
+const TX_SNAP_AT = TX_DELETE_W / 2;  // snap open if past this
+const TX_AUTO_DELETE = 190;  // full swipe left → auto-delete immediately
 
 // ─── Single payment row ───────────────────────────────────────────────────────
 
@@ -59,9 +62,8 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
   const translateX = useSharedValue(0);
   const rowOpacity = useSharedValue(1);
   const rowHeight = useSharedValue(ROW_HEIGHT + Spacing['2']);
-  const glowOp = useSharedValue(0); // pulse glow when unlocked
+  const glowOp = useSharedValue(0);
 
-  // JS-thread unlock flag — drives enabled state of pan gesture
   const [isUnlocked, setIsUnlocked] = useState(false);
   const lockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -73,17 +75,25 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
       payment.status === 'OVERDUE' ? colors.status.expense :
         urgent ? '#F59E0B' : colors.status.info;
 
-  // ── Collapse row then call action
+  // ── Collapse + call action (used for settle)
   const dismissRow = (action: () => void) => {
     rowOpacity.value = withTiming(0, { duration: 220 });
     rowHeight.value = withTiming(0, { duration: 300 });
     setTimeout(action, 300);
   };
 
-  const handleSettle = () => dismissRow(() => onSettle(payment.id));
-  const handleDelete = () => dismissRow(() => onDelete(payment.id));
+  // ── Slide left + collapse (used for delete)
+  const dismissLeft = () => {
+    translateX.value = withTiming(-500, { duration: 260 });
+    rowOpacity.value = withTiming(0, { duration: 200 });
+    rowHeight.value = withTiming(0, { duration: 280 });
+    if (isUnlocked) lock();
+    setTimeout(() => onDelete(payment.id), 250);
+  };
 
-  // ── Unlock via long press
+  const handleSettle = () => dismissRow(() => onSettle(payment.id));
+
+  // ── Long-press unlock (for settle gesture)
   const unlock = () => {
     if (payment.status === 'SETTLED') return;
     setIsUnlocked(true);
@@ -91,7 +101,6 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (lockTimer.current) clearTimeout(lockTimer.current);
     lockTimer.current = setTimeout(() => {
-      // Auto-lock only if row hasn't moved
       setIsUnlocked(false);
       glowOp.value = withTiming(0, { duration: 200 });
       translateX.value = withSpring(0, { damping: 20, stiffness: 260 });
@@ -104,26 +113,45 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
     if (lockTimer.current) clearTimeout(lockTimer.current);
   };
 
-  // ── Pan: only moves when unlocked
+  // ── Unified pan: left = delete (always), right = settle (requires unlock)
   const panGesture = Gesture.Pan()
-    .enabled(isUnlocked && payment.status !== 'SETTLED')
+    .enabled(payment.status !== 'SETTLED')
     .runOnJS(true)
-    .activeOffsetX([8, 8000])
+    .activeOffsetX([-10, 10])
     .failOffsetY([-8, 8])
     .onUpdate((e) => {
-      // Allow swiping right (settle) or back left to cancel
-      translateX.value = Math.min(Math.max(e.translationX, 0), 140);
+      if (e.translationX < 0) {
+        // Left swipe → delete direction (no unlock needed)
+        translateX.value = Math.max(e.translationX, -(TX_DELETE_W + 12));
+      } else {
+        // Right swipe → settle direction (unlock required)
+        if (isUnlocked) {
+          translateX.value = Math.min(e.translationX, 140);
+        }
+        // If not unlocked, resist rightward movement (no visual shift)
+      }
     })
     .onEnd((e) => {
-      if (e.translationX >= SWIPE_SETTLE) {
-        // Confirmed — animate out then settle
+      if (e.translationX >= SWIPE_SETTLE && isUnlocked) {
+        // ── Settle: swiped right far enough while unlocked
         translateX.value = withTiming(170, { duration: 200 });
-        setTimeout(() => {
-          lock();
-          handleSettle();
-        }, 100);
+        setTimeout(() => { lock(); handleSettle(); }, 100);
+
+      } else if (e.translationX < 0) {
+        // ── Delete direction
+        if (e.velocityX < -700 || e.translationX < -TX_AUTO_DELETE) {
+          // Fast flick OR long swipe → auto-delete
+          dismissLeft();
+        } else if (e.translationX < -TX_SNAP_AT) {
+          // Past halfway → snap open, show delete button
+          translateX.value = withSpring(-TX_DELETE_W, { damping: 20, stiffness: 200 });
+        } else {
+          // Short swipe → snap back
+          translateX.value = withSpring(0, { damping: 20, stiffness: 260 });
+        }
+
       } else {
-        // Didn't swipe far enough — spring back, stay unlocked
+        // Right swipe but not far enough or not unlocked → snap back
         translateX.value = withSpring(0, { damping: 20, stiffness: 260 });
       }
     });
@@ -131,7 +159,14 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
   // ── Animated styles
   const rowStyle = useAnimatedStyle(() => ({ transform: [{ translateX: translateX.value }] }));
   const wrapStyle = useAnimatedStyle(() => ({ opacity: rowOpacity.value, height: rowHeight.value }));
-  const underlayOp = useAnimatedStyle(() => ({ opacity: Math.min(translateX.value / SWIPE_SETTLE, 1) }));
+  // Settle underlay: fades in as card slides RIGHT
+  const settleOp = useAnimatedStyle(() => ({
+    opacity: Math.min(Math.max(translateX.value / SWIPE_SETTLE, 0), 1),
+  }));
+  // Delete underlay: fades in as card slides LEFT
+  const deleteOp = useAnimatedStyle(() => ({
+    opacity: Math.min(Math.max(-translateX.value / (TX_DELETE_W * 0.55), 0), 1),
+  }));
   const glowStyle = useAnimatedStyle(() => ({ opacity: glowOp.value }));
 
   const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
@@ -139,12 +174,12 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
   return (
     <Animated.View style={wrapStyle}>
 
-      {/* Settle underlay */}
+      {/* ── Settle underlay (left side, revealed on rightward swipe) ── */}
       {payment.status !== 'SETTLED' && (
         <Animated.View
           style={[
             styles.underlaySettle,
-            underlayOp,
+            settleOp,
             { backgroundColor: colors.status.income, height: ROW_HEIGHT },
           ]}
         >
@@ -153,7 +188,23 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
         </Animated.View>
       )}
 
-      {/* Unlock glow ring */}
+      {/* ── Delete underlay (right side, revealed on leftward swipe) ── */}
+      {payment.status !== 'SETTLED' && (
+        <Animated.View
+          style={[
+            styles.underlayDelete,
+            deleteOp,
+            { backgroundColor: colors.status.expense, height: ROW_HEIGHT },
+          ]}
+        >
+          <Pressable onPress={dismissLeft} style={styles.underlayDeletePressable}>
+            <AppText variant="labelSM" style={styles.underlayText}>Delete</AppText>
+            <Ionicons name="trash-outline" size={18} color="#fff" />
+          </Pressable>
+        </Animated.View>
+      )}
+
+      {/* ── Unlock glow ring ── */}
       {payment.status !== 'SETTLED' && (
         <Animated.View
           pointerEvents="none"
@@ -170,6 +221,12 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
           onLongPress={unlock}
           delayLongPress={340}
           disabled={payment.status === 'SETTLED'}
+          onPress={() => {
+            // If row is open (swiped left), tap card to close
+            if (translateX.value < -8) {
+              translateX.value = withSpring(0, { damping: 20, stiffness: 260 });
+            }
+          }}
           style={{ zIndex: 1 }}
         >
           <Animated.View
@@ -183,17 +240,6 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
               },
             ]}
           >
-            {/* Corner delete */}
-            {payment.status !== 'SETTLED' && (
-              <Pressable
-                onPress={handleDelete}
-                hitSlop={8}
-                style={[styles.cornerDelete, { backgroundColor: colors.status.expense + '14' }]}
-              >
-                <Ionicons name="trash-outline" size={11} color={colors.status.expense} />
-              </Pressable>
-            )}
-
             {/* Timeline dot */}
             <View style={[styles.dot, { backgroundColor: dotColor }]} />
 
@@ -222,7 +268,8 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
                         : `Due in ${days}d`}
                   {payment.isRecurring ? '  ·  ↻' : ''}
                 </AppText>
-                {/* Hold hint — only shows when row is NOT unlocked */}
+
+                {/* State hint badges */}
                 {payment.status !== 'SETTLED' && !isUnlocked && (
                   <View style={[styles.holdHint, { backgroundColor: colors.text.tertiary + '18' }]}>
                     <AppText style={{ fontSize: 9, color: colors.text.tertiary, fontWeight: '600', letterSpacing: 0.3 }}>
@@ -230,7 +277,6 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
                     </AppText>
                   </View>
                 )}
-                {/* Unlocked indicator */}
                 {payment.status !== 'SETTLED' && isUnlocked && (
                   <View style={[styles.holdHint, { backgroundColor: colors.status.income + '20' }]}>
                     <Ionicons name="arrow-forward" size={9} color={colors.status.income} />
@@ -288,13 +334,18 @@ export function PlannedPaymentsTimeline({ payments, onSettle, onDelete }: Planne
 
   return (
     <View style={styles.container}>
+      {/* Title + dual gesture hints */}
       <View style={styles.titleRow}>
         <AppText variant="headingSM" color={colors.text.primary}>Planned Payments</AppText>
-        <View style={[styles.hint, { backgroundColor: colors.brand.primary + '15', borderColor: colors.brand.primary + '30' }]}>
-          <Ionicons name="hand-left-outline" size={11} color={colors.brand.primary} />
-          <AppText variant="labelSM" style={{ color: colors.brand.primary, fontSize: 10, fontWeight: '600' }}>
-            Hold to settle
-          </AppText>
+        <View style={styles.hintGroup}>
+          <View style={[styles.hint, { backgroundColor: colors.status.expense + '12', borderColor: colors.status.expense + '30' }]}>
+            <Ionicons name="arrow-back-outline" size={10} color={colors.status.expense} />
+            <AppText style={{ color: colors.status.expense, fontSize: 9, fontWeight: '700' }}>Delete</AppText>
+          </View>
+          <View style={[styles.hint, { backgroundColor: colors.brand.primary + '15', borderColor: colors.brand.primary + '30' }]}>
+            <Ionicons name="hand-left-outline" size={10} color={colors.brand.primary} />
+            <AppText style={{ color: colors.brand.primary, fontSize: 9, fontWeight: '700' }}>Hold settle</AppText>
+          </View>
         </View>
       </View>
 
@@ -316,18 +367,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  hintGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['2'],
+  },
   hint: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
+    gap: 4,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: Radius.full,
     borderWidth: 1,
   },
   list: { gap: Spacing['2'] },
 
-  // Swipe underlay
+  // ── Underlays ──────────────────────────────────────────────────────────────
+
+  // Left underlay (green, settle — slides in as card moves right)
   underlaySettle: {
     position: 'absolute',
     left: 0,
@@ -339,9 +397,25 @@ const styles = StyleSheet.create({
     paddingLeft: Spacing['5'],
     gap: Spacing['2'],
   },
-  underlayText: { color: '#FFFFFF', fontWeight: '700' },
+  // Right underlay (red, delete — slides in as card moves left)
+  underlayDelete: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: TX_DELETE_W + 20,
+    borderRadius: Radius.xl,
+  },
+  underlayDeletePressable: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingRight: Spacing['5'],
+    gap: Spacing['2'],
+  },
+  underlayText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
 
-  // Unlock glow ring (border highlight when hold is active)
+  // ── Glow ring ─────────────────────────────────────────────────────────────
   unlockGlow: {
     position: 'absolute',
     left: 0,
@@ -352,7 +426,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
 
-  // Row card
+  // ── Row card ───────────────────────────────────────────────────────────────
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -380,17 +454,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 4,
   },
-  right: { alignItems: 'flex-end', flexShrink: 0, paddingRight: 4 },
+  right: { alignItems: 'flex-end', flexShrink: 0 },
   amount: { fontSize: 14, fontWeight: '700' },
-  cornerDelete: {
-    position: 'absolute',
-    top: 7,
-    right: 7,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
 });

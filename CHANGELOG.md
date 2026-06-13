@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2026-06-13
+
+### Fixed
+- Fixed text layout in modal buttons by preventing text wrapping and overlapping inside `src/components/ConfirmModal.tsx`.
+
+### Architectural Decisions
+- **Flexible Font Scaling**: Configured `numberOfLines={1}` and `adjustsFontSizeToFit` alongside `lineHeight: undefined` on button label components to scale long text (like "Clear Everything") dynamically without visual layout shifts or overlapping.
+
+### Rollback & Escape Plan
+- **Forward-fix path**: If font scaling causes text to become too small on extreme screen ratios, decrease horizontal padding of buttons or increase card maxWidth.
+- **Rollback path**: Run `git checkout src/components/ConfirmModal.tsx` to restore previous modal button styles.
+
 ## [1.4.2] - 2026-06-13
 
 ### Changed

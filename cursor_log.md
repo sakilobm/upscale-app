@@ -57,3 +57,8 @@
   - Reduced `paddingTop` to `Spacing['2']` (8px) on the transactions list container in `src/app/(tabs)/transactions.tsx`.
 - **Validation Run**: Executed compile validation via `testing/run_all_test_scripts.sh`.
 - **Result**: Success (All checks passed cleanly).
+
+## [2026-06-13 19:15] ConfirmModal Button Text Wrapping Fix
+- **Action**: Modified `src/components/ConfirmModal.tsx` to apply `numberOfLines={1}`, `adjustsFontSizeToFit`, and override `lineHeight: undefined` on button label components.
+- **Validation Run**: Executed compile validation via `testing/run_all_test_scripts.sh`.
+- **Result**: Success (All checks passed cleanly).

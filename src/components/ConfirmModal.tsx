@@ -142,7 +142,13 @@ export function ConfirmModal({
                 },
               ]}
             >
-              <AppText variant="labelLG" color={colors.text.secondary}>
+              <AppText
+                variant="labelLG"
+                color={colors.text.secondary}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={{ lineHeight: undefined }}
+              >
                 {cancelLabel}
               </AppText>
             </Pressable>
@@ -166,7 +172,12 @@ export function ConfirmModal({
                 },
               ]}
             >
-              <AppText variant="labelLG" style={{ color: '#FFFFFF', fontWeight: '700' }}>
+              <AppText
+                variant="labelLG"
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={{ color: '#FFFFFF', fontWeight: '700', lineHeight: undefined }}
+              >
                 {confirmLabel}
               </AppText>
             </Pressable>
