@@ -38,34 +38,34 @@ type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const CURRENCIES: { code: CurrencyCode; name: string; flag: string }[] = [
-  { code: 'USD', name: 'US Dollar',         flag: '🇺🇸' },
-  { code: 'EUR', name: 'Euro',              flag: '🇪🇺' },
-  { code: 'GBP', name: 'British Pound',     flag: '🇬🇧' },
-  { code: 'INR', name: 'Indian Rupee',      flag: '🇮🇳' },
-  { code: 'JPY', name: 'Japanese Yen',      flag: '🇯🇵' },
-  { code: 'CAD', name: 'Canadian Dollar',   flag: '🇨🇦' },
+  { code: 'USD', name: 'US Dollar', flag: '🇺🇸' },
+  { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
+  { code: 'GBP', name: 'British Pound', flag: '🇬🇧' },
+  { code: 'INR', name: 'Indian Rupee', flag: '🇮🇳' },
+  { code: 'JPY', name: 'Japanese Yen', flag: '🇯🇵' },
+  { code: 'CAD', name: 'Canadian Dollar', flag: '🇨🇦' },
   { code: 'AUD', name: 'Australian Dollar', flag: '🇦🇺' },
 ];
 
 const FAQ_ITEMS = [
-  { q: 'How do I add a transaction?',   a: 'Tap the + button on the Home or Activity tab to log income or expenses.' },
-  { q: 'How do budgets work?',          a: 'Set a monthly limit per category in the Budget tab. We track spending and warn you when nearing the limit.' },
-  { q: 'Can I export my data?',         a: 'Yes — go to Profile → Export Data to share your transactions as CSV.' },
-  { q: 'How do I track who owes me?',   a: 'Use the Ledger tab to record hand-to-hand money exchanges and loans.' },
-  { q: 'Is my data secure?',            a: 'All data is encrypted at rest and in transit. We never share your data.' },
+  { q: 'How do I add a transaction?', a: 'Tap the + button on the Home or Activity tab to log income or expenses.' },
+  { q: 'How do budgets work?', a: 'Set a monthly limit per category in the Budget tab. We track spending and warn you when nearing the limit.' },
+  { q: 'Can I export my data?', a: 'Yes — go to Profile → Export Data to share your transactions as CSV.' },
+  { q: 'How do I track who owes me?', a: 'Use the Ledger tab to record hand-to-hand money exchanges and loans.' },
+  { q: 'Is my data secure?', a: 'All data is encrypted at rest and in transit. We never share your data.' },
 ];
 
 // ─── Entrance animation ───────────────────────────────────────────────────────
 
 function useEntrance(delay: number) {
   const opacity = useSharedValue(0);
-  const ty      = useSharedValue(18);
+  const ty = useSharedValue(18);
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(1, { duration: 360 }));
-    ty.value      = withDelay(delay, withSpring(0, { damping: 22, stiffness: 200 }));
+    ty.value = withDelay(delay, withSpring(0, { damping: 22, stiffness: 200 }));
   }, []);
   return useAnimatedStyle(() => ({
-    opacity:   opacity.value,
+    opacity: opacity.value,
     transform: [{ translateY: ty.value }],
   }));
 }
@@ -73,29 +73,29 @@ function useEntrance(delay: number) {
 // ─── Bottom sheet ─────────────────────────────────────────────────────────────
 
 interface SheetProps {
-  visible:     boolean;
-  onClose:     () => void;
-  title:       string;
-  children:    React.ReactNode;
+  visible: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
   snapHeight?: number;
 }
 
 function BottomSheet({ visible, onClose, title, children, snapHeight = 460 }: SheetProps) {
   const { colors, isDark } = useTheme();
-  const ty          = useSharedValue(snapHeight + 100);
-  const dimOpacity  = useSharedValue(0);
+  const ty = useSharedValue(snapHeight + 100);
+  const dimOpacity = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
       dimOpacity.value = withTiming(1, { duration: 220 });
-      ty.value         = withSpring(0, { damping: 26, stiffness: 220, mass: 0.9 });
+      ty.value = withSpring(0, { damping: 26, stiffness: 220, mass: 0.9 });
     } else {
       dimOpacity.value = withTiming(0, { duration: 180 });
-      ty.value         = withTiming(snapHeight + 100, { duration: 240 });
+      ty.value = withTiming(snapHeight + 100, { duration: 240 });
     }
   }, [visible]);
 
-  const sheetStyle    = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value }] }));
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value }] }));
   const backdropStyle = useAnimatedStyle(() => ({ opacity: dimOpacity.value }));
 
   const bg = isDark ? colors.background.secondary : '#FFFFFF';
@@ -112,9 +112,9 @@ function BottomSheet({ visible, onClose, title, children, snapHeight = 460 }: Sh
             styles.sheetPanel,
             sheetStyle,
             {
-              height:          snapHeight,
+              height: snapHeight,
               backgroundColor: bg,
-              borderColor:     isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
             },
           ]}
         >
@@ -137,18 +137,18 @@ function BottomSheet({ visible, onClose, title, children, snapHeight = 460 }: Sh
 // ─── Setting row ──────────────────────────────────────────────────────────────
 
 interface RowProps {
-  icon:      IoniconName;
+  icon: IoniconName;
   iconColor: string;
-  label:     string;
+  label: string;
   subtitle?: string;
-  onPress?:  () => void;
-  right?:    React.ReactNode;
-  isLast?:   boolean;
+  onPress?: () => void;
+  right?: React.ReactNode;
+  isLast?: boolean;
 }
 
 function SettingRow({ icon, iconColor, label, subtitle, onPress, right, isLast }: RowProps) {
   const { colors, isDark } = useTheme();
-  const scale   = useSharedValue(1);
+  const scale = useSharedValue(1);
   const rowAnim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
@@ -193,7 +193,7 @@ function SectionCard({ title, children, delay = 0 }: { title?: string; children:
         styles.sectionCard,
         {
           backgroundColor: isDark ? colors.background.secondary : '#FFFFFF',
-          borderColor:     isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+          borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
         },
       ]}>
         {children}
@@ -205,12 +205,12 @@ function SectionCard({ title, children, delay = 0 }: { title?: string; children:
 // ─── Profile hero ─────────────────────────────────────────────────────────────
 
 interface HeroProps {
-  initials:    string;
-  fullName:    string;
-  email:       string;
+  initials: string;
+  fullName: string;
+  email: string;
   memberSince: string;
-  txCount:     number;
-  currency:    CurrencyCode;
+  txCount: number;
+  currency: CurrencyCode;
   onEditPress: () => void;
 }
 
@@ -315,10 +315,10 @@ interface NotifPrefs { transactions: boolean; budgetAlerts: boolean; plannedPay:
 function NotifSheet({ prefs, onChange }: { prefs: NotifPrefs; onChange: (k: keyof NotifPrefs, v: boolean) => void }) {
   const { colors, isDark } = useTheme();
   const ITEMS: { key: keyof NotifPrefs; label: string; sub: string }[] = [
-    { key: 'transactions', label: 'Transaction Alerts',  sub: 'Notify on every spend or income'   },
-    { key: 'budgetAlerts', label: 'Budget Warnings',     sub: 'Alert when nearing category limit'  },
-    { key: 'plannedPay',   label: 'Planned Payments',    sub: 'Remind me 2 days before due date'   },
-    { key: 'weeklyReport', label: 'Weekly Summary',      sub: 'Spending digest every Sunday'       },
+    { key: 'transactions', label: 'Transaction Alerts', sub: 'Notify on every spend or income' },
+    { key: 'budgetAlerts', label: 'Budget Warnings', sub: 'Alert when nearing category limit' },
+    { key: 'plannedPay', label: 'Planned Payments', sub: 'Remind me 2 days before due date' },
+    { key: 'weeklyReport', label: 'Weekly Summary', sub: 'Spending digest every Sunday' },
   ];
   return (
     <View style={{ marginTop: Spacing['3'] }}>
@@ -354,9 +354,9 @@ interface SecPrefs { biometric: boolean; autoLock: boolean; hideBalance: boolean
 function SecuritySheet({ prefs, onChange }: { prefs: SecPrefs; onChange: (k: keyof SecPrefs, v: boolean) => void }) {
   const { colors, isDark } = useTheme();
   const ITEMS: { key: keyof SecPrefs; label: string; sub: string; icon: IoniconName; color: string }[] = [
-    { key: 'biometric',   label: 'Face ID / Touch ID',  sub: 'Use biometrics to unlock app',    icon: 'finger-print',  color: '#6C63FF' },
-    { key: 'autoLock',    label: 'Auto-Lock',            sub: 'Lock after 5 min of inactivity',  icon: 'lock-closed',   color: '#EF4444' },
-    { key: 'hideBalance', label: 'Hide Balance',         sub: 'Blur amounts on home screen',     icon: 'eye-off',       color: '#F59E0B' },
+    { key: 'biometric', label: 'Face ID / Touch ID', sub: 'Use biometrics to unlock app', icon: 'finger-print', color: '#6C63FF' },
+    { key: 'autoLock', label: 'Auto-Lock', sub: 'Lock after 5 min of inactivity', icon: 'lock-closed', color: '#EF4444' },
+    { key: 'hideBalance', label: 'Hide Balance', sub: 'Blur amounts on home screen', icon: 'eye-off', color: '#F59E0B' },
   ];
   return (
     <View style={{ marginTop: Spacing['3'] }}>
@@ -400,8 +400,8 @@ function SecuritySheet({ prefs, onChange }: { prefs: SecPrefs; onChange: (k: key
 function ExportSheet({ onExport }: { onExport: (fmt: 'CSV' | 'JSON') => void }) {
   const { colors, isDark } = useTheme();
   const opts: { fmt: 'CSV' | 'JSON'; icon: IoniconName; desc: string }[] = [
-    { fmt: 'CSV',  icon: 'document-text-outline', desc: 'Spreadsheet-compatible format'  },
-    { fmt: 'JSON', icon: 'code-slash-outline',    desc: 'Raw data for developers'        },
+    { fmt: 'CSV', icon: 'document-text-outline', desc: 'Spreadsheet-compatible format' },
+    { fmt: 'JSON', icon: 'code-slash-outline', desc: 'Raw data for developers' },
   ];
   return (
     <View style={{ marginTop: Spacing['4'], gap: Spacing['3'], paddingHorizontal: Spacing['5'] }}>
@@ -414,7 +414,7 @@ function ExportSheet({ onExport }: { onExport: (fmt: 'CSV' | 'JSON') => void }) 
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onExport(o.fmt); }}
           style={[styles.exportOpt, {
             backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-            borderColor:     isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)',
+            borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)',
           }]}
         >
           <View style={[styles.exportIcon, { backgroundColor: colors.brand.primary + '18' }]}>
@@ -464,7 +464,7 @@ function HelpSheet() {
         );
       })}
       <Pressable
-        onPress={() => toast.info('Email us at support@moneyapp.io')}
+        onPress={() => toast.info('Email us at support@wherecash.app')}
         style={[styles.contactBtn, { backgroundColor: colors.brand.primary + '14' }]}
       >
         <Ionicons name="mail-outline" size={16} color={colors.brand.primary} />
@@ -479,27 +479,27 @@ function HelpSheet() {
 
 export default function ProfileScreen() {
   const { colors, isDark, toggle } = useTheme();
-  const { user, signOut, setUser }  = useAuth();
+  const { user, signOut, setUser } = useAuth();
   const transactions = useTransactionStore((s) => s.transactions);
 
   // Sheet visibility
-  const [currencySheet,  setCurrencySheet]  = useState(false);
-  const [notifSheet,     setNotifSheet]     = useState(false);
-  const [securitySheet,  setSecuritySheet]  = useState(false);
-  const [exportSheet,    setExportSheet]    = useState(false);
-  const [helpSheet,      setHelpSheet]      = useState(false);
+  const [currencySheet, setCurrencySheet] = useState(false);
+  const [notifSheet, setNotifSheet] = useState(false);
+  const [securitySheet, setSecuritySheet] = useState(false);
+  const [exportSheet, setExportSheet] = useState(false);
+  const [helpSheet, setHelpSheet] = useState(false);
 
   // Confirm dialog
   const [signOutConfirm, setSignOutConfirm] = useState(false);
-  const [rateConfirm,    setRateConfirm]    = useState(false);
+  const [rateConfirm, setRateConfirm] = useState(false);
 
   // Pref states
-  const [notifPrefs, setNotifPrefs]   = useState({ transactions: true, budgetAlerts: true, plannedPay: true, weeklyReport: false });
-  const [secPrefs,   setSecPrefs]     = useState({ biometric: false, autoLock: true, hideBalance: false });
+  const [notifPrefs, setNotifPrefs] = useState({ transactions: true, budgetAlerts: true, plannedPay: true, weeklyReport: false });
+  const [secPrefs, setSecPrefs] = useState({ biometric: false, autoLock: true, hideBalance: false });
 
-  const txCount     = transactions.length;
+  const txCount = transactions.length;
   const memberSince = user?.createdAt ? format(new Date(user.createdAt), 'MMM yyyy') : 'Jan 2025';
-  const initials    = user?.fullName?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) ?? 'AM';
+  const initials = user?.fullName?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) ?? 'AM';
 
   // ── Handlers ──
 
@@ -531,16 +531,16 @@ export default function ProfileScreen() {
       let content = '';
       if (fmt === 'CSV') {
         const header = 'Date,Type,Category,Amount,Currency,Description\n';
-        const rows   = transactions.map((t) =>
+        const rows = transactions.map((t) =>
           `${t.date},${t.type},${t.category},${t.amount},${t.currency},"${t.description}"`
         ).join('\n');
         content = header + rows;
       } else {
         content = JSON.stringify(transactions, null, 2);
       }
-      await Share.share({ message: `MoneyApp Export (${fmt})\n\n${content}`, title: `MoneyApp ${fmt}` });
+      await Share.share({ message: `WhereCash Export (${fmt})\n\n${content}`, title: `WhereCash ${fmt}` });
       toast.success(`Exported ${txCount} transactions as ${fmt}`);
-    } catch (_) {}
+    } catch (_) { }
   }, [transactions, txCount]);
 
   const handleBackup = useCallback(() => {
@@ -666,7 +666,7 @@ export default function ProfileScreen() {
           <SettingRow
             icon="star-outline"
             iconColor="#FBBF24"
-            label="Rate MoneyApp"
+            label="Rate WhereCash"
             subtitle="Share your feedback"
             onPress={() => setRateConfirm(true)}
           />
@@ -676,7 +676,7 @@ export default function ProfileScreen() {
             label="About"
             subtitle="v1.0.0 · Build 100"
             isLast
-            onPress={() => toast.info('MoneyApp v1.0.0 — Built with Expo & React Native')}
+            onPress={() => toast.info('WhereCash v1.0.0 — Built with Expo & React Native')}
           />
         </SectionCard>
 
@@ -688,7 +688,7 @@ export default function ProfileScreen() {
               styles.signOutBtn,
               {
                 backgroundColor: isDark ? '#EF444418' : '#FEF2F2',
-                borderColor:     isDark ? '#EF444430' : '#FCA5A5',
+                borderColor: isDark ? '#EF444430' : '#FCA5A5',
                 opacity: pressed ? 0.75 : 1,
               },
             ]}
@@ -698,7 +698,7 @@ export default function ProfileScreen() {
           </Pressable>
 
           <AppText variant="caption" color={colors.text.tertiary} align="center" style={styles.versionText}>
-            MoneyApp v1.0.0 · Made with ♥
+            WhereCash v1.0.0 · Made with ♥
           </AppText>
         </Animated.View>
       </ScrollView>
@@ -739,7 +739,7 @@ export default function ProfileScreen() {
 
       <ConfirmModal
         visible={rateConfirm}
-        title="Rate MoneyApp ⭐"
+        title="Rate WhereCash ⭐"
         message="Enjoying the app? Your review helps us reach more people."
         confirmLabel="Rate Now"
         cancelLabel="Later"
@@ -757,97 +757,97 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scroll: {
     paddingHorizontal: Spacing['5'],
-    paddingTop:        Spacing['3'],
-    gap:               Spacing['4'],
+    paddingTop: Spacing['3'],
+    gap: Spacing['4'],
   },
 
   // Hero
   hero: {
     borderRadius: Radius['2xl'],
-    overflow:     'hidden',
+    overflow: 'hidden',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 20 },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 20 },
       android: { elevation: 10 },
     }),
   },
   heroBorder: {
     ...StyleSheet.absoluteFill,
     borderRadius: Radius['2xl'],
-    borderWidth:  1,
+    borderWidth: 1,
   },
   heroBlobTL: {
-    position:     'absolute',
-    top:          -40,
-    left:         -30,
-    width:        160,
-    height:       160,
+    position: 'absolute',
+    top: -40,
+    left: -30,
+    width: 160,
+    height: 160,
     borderRadius: 80,
   },
   heroBlobBR: {
-    position:     'absolute',
-    bottom:       -30,
-    right:        -20,
-    width:        120,
-    height:       120,
+    position: 'absolute',
+    bottom: -30,
+    right: -20,
+    width: 120,
+    height: 120,
     borderRadius: 60,
   },
   heroInner: {
-    padding:    Spacing['6'],
+    padding: Spacing['6'],
     alignItems: 'center',
-    gap:        Spacing['2'],
+    gap: Spacing['2'],
   },
-  avatarWrap:   { marginBottom: Spacing['2'], position: 'relative' },
+  avatarWrap: { marginBottom: Spacing['2'], position: 'relative' },
   avatarCircle: {
-    width:          80,
-    height:         80,
-    borderRadius:   40,
-    alignItems:     'center',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
     justifyContent: 'center',
-    borderWidth:    2,
-    borderColor:    'rgba(255,255,255,0.25)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
-  avatarText:   { fontSize: 30, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
+  avatarText: { fontSize: 30, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
   editBadge: {
-    position:       'absolute',
-    bottom:         2,
-    right:          2,
-    width:          22,
-    height:         22,
-    borderRadius:   11,
-    alignItems:     'center',
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
     justifyContent: 'center',
-    borderWidth:    2,
-    borderColor:    'rgba(255,255,255,0.9)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.9)',
   },
-  heroName:   { fontWeight: '800', letterSpacing: -0.5, textAlign: 'center' },
+  heroName: { fontWeight: '800', letterSpacing: -0.5, textAlign: 'center' },
   heroBadges: { flexDirection: 'row', gap: Spacing['2'], flexWrap: 'wrap', justifyContent: 'center', marginTop: Spacing['2'] },
   heroBadge: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    gap:               4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 10,
-    paddingVertical:   4,
-    borderRadius:      Radius.full,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
   },
 
   // Section
   sectionLabel: { fontSize: 11, letterSpacing: 0.8, marginBottom: Spacing['2'], marginLeft: Spacing['1'] },
   sectionCard: {
     borderRadius: Radius.xl,
-    borderWidth:  1,
-    overflow:     'hidden',
+    borderWidth: 1,
+    overflow: 'hidden',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10 },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10 },
       android: { elevation: 2 },
     }),
   },
 
   // Setting row
   settingRow: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    gap:               Spacing['3'],
-    paddingVertical:   Spacing['4'],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['3'],
+    paddingVertical: Spacing['4'],
     paddingHorizontal: Spacing['4'],
   },
   iconBox: {
@@ -859,24 +859,24 @@ const styles = StyleSheet.create({
   // Bottom sheet
   sheetBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.52)' },
   sheetPanel: {
-    position:              'absolute',
-    bottom:                0,
-    left:                  0,
-    right:                 0,
-    borderTopLeftRadius:   Radius['2xl'],
-    borderTopRightRadius:  Radius['2xl'],
-    borderTopWidth:        1,
-    borderLeftWidth:       1,
-    borderRightWidth:      1,
-    paddingTop:            Spacing['3'],
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: Radius['2xl'],
+    borderTopRightRadius: Radius['2xl'],
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    paddingTop: Spacing['3'],
   },
   sheetHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: Spacing['2'] },
   sheetTitleRow: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    justifyContent:    'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing['5'],
-    paddingBottom:     Spacing['3'],
+    paddingBottom: Spacing['3'],
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(128,128,128,0.15)',
   },
@@ -884,19 +884,19 @@ const styles = StyleSheet.create({
 
   // Sheet rows
   sheetRow: {
-    flexDirection:     'row',
-    alignItems:        'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: Spacing['5'],
-    paddingVertical:   Spacing['4'],
-    gap:               Spacing['3'],
+    paddingVertical: Spacing['4'],
+    gap: Spacing['3'],
   },
   secIcon: { width: 36, height: 36, borderRadius: Radius.sm, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   pinBtn: {
-    flexDirection:  'row', alignItems: 'center', justifyContent: 'center',
-    gap:            Spacing['2'],
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: Spacing['2'],
     marginHorizontal: Spacing['5'], marginTop: Spacing['3'],
     paddingVertical: Spacing['3'],
-    borderRadius:   Radius.lg, borderWidth: 1,
+    borderRadius: Radius.lg, borderWidth: 1,
   },
 
   // Currency
@@ -909,8 +909,8 @@ const styles = StyleSheet.create({
 
   // FAQ
   faqItem: { paddingHorizontal: Spacing['5'], paddingVertical: Spacing['4'], gap: Spacing['2'] },
-  faqRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing['2'] },
-  faqA:    { lineHeight: 20, opacity: 0.85 },
+  faqRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing['2'] },
+  faqA: { lineHeight: 20, opacity: 0.85 },
   contactBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: Spacing['2'],
@@ -919,7 +919,7 @@ const styles = StyleSheet.create({
   },
 
   // Misc
-  badge:      { paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full },
+  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full },
   signOutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: Spacing['2'], paddingVertical: Spacing['4'],

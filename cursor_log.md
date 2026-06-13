@@ -35,7 +35,12 @@
 - **Validation Run**: Executed `testing/run_all_test_scripts.sh` (TypeScript compile check).
 - **Result**: Success (All compilation validation checks passed cleanly).
 
-## [2026-06-12 18:43] Categories Screen Compilation Fix
+## [2026-06-12 18:43] Categories Screen Compilation & Release Build Fix
 - **Action**: Fixed missing React Native imports (`Modal`, `TextInput`, `Platform`) and safe area hook (`useSafeAreaInsets`) in `src/app/categories.tsx`.
-- **Validation Run**: Executed `testing/run_all_test_scripts.sh` (TypeScript compile check).
-- **Result**: Success (All compiler checks passed cleanly).
+- **Validation Run**: Executed `testing/run_all_test_scripts.sh` (TypeScript compile check) and verified release bundle generation via `npx expo export` and Gradle release compilation (`./gradlew assembleRelease`).
+- **Result**: Success (All compiler checks and Gradle APK compilation passed cleanly).
+
+## [2026-06-13 10:59] App Renaming to WhereCash
+- **Action**: Updated `app.json`, `package.json`, `package-lock.json`, `src/app/(tabs)/profile.tsx`, and `ARCHITECTURE_DOCUMENTATION.md` to rename the application from `MoneyApp` to `WhereCash`.
+- **Validation Run**: Regenerated native directories using `npx expo prebuild` and executed TypeScript compiler checks via `testing/run_all_test_scripts.sh`.
+- **Result**: Success (All native prebuild tasks and TypeScript compile checks passed cleanly).

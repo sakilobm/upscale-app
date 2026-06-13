@@ -1,29 +1,29 @@
 {
   "expo": {
-    "name": "MoneyApp",
-    "slug": "MoneyApp",
+    "name": "WhereCash",
+    "slug": "WhereCash",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icon/Icon-512x512.png",
     "userInterfaceStyle": "dark",
-    "scheme": "moneyapp",
+    "scheme": "wherecash",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.moneyapp.app"
+      "bundleIdentifier": "com.wherecash.app"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0A0E1A",
-        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#FAFAF0",
+        "foregroundImage": "./assets/app-icon/Icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "monochromeImage": "./assets/app-icon/Icon-Monochrome.png"
       },
-      "package": "com.moneyapp.app",
+      "package": "com.wherecash.app",
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "bundler": "metro",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/app-icon/Icon-48x48.png"
     },
     "router": {
       "root": "src/app"
@@ -34,7 +34,7 @@
       [
         "expo-secure-store",
         {
-          "faceIDPermission": "Allow MoneyApp to access Face ID for secure authentication."
+          "faceIDPermission": "Allow WhereCash to access Face ID for secure authentication."
         }
       ]
     ],

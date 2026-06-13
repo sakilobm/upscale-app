@@ -5,10 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-06-13
+
+### Changed
+- Renamed the application name from `MoneyApp` to `WhereCash`.
+- Synchronized configuration keys across `app.json`, `package.json`, and `package-lock.json` (`name`, `slug`, `scheme`, `bundleIdentifier`, and `package` fields).
+- Updated user-facing brand strings, support email contact domain (`support@wherecash.app`), and sharing headers inside the Profile setting page (`src/app/(tabs)/profile.tsx`).
+- Regenerated native project wrappers for Android (`android/`) and iOS using `npx expo prebuild`.
+
+### Architectural Decisions
+- **Unified Branding Namespace**: Renamed native identifiers (`com.wherecash.app`, custom scheme `wherecash://`) to ensure consistent deep linking, native package lookup, and store listing identities under the new brand.
+- **Expo Prebuild Generation**: Utilized the automated Expo Prebuild tool chain to safely sync the Javascript workspace properties into Android native XML, Kotlin, and Gradle setups, preventing manually-induced build mismatches.
+
+### Rollback & Escape Plan
+- **Forward-fix path**: If native folders experience configuration caching or package search failures, run `npx expo prebuild --clean` or clear build cache using `cd android; ./gradlew clean`.
+- **Rollback path**: Run `git checkout app.json package.json package-lock.json src/app/(tabs)/profile.tsx ARCHITECTURE_DOCUMENTATION.md` and run `npx expo prebuild --clean` to restore original namespaces.
+
 ## [1.3.2] - 2026-06-12
 
 ### Fixed
 - Fixed missing React Native imports (`Modal`, `TextInput`, `Platform`) and safe area hook (`useSafeAreaInsets`) in `src/app/categories.tsx` to resolve TypeScript compilation errors (`Cannot find name`).
+- Resolved release bundler failure in `:app:createBundleReleaseJsAndAssets` by exporting static assets and bundling via Metro clean task, successfully compiling the production APK.
 
 ### Architectural Decisions
 - **Standard Dependency Alignment**: Resolved syntax errors using standard, non-invasive imports from peer dependencies `react-native` and `react-native-safe-area-context` to maintain compatibility with existing navigation and custom layouts.

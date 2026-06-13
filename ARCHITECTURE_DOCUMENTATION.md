@@ -1,6 +1,6 @@
 # Architecture Documentation
 
-This document describes the high-level architecture of `MoneyApp`, a modern, polished personal finance application built using Expo, React Native, and TypeScript.
+This document describes the high-level architecture of `WhereCash`, a modern, polished personal finance application built using Expo, React Native, and TypeScript.
 
 ---
 
@@ -27,7 +27,7 @@ The project follows a standard modular organization:
 
 ## 2. Navigation Architecture
 
-`MoneyApp` employs file-based routing:
+`WhereCash` employs file-based routing:
 1. **Root Stack**: Standard stack navigator transitioning between screens (header hidden). The first route is `(tabs)`.
 2. **Bottom Tabs**: Replaces standard bottom tab bar with an animated custom component (`CustomTabBar`).
 
