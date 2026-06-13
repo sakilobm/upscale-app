@@ -29,6 +29,13 @@ import { Spacing, Radius, Layout } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
 import { useAuth } from '@hooks/useAuth';
 import { useTransactionStore } from '@store/transactionStore';
+import { useAccountStore } from '@store/accountStore';
+import { useCategoryStore } from '@store/categoryStore';
+import { useBudgetStore } from '@store/budgetStore';
+import { usePlannedPaymentsStore } from '@store/plannedPaymentsStore';
+import { useLedgerStore } from '@store/ledgerStore';
+import { useLoansStore } from '@store/loansStore';
+import { clearAllPersistedData } from '@store/storage';
 import { toast } from '@store/toastStore';
 import { CURRENCY_SYMBOLS } from '@store/types';
 import type { CurrencyCode } from '@store/types';
@@ -489,9 +496,19 @@ export default function ProfileScreen() {
   const [exportSheet, setExportSheet] = useState(false);
   const [helpSheet, setHelpSheet] = useState(false);
 
+  // Store reset actions
+  const resetTransactions    = useTransactionStore((s) => s.reset);
+  const resetAccounts        = useAccountStore((s) => s.reset);
+  const resetCategories      = useCategoryStore((s) => s.reset);
+  const resetBudgets         = useBudgetStore((s) => s.reset);
+  const resetPlannedPayments = usePlannedPaymentsStore((s) => s.reset);
+  const resetLedger          = useLedgerStore((s) => s.reset);
+  const resetLoans           = useLoansStore((s) => s.reset);
+
   // Confirm dialog
-  const [signOutConfirm, setSignOutConfirm] = useState(false);
-  const [rateConfirm, setRateConfirm] = useState(false);
+  const [signOutConfirm,   setSignOutConfirm]   = useState(false);
+  const [rateConfirm,      setRateConfirm]      = useState(false);
+  const [clearDataConfirm, setClearDataConfirm] = useState(false);
 
   // Pref states
   const [notifPrefs, setNotifPrefs] = useState({ transactions: true, budgetAlerts: true, plannedPay: true, weeklyReport: false });
@@ -547,6 +564,20 @@ export default function ProfileScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     toast.success('All data is backed up and up to date!');
   }, []);
+
+  const handleClearAllData = useCallback(async () => {
+    setClearDataConfirm(false);
+    await clearAllPersistedData();
+    resetTransactions();
+    resetAccounts();
+    resetCategories();
+    resetBudgets();
+    resetPlannedPayments();
+    resetLedger();
+    resetLoans();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    toast.success('All data cleared and reset to demo');
+  }, [resetTransactions, resetAccounts, resetCategories, resetBudgets, resetPlannedPayments, resetLedger, resetLoans]);
 
   const handleSignOutConfirm = useCallback(() => {
     setSignOutConfirm(false);
@@ -650,6 +681,13 @@ export default function ProfileScreen() {
             label="Export Data"
             subtitle={`${txCount} transactions ready`}
             onPress={() => setExportSheet(true)}
+          />
+          <SettingRow
+            icon="trash-outline"
+            iconColor="#EF4444"
+            label="Clear All Data"
+            subtitle="Reset to demo — cannot be undone"
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); setClearDataConfirm(true); }}
             isLast
           />
         </SectionCard>
@@ -735,6 +773,18 @@ export default function ProfileScreen() {
         icon="log-out-outline"
         onConfirm={handleSignOutConfirm}
         onCancel={() => setSignOutConfirm(false)}
+      />
+
+      <ConfirmModal
+        visible={clearDataConfirm}
+        title="Clear All Data?"
+        message="This will erase all transactions, budgets, ledger entries and planned payments, and reset to demo data. This cannot be undone."
+        confirmLabel="Clear Everything"
+        cancelLabel="Cancel"
+        danger
+        icon="trash-outline"
+        onConfirm={handleClearAllData}
+        onCancel={() => setClearDataConfirm(false)}
       />
 
       <ConfirmModal

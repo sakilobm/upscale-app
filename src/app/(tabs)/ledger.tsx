@@ -120,6 +120,16 @@ export default function LedgerScreen() {
         </View>
 
         {/* Tab Content */}
+        {/* Swipe hint — visible only on owed_to_me / i_owe tabs with active entries */}
+        {activeTab !== 'loans' && activeEntries.length > 0 && (
+          <View style={[styles.swipeHint, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)' }]}>
+            <Ionicons name="arrow-back-outline" size={13} color={colors.text.tertiary} />
+            <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '500', fontSize: 11 }}>
+              Swipe left on a card to settle or delete
+            </AppText>
+          </View>
+        )}
+
         {activeTab === 'loans' ? (
           <View style={styles.loansSection}>
             {loans.length === 0 ? (
@@ -211,5 +221,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1,
     marginBottom: Spacing['1'],
+  },
+  swipeHint: {
+    flexDirection:     'row',
+    alignItems:        'center',
+    gap:               6,
+    paddingHorizontal: Spacing['3'],
+    paddingVertical:   Spacing['2'],
+    borderRadius:      Radius.lg,
+    borderWidth:       1,
+    marginBottom:      Spacing['1'],
   },
 });

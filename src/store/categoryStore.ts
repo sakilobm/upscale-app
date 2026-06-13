@@ -1,9 +1,11 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { zustandStorage } from './storage';
 
 export interface CategoryDef {
   id: string;
   label: string;
-  icon: string;   // Ionicons name (e.g. 'home', 'fast-food')
+  icon: string;
   color: string;
   isCustom: boolean;
   applicableTo: 'expense' | 'income' | 'both';
@@ -28,7 +30,6 @@ export const ICON_GROUPS: { label: string; icons: string[] }[] = [
   { label: 'Life',          icons: ['people', 'person', 'happy', 'paw', 'leaf', 'umbrella', 'sunny', 'moon', 'globe', 'earth'] },
 ];
 
-// Derived flat list — guaranteed unique
 export const ICON_OPTIONS: string[] = [
   ...new Set(ICON_GROUPS.flatMap((g) => g.icons)),
 ];
@@ -54,31 +55,45 @@ interface CategoryState {
   addCategory: (cat: Omit<CategoryDef, 'id' | 'isCustom'>) => void;
   updateCategory: (id: string, updates: Partial<Omit<CategoryDef, 'id' | 'isCustom'>>) => void;
   deleteCategory: (id: string) => void;
+  reset: () => void;
 }
 
-export const useCategoryStore = create<CategoryState>((set) => ({
-  categories: BUILT_IN,
+export const useCategoryStore = create<CategoryState>()(
+  persist(
+    (set) => ({
+      categories: BUILT_IN,
 
-  addCategory: (cat) =>
-    set((state) => ({
-      categories: [
-        ...state.categories,
-        { ...cat, id: `custom-${Date.now()}`, isCustom: true },
-      ],
-    })),
+      addCategory: (cat) =>
+        set((state) => ({
+          categories: [...state.categories, { ...cat, id: `custom-${Date.now()}`, isCustom: true }],
+        })),
 
-  updateCategory: (id, updates) =>
-    set((state) => ({
-      categories: state.categories.map((c) =>
-        c.id === id ? { ...c, ...updates } : c
-      ),
-    })),
+      updateCategory: (id, updates) =>
+        set((state) => ({
+          categories: state.categories.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+        })),
 
-  deleteCategory: (id) =>
-    set((state) => ({
-      categories: state.categories.filter((c) => c.id !== id),
-    })),
-}));
+      deleteCategory: (id) =>
+        set((state) => ({ categories: state.categories.filter((c) => c.id !== id) })),
+
+      reset: () => set({ categories: BUILT_IN }),
+    }),
+    {
+      name: 'wc-categories',
+      storage: zustandStorage,
+      // Only persist custom categories; built-ins are always re-merged on rehydration
+      partialize: (s) => ({ categories: s.categories.filter((c) => c.isCustom) }),
+      merge: (persisted: any, current) => ({
+        ...current,
+        // Merge: built-ins first, then any persisted custom cats
+        categories: [
+          ...BUILT_IN,
+          ...(persisted.categories ?? []),
+        ],
+      }),
+    }
+  )
+);
 
 export function getCategoryById(id: string): CategoryDef {
   const cats = useCategoryStore.getState().categories;

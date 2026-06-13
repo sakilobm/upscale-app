@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { zustandStorage } from './storage';
 import type { Account } from './types';
 import { MOCK_ACCOUNTS } from '@features/dashboard/services/dashboardService';
 
@@ -8,7 +10,6 @@ interface AccountState {
   isLoading: boolean;
   isError: boolean;
   error: string | null;
-  // Actions
   setAccounts: (accounts: Account[]) => void;
   addAccount: (account: Account) => void;
   updateAccount: (id: string, updates: Partial<Account>) => void;
@@ -16,43 +17,49 @@ interface AccountState {
   setActiveAccount: (id: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  reset: () => void;
 }
 
-export const useAccountStore = create<AccountState>((set) => ({
-  accounts: MOCK_ACCOUNTS,
-  activeAccountId: MOCK_ACCOUNTS.find((a) => a.isDefault)?.id ?? null,
-  isLoading: false,
-  isError: false,
-  error: null,
-
-  setAccounts: (accounts) => {
-    const defaultAccount = accounts.find((a) => a.isDefault) ?? accounts[0] ?? null;
-    set({
-      accounts,
-      activeAccountId: defaultAccount?.id ?? null,
+export const useAccountStore = create<AccountState>()(
+  persist(
+    (set) => ({
+      accounts: MOCK_ACCOUNTS,
+      activeAccountId: MOCK_ACCOUNTS.find((a) => a.isDefault)?.id ?? null,
       isLoading: false,
       isError: false,
       error: null,
-    });
-  },
 
-  addAccount: (account) =>
-    set((state) => ({ accounts: [...state.accounts, account] })),
+      setAccounts: (accounts) => {
+        const defaultAccount = accounts.find((a) => a.isDefault) ?? accounts[0] ?? null;
+        set({ accounts, activeAccountId: defaultAccount?.id ?? null, isLoading: false, isError: false, error: null });
+      },
 
-  updateAccount: (id, updates) =>
-    set((state) => ({
-      accounts: state.accounts.map((a) => (a.id === id ? { ...a, ...updates } : a)),
-    })),
+      addAccount: (account) =>
+        set((state) => ({ accounts: [...state.accounts, account] })),
 
-  deleteAccount: (id) =>
-    set((state) => ({
-      accounts: state.accounts.filter((a) => a.id !== id),
-      activeAccountId: state.activeAccountId === id ? null : state.activeAccountId,
-    })),
+      updateAccount: (id, updates) =>
+        set((state) => ({
+          accounts: state.accounts.map((a) => (a.id === id ? { ...a, ...updates } : a)),
+        })),
 
-  setActiveAccount: (id) => set({ activeAccountId: id }),
+      deleteAccount: (id) =>
+        set((state) => ({
+          accounts: state.accounts.filter((a) => a.id !== id),
+          activeAccountId: state.activeAccountId === id ? null : state.activeAccountId,
+        })),
 
-  setLoading: (isLoading) => set({ isLoading }),
+      setActiveAccount: (id) => set({ activeAccountId: id }),
 
-  setError: (error) => set({ error, isError: error !== null, isLoading: false }),
-}));
+      setLoading: (isLoading) => set({ isLoading }),
+
+      setError: (error) => set({ error, isError: error !== null, isLoading: false }),
+
+      reset: () => set({ accounts: MOCK_ACCOUNTS, activeAccountId: MOCK_ACCOUNTS.find((a) => a.isDefault)?.id ?? null }),
+    }),
+    {
+      name: 'wc-accounts',
+      storage: zustandStorage,
+      partialize: (s) => ({ accounts: s.accounts, activeAccountId: s.activeAccountId }),
+    }
+  )
+);
