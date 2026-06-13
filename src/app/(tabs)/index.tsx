@@ -81,6 +81,7 @@ function QuickAddSheet({
   const [category, setCategory] = useState('food');
   const [accountId, setAccountId] = useState(defaultAccount?.id ?? '');
   const [note, setNote] = useState('');
+  const [catFormVisible, setCatFormVisible] = useState(false);
 
   const slideY = useSharedValue(SH * 0.9);
 
@@ -145,6 +146,7 @@ function QuickAddSheet({
     .toLocaleString('en-US', { minimumFractionDigits: amountStr.includes('.') ? Math.min(amountStr.split('.')[1]?.length ?? 0, 2) : 0, maximumFractionDigits: 2 });
 
   return (
+    <>
     <Modal
       transparent
       visible={visible}
@@ -290,6 +292,18 @@ function QuickAddSheet({
                 </Pressable>
               );
             })}
+            {/* + New category chip */}
+            <Pressable
+              onPress={() => { setCatFormVisible(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+              style={[styles.qaCatChip, styles.qaCatNewChip, { borderColor: colors.brand.primary + '45' }]}
+            >
+              <View style={[styles.qaCatIcon, { backgroundColor: colors.brand.primary + '18' }]}>
+                <Ionicons name="add" size={15} color={colors.brand.primary} />
+              </View>
+              <AppText variant="labelSM" style={{ color: colors.brand.primary, fontWeight: '600', fontSize: 11 }}>
+                New
+              </AppText>
+            </Pressable>
           </ScrollView>
 
           {/* Account picker */}
@@ -370,6 +384,12 @@ function QuickAddSheet({
         </Animated.View>
       </View>
     </Modal>
+    <CategoryFormSheet
+      visible={catFormVisible}
+      onClose={() => setCatFormVisible(false)}
+      onSaved={(id) => setCategory(id)}
+    />
+    </>
   );
 }
 
@@ -592,7 +612,6 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      {/* Quick Add Sheet */}
       <QuickAddSheet
         visible={addVisible}
         initialType={addType}
@@ -820,6 +839,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: Radius.full,
+  },
+  qaCatNewChip: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
   },
   qaCatIcon: {
     width: 26,
