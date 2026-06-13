@@ -23,7 +23,6 @@ import Animated, {
   withRepeat,
   withSequence,
   FadeInDown,
-  Easing,
 } from 'react-native-reanimated';
 import { AppHeader } from '@components/AppHeader';
 import { FAB } from '@components/FAB';
@@ -243,248 +242,104 @@ function AddPaymentSheet({ visible, onClose, onSubmit }: AddPaymentSheetProps) {
 
 // ─── Budget Empty State ───────────────────────────────────────────────────────
 
-const GHOST_CATEGORIES = [
-  { icon: 'home-outline',      label: 'Housing',   pct: 72, color: '#6366F1' },
-  { icon: 'fast-food-outline', label: 'Food',      pct: 48, color: '#F59E0B' },
-  { icon: 'car-outline',       label: 'Transport', pct: 90, color: '#EF4444' },
-];
-
-const BENEFITS = [
-  { icon: 'bar-chart-outline',       text: 'Spending vs. limit bars' },
-  { icon: 'notifications-outline',   text: 'Overspend alerts' },
-  { icon: 'trending-down-outline',   text: 'Monthly insights' },
-];
+const BUDGET_FEATURES = [
+  { icon: 'pie-chart-outline'     as const, color: '#F59E0B', text: 'Set spending limits per category'   },
+  { icon: 'bar-chart-outline'     as const, color: '#6366F1', text: 'Visual progress bars for each limit' },
+  { icon: 'notifications-outline' as const, color: '#EF4444', text: 'Alerts before you overspend'         },
+] as const;
 
 function BudgetEmptyState() {
   const { colors, isDark } = useTheme();
-
-  const pulse = useSharedValue(1);
-  useEffect(() => {
-    pulse.value = withRepeat(
-      withSequence(
-        withTiming(1.22, { duration: 1900, easing: Easing.inOut(Easing.sin) }),
-        withTiming(1.0,  { duration: 1900, easing: Easing.inOut(Easing.sin) }),
-      ), -1, true,
-    );
-  }, []);
-
-  // Scale-only pulse — no opacity here to avoid layout-animation conflict
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulse.value }],
-  }));
-
   const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
+  const accentHex = '#F59E0B';
 
   return (
-    <View style={es.root}>
-
+    <View style={be.root}>
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <Animated.View entering={FadeInDown.springify().damping(22).stiffness(140)} style={es.heroWrap}>
-        {/* Outer glow ring (pulsing) */}
-        <Animated.View style={[es.glowRing, { backgroundColor: colors.brand.primary + '18' }, pulseStyle]} />
-        {/* Mid ring */}
-        <View style={[es.midRing, { borderColor: colors.brand.primary + '28' }]} />
-        {/* Icon circle */}
-        <View style={es.iconCircle}>
-          <LinearGradient
-            colors={[colors.brand.primary, colors.brand.accent] as [string, string]}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <Ionicons name="wallet-outline" size={38} color="#fff" />
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140)} style={be.heroWrap}>
+        <View style={[be.outerRing, { borderColor: accentHex + '28' }]} />
+        <LinearGradient
+          colors={['#F59E0B', '#D97706']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={be.iconCircle}
+        >
+          <Ionicons name="wallet-outline" size={36} color="#fff" />
+        </LinearGradient>
+        <View style={[be.badge, be.badgeBR, { backgroundColor: accentHex + '20' }]}>
+          <Ionicons name="add" size={16} color={accentHex} />
         </View>
-        {/* Floating decorative dots */}
-        <View style={[es.floatDot, es.dotTL, { backgroundColor: '#6366F1' }]} />
-        <View style={[es.floatDot, es.dotTR, { backgroundColor: '#F59E0B' }]} />
-        <View style={[es.floatDot, es.dotBL, { backgroundColor: '#10B981' }]} />
-        <View style={[es.floatDot, es.dotBR, { backgroundColor: '#EF4444' }]} />
       </Animated.View>
 
       {/* ── Text ─────────────────────────────────────────────── */}
-      <Animated.View entering={FadeInDown.springify().damping(22).stiffness(140).delay(80)} style={es.textBlock}>
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(80)} style={be.textBlock}>
         <AppText variant="headingMD" color={colors.text.primary} align="center">
-          No budgets yet
+          No budgets set
         </AppText>
-        <AppText variant="bodySM" color={colors.text.secondary} align="center" style={es.subtitle}>
+        <AppText variant="bodySM" color={colors.text.secondary} align="center" style={be.subtitle}>
           Set monthly limits per category to stay on track and build better money habits.
         </AppText>
       </Animated.View>
 
-      {/* ── Ghost Preview Cards ───────────────────────────────── */}
-      <Animated.View
-        entering={FadeInDown.springify().damping(22).stiffness(140).delay(160)}
-        style={es.previewRow}
-      >
-        {GHOST_CATEGORIES.map((cat, i) => (
-          <View
-            key={cat.label}
-            style={[es.previewCard, { backgroundColor: cardBg, borderColor: cat.color + '28', opacity: 1 - i * 0.14 }]}
-          >
-            <View style={[es.previewIconBox, { backgroundColor: cat.color + '18' }]}>
-              <Ionicons name={cat.icon as any} size={17} color={cat.color} />
-            </View>
-            <AppText variant="caption" color={colors.text.primary} style={es.previewLabel}>
-              {cat.label}
-            </AppText>
-            <View style={[es.miniBarTrack, { backgroundColor: colors.glass.backgroundMid }]}>
-              <View style={[es.miniBarFill, { width: `${cat.pct}%`, backgroundColor: cat.color + '60' }]} />
-            </View>
-            <AppText variant="caption" color={colors.text.tertiary}>
-              $0 / —
-            </AppText>
-          </View>
-        ))}
-      </Animated.View>
-
-      {/* ── Benefits ─────────────────────────────────────────── */}
-      <Animated.View
-        entering={FadeInDown.springify().damping(22).stiffness(140).delay(240)}
-        style={es.benefitsCol}
-      >
-        {BENEFITS.map(({ icon, text }) => (
+      {/* ── Feature rows ─────────────────────────────────────── */}
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(160)} style={be.featuresCol}>
+        {BUDGET_FEATURES.map(({ icon, color, text }) => (
           <View
             key={text}
-            style={[es.benefitRow, { backgroundColor: isDark ? colors.background.secondary : '#FFFFFF', borderColor: colors.glass.border }]}
+            style={[be.featureRow, { backgroundColor: cardBg, borderColor: accentHex + '20' }]}
           >
-            <View style={[es.benefitIconBox, { backgroundColor: colors.brand.primary + '15' }]}>
-              <Ionicons name={icon as any} size={15} color={colors.brand.primary} />
+            <View style={[be.featureIcon, { backgroundColor: color + '15' }]}>
+              <Ionicons name={icon} size={16} color={color} />
             </View>
             <AppText variant="bodySM" color={colors.text.secondary} style={{ flex: 1 }}>{text}</AppText>
-            <Ionicons name="checkmark-circle" size={16} color={colors.brand.primary + '80'} />
           </View>
         ))}
       </Animated.View>
 
       {/* ── Hint ─────────────────────────────────────────────── */}
       <Animated.View
-        entering={FadeInDown.springify().damping(22).stiffness(140).delay(320)}
-        style={es.hintRow}
+        entering={FadeInDown.springify().damping(20).stiffness(140).delay(240)}
+        style={[be.hint, { backgroundColor: accentHex + '0C', borderColor: accentHex + '25' }]}
       >
-        <Ionicons name="arrow-down-circle-outline" size={15} color={colors.text.tertiary} />
-        <AppText variant="caption" color={colors.text.tertiary}>
+        <Ionicons name="bulb-outline" size={14} color={accentHex} />
+        <AppText variant="caption" color={colors.text.secondary} style={{ flex: 1 }}>
           Tap{' '}
-          <AppText variant="caption" style={{ color: colors.brand.primary, fontWeight: '700' }}>
-            + Payment
-          </AppText>
+          <AppText variant="caption" style={{ color: accentHex, fontWeight: '700' }}>+ Payment</AppText>
           {' '}below to schedule your first payment
         </AppText>
       </Animated.View>
-
     </View>
   );
 }
 
-const es = StyleSheet.create({
-  root: {
-    alignItems: 'center',
-    paddingTop: Spacing['6'],
-    paddingBottom: Spacing['4'],
-    gap: Spacing['5'],
-  },
-
-  // Hero
-  heroWrap: {
-    width: 160,
-    height: 160,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  glowRing: {
-    position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-  },
-  midRing: {
-    position: 'absolute',
-    width: 118,
-    height: 118,
-    borderRadius: 59,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-  },
+const be = StyleSheet.create({
+  root:        { alignItems: 'center', paddingHorizontal: Spacing['5'], paddingTop: Spacing['4'], gap: Spacing['4'] },
+  heroWrap:    { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
+  outerRing:   { position: 'absolute', width: 118, height: 118, borderRadius: 59, borderWidth: 1.5, borderStyle: 'dashed' },
   iconCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    width: 82, height: 82, borderRadius: 41,
+    alignItems: 'center', justifyContent: 'center',
     ...Platform.select({
       ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
       android: { elevation: 12 },
     }),
   },
-  floatDot: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    opacity: 0.7,
-  },
-  dotTL: { top: 18, left: 20 },
-  dotTR: { top: 22, right: 16 },
-  dotBL: { bottom: 20, left: 14 },
-  dotBR: { bottom: 18, right: 22 },
-
-  // Text
-  textBlock: { alignItems: 'center', gap: Spacing['2'], paddingHorizontal: Spacing['4'] },
-  subtitle:  { lineHeight: 20, maxWidth: 280 },
-
-  // Ghost preview
-  previewRow: {
-    flexDirection: 'row',
-    gap: Spacing['3'],
-    paddingHorizontal: Spacing['2'],
-    alignSelf: 'stretch',
-  },
-  previewCard: {
-    flex: 1,
-    borderRadius: Radius.xl,
-    borderWidth: 1.5,
-    padding: Spacing['3'],
-    gap: 4,
-    alignItems: 'flex-start',
+  badge:       { position: 'absolute', width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  badgeBR:     { bottom: 14, right: 10 },
+  textBlock:   { alignItems: 'center', gap: Spacing['2'] },
+  subtitle:    { maxWidth: 280, lineHeight: 20 },
+  featuresCol: { alignSelf: 'stretch', gap: Spacing['2'] },
+  featureRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
+    padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8 },
-      android: { elevation: 3 },
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      android: { elevation: 1 },
     }),
   },
-  previewIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  previewLabel: { fontWeight: '600', marginTop: 2 },
-  miniBarTrack: { height: 5, borderRadius: 3, width: '100%', overflow: 'hidden', marginTop: 2 },
-  miniBarFill:  { height: '100%', borderRadius: 3 },
-
-  // Benefits
-  benefitsCol: { gap: Spacing['2'], alignSelf: 'stretch', paddingHorizontal: Spacing['2'] },
-  benefitRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing['3'],
-    padding: Spacing['3'],
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-  },
-  benefitIconBox: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Hint
-  hintRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing['2'],
-    opacity: 0.7,
-    paddingHorizontal: Spacing['4'],
+  featureIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  hint: {
+    alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center',
+    gap: Spacing['2'], padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
   },
 });
 

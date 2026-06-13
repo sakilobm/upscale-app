@@ -662,6 +662,7 @@ const SETUP_STEPS = [
 function HomeSetupPrompt({ onLogExpense }: { onLogExpense: () => void }) {
   const { colors, isDark } = useTheme();
   const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
+  const accentHex = colors.brand.primary;
 
   const handleStep = (action: 'accounts' | 'transaction' | 'budget') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -672,65 +673,66 @@ function HomeSetupPrompt({ onLogExpense }: { onLogExpense: () => void }) {
 
   return (
     <View style={hs.root}>
-      {/* Header */}
-      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140)} style={hs.header}>
-        <View style={[hs.rocketBadge, { backgroundColor: colors.brand.primary + '18' }]}>
-          <Ionicons name="rocket-outline" size={22} color={colors.brand.primary} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <AppText variant="headingSM" color={colors.text.primary}>Let's get you started</AppText>
-          <AppText variant="caption" color={colors.text.tertiary} style={{ marginTop: 2 }}>
-            3 quick steps to set up WhereCash
-          </AppText>
+      {/* ── Hero ─────────────────────────────────────────────── */}
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140)} style={hs.heroWrap}>
+        <View style={[hs.outerRing, { borderColor: accentHex + '28' }]} />
+        <LinearGradient
+          colors={[accentHex, colors.brand.accent] as [string, string]}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={hs.iconCircle}
+        >
+          <Ionicons name="rocket-outline" size={36} color="#fff" />
+        </LinearGradient>
+        <View style={[hs.badge, hs.badgeBR, { backgroundColor: accentHex + '20' }]}>
+          <Ionicons name="sparkles" size={13} color={accentHex} />
         </View>
       </Animated.View>
 
-      {/* Steps */}
-      {SETUP_STEPS.map((step, i) => (
-        <Animated.View
-          key={step.title}
-          entering={FadeInDown.springify().damping(20).stiffness(140).delay(80 + i * 70)}
-        >
-          <Pressable
-            onPress={() => handleStep(step.action)}
-            style={({ pressed }) => [
-              hs.stepCard,
-              {
-                backgroundColor: cardBg,
-                borderColor: step.color + '25',
-                opacity: pressed ? 0.82 : 1,
-              },
-            ]}
+      {/* ── Text ─────────────────────────────────────────────── */}
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(80)} style={hs.textBlock}>
+        <AppText variant="headingMD" color={colors.text.primary} align="center">
+          Welcome to WhereCash
+        </AppText>
+        <AppText variant="bodySM" color={colors.text.secondary} align="center" style={hs.subtitle}>
+          3 quick steps to start tracking your money and hitting your goals.
+        </AppText>
+      </Animated.View>
+
+      {/* ── Step rows (tappable) ──────────────────────────────── */}
+      <View style={hs.stepsCol}>
+        {SETUP_STEPS.map((step, i) => (
+          <Animated.View
+            key={step.title}
+            entering={FadeInDown.springify().damping(20).stiffness(140).delay(160 + i * 70)}
           >
-            {/* Connecting line */}
-            {i < SETUP_STEPS.length - 1 && (
-              <View style={[hs.connector, { backgroundColor: colors.glass.backgroundMid }]} />
-            )}
+            <Pressable
+              onPress={() => handleStep(step.action)}
+              style={({ pressed }) => [
+                hs.stepRow,
+                { backgroundColor: cardBg, borderColor: step.color + '22', opacity: pressed ? 0.82 : 1 },
+              ]}
+            >
+              <View style={[hs.stepIcon, { backgroundColor: step.color + '15' }]}>
+                <Ionicons name={step.icon} size={16} color={step.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <AppText variant="labelMD" color={colors.text.primary}>{step.title}</AppText>
+                <AppText variant="caption" color={colors.text.secondary} style={{ lineHeight: 17, marginTop: 1 }}>
+                  {step.subtitle}
+                </AppText>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
+            </Pressable>
+          </Animated.View>
+        ))}
+      </View>
 
-            <View style={[hs.stepIconBox, { backgroundColor: step.color + '18' }]}>
-              <Ionicons name={step.icon} size={20} color={step.color} />
-            </View>
-
-            <View style={{ flex: 1 }}>
-              <AppText variant="labelMD" color={colors.text.primary}>{step.title}</AppText>
-              <AppText variant="caption" color={colors.text.secondary} style={{ marginTop: 2, lineHeight: 17 }}>
-                {step.subtitle}
-              </AppText>
-            </View>
-
-            <View style={[hs.arrowBox, { backgroundColor: step.color + '12' }]}>
-              <Ionicons name="chevron-forward" size={16} color={step.color} />
-            </View>
-          </Pressable>
-        </Animated.View>
-      ))}
-
-      {/* Bottom tip */}
+      {/* ── Hint ─────────────────────────────────────────────── */}
       <Animated.View
-        entering={FadeInDown.springify().damping(20).stiffness(140).delay(300)}
-        style={[hs.tip, { backgroundColor: colors.brand.primary + '0C', borderColor: colors.brand.primary + '20' }]}
+        entering={FadeInDown.springify().damping(20).stiffness(140).delay(400)}
+        style={[hs.hint, { backgroundColor: accentHex + '0C', borderColor: accentHex + '25' }]}
       >
-        <Ionicons name="information-circle-outline" size={15} color={colors.brand.primary} />
+        <Ionicons name="shield-checkmark-outline" size={14} color={accentHex} />
         <AppText variant="caption" color={colors.text.secondary} style={{ flex: 1, lineHeight: 17 }}>
           All your data stays on this device. Nothing is uploaded without your permission.
         </AppText>
@@ -740,41 +742,34 @@ function HomeSetupPrompt({ onLogExpense }: { onLogExpense: () => void }) {
 }
 
 const hs = StyleSheet.create({
-  root:        { gap: Spacing['3'], paddingTop: Spacing['2'] },
-  header:      { flexDirection: 'row', alignItems: 'center', gap: Spacing['3'], paddingBottom: Spacing['1'] },
-  rocketBadge: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  stepCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing['3'],
-    padding: Spacing['4'],
-    borderRadius: Radius.xl,
-    borderWidth: 1.5,
-    position: 'relative',
-    overflow: 'visible',
+  root:      { alignItems: 'center', paddingHorizontal: Spacing['5'], paddingTop: Spacing['2'], gap: Spacing['4'] },
+  heroWrap:  { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
+  outerRing: { position: 'absolute', width: 118, height: 118, borderRadius: 59, borderWidth: 1.5, borderStyle: 'dashed' },
+  iconCircle: {
+    width: 82, height: 82, borderRadius: 41,
+    alignItems: 'center', justifyContent: 'center',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10 },
-      android: { elevation: 3 },
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
+      android: { elevation: 12 },
     }),
   },
-  connector: {
-    position: 'absolute',
-    left: Spacing['4'] + 19,  // center of icon box (padding + half iconBox width)
-    bottom: -Spacing['3'],
-    width: 2,
-    height: Spacing['3'],
-    zIndex: 1,
+  badge:     { position: 'absolute', width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  badgeBR:   { bottom: 14, right: 10 },
+  textBlock: { alignItems: 'center', gap: Spacing['2'] },
+  subtitle:  { maxWidth: 280, lineHeight: 20 },
+  stepsCol:  { alignSelf: 'stretch', gap: Spacing['2'] },
+  stepRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
+    padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
+    ...Platform.select({
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      android: { elevation: 1 },
+    }),
   },
-  stepIconBox: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  arrowBox:    { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  tip: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing['2'],
-    padding: Spacing['3'],
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    marginTop: Spacing['2'],
+  stepIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  hint: {
+    alignSelf: 'stretch', flexDirection: 'row', alignItems: 'flex-start',
+    gap: Spacing['2'], padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
   },
 });
 
