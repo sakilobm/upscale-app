@@ -81,7 +81,7 @@ function buildSeed(): LedgerEntry[] {
 export const useLedgerStore = create<LedgerState>()(
   persist(
     (set) => ({
-      entries:   buildSeed(),
+      entries:   [],
       isLoading: false,
 
       addEntry: (draft) => {

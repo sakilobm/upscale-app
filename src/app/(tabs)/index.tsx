@@ -20,6 +20,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   Easing,
+  FadeInDown,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useDashboardData } from '@features/dashboard/hooks/useDashboardData';
@@ -573,42 +574,53 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* ── This Month ───────────────────────────────────────────── */}
-        {data && (
+        {/* ── Data sections OR setup prompt ─────────────────────── */}
+        {accounts.length === 0 && storeTransactions.length === 0 ? (
           <View style={styles.section}>
-            <SectionTitle title="This Month" />
-            <View style={styles.statsRow}>
-              <QuickStatCard label="Income"   amount={data.monthSummary.totalIncome}  type="income"  iconEmoji="💰" />
-              <QuickStatCard label="Expenses" amount={data.monthSummary.totalExpense} type="expense" iconEmoji="💸" />
-            </View>
+            <HomeSetupPrompt onLogExpense={() => openAdd('expense')} />
           </View>
-        )}
-
-        {/* ── Spending Chart ──────────────────────────────────────── */}
-        <View style={styles.section}>
-          <SectionTitle title="Where it went" />
-          <SpendingChart data={data?.spendingByCategory ?? []} isLoading={isLoading} />
-        </View>
-
-        {/* ── Recent Activity ─────────────────────────────────────── */}
-        {recentTransactions.length > 0 && (
-          <View style={styles.section}>
-            <SectionTitle
-              title="Recent Activity"
-              action="See all"
-              onAction={() => router.push('/(tabs)/transactions')}
-            />
-            <GlassCard padding={0}>
-              {recentTransactions.map((tx, idx) => (
-                <View
-                  key={tx.id}
-                  style={[styles.txRow, idx === recentTransactions.length - 1 && styles.txRowLast]}
-                >
-                  <RecentTransactionRow transaction={tx} onPress={handleTransactionPress} />
+        ) : (
+          <>
+            {/* This Month */}
+            {data && (
+              <View style={styles.section}>
+                <SectionTitle title="This Month" />
+                <View style={styles.statsRow}>
+                  <QuickStatCard label="Income"   amount={data.monthSummary.totalIncome}  type="income"  iconEmoji="💰" />
+                  <QuickStatCard label="Expenses" amount={data.monthSummary.totalExpense} type="expense" iconEmoji="💸" />
                 </View>
-              ))}
-            </GlassCard>
-          </View>
+              </View>
+            )}
+
+            {/* Spending Chart — only when there's something to show */}
+            {data && data.spendingByCategory.length > 0 && (
+              <View style={styles.section}>
+                <SectionTitle title="Where it went" />
+                <SpendingChart data={data.spendingByCategory} isLoading={isLoading} />
+              </View>
+            )}
+
+            {/* Recent Activity */}
+            {recentTransactions.length > 0 && (
+              <View style={styles.section}>
+                <SectionTitle
+                  title="Recent Activity"
+                  action="See all"
+                  onAction={() => router.push('/(tabs)/transactions')}
+                />
+                <GlassCard padding={0}>
+                  {recentTransactions.map((tx, idx) => (
+                    <View
+                      key={tx.id}
+                      style={[styles.txRow, idx === recentTransactions.length - 1 && styles.txRowLast]}
+                    >
+                      <RecentTransactionRow transaction={tx} onPress={handleTransactionPress} />
+                    </View>
+                  ))}
+                </GlassCard>
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
 
@@ -620,6 +632,151 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
+
+// ─── Home Setup Prompt (shown when app is fresh / all data cleared) ───────────
+
+const SETUP_STEPS = [
+  {
+    icon:     'wallet-outline'    as const,
+    color:    '#6366F1',
+    title:    'Add your first account',
+    subtitle: 'Link a bank, cash wallet, or savings account',
+    action:   'accounts' as const,
+  },
+  {
+    icon:     'receipt-outline'   as const,
+    color:    '#10B981',
+    title:    'Log an expense or income',
+    subtitle: 'Track where your money comes and goes',
+    action:   'transaction' as const,
+  },
+  {
+    icon:     'bar-chart-outline' as const,
+    color:    '#F59E0B',
+    title:    'Set a monthly budget',
+    subtitle: 'Limit spending per category and hit your goals',
+    action:   'budget' as const,
+  },
+] as const;
+
+function HomeSetupPrompt({ onLogExpense }: { onLogExpense: () => void }) {
+  const { colors, isDark } = useTheme();
+  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
+
+  const handleStep = (action: 'accounts' | 'transaction' | 'budget') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (action === 'accounts')    router.push('/accounts');
+    else if (action === 'budget') router.push('/(tabs)/budget');
+    else                          onLogExpense();
+  };
+
+  return (
+    <View style={hs.root}>
+      {/* Header */}
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140)} style={hs.header}>
+        <View style={[hs.rocketBadge, { backgroundColor: colors.brand.primary + '18' }]}>
+          <Ionicons name="rocket-outline" size={22} color={colors.brand.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <AppText variant="headingSM" color={colors.text.primary}>Let's get you started</AppText>
+          <AppText variant="caption" color={colors.text.tertiary} style={{ marginTop: 2 }}>
+            3 quick steps to set up WhereCash
+          </AppText>
+        </View>
+      </Animated.View>
+
+      {/* Steps */}
+      {SETUP_STEPS.map((step, i) => (
+        <Animated.View
+          key={step.title}
+          entering={FadeInDown.springify().damping(20).stiffness(140).delay(80 + i * 70)}
+        >
+          <Pressable
+            onPress={() => handleStep(step.action)}
+            style={({ pressed }) => [
+              hs.stepCard,
+              {
+                backgroundColor: cardBg,
+                borderColor: step.color + '25',
+                opacity: pressed ? 0.82 : 1,
+              },
+            ]}
+          >
+            {/* Connecting line */}
+            {i < SETUP_STEPS.length - 1 && (
+              <View style={[hs.connector, { backgroundColor: colors.glass.backgroundMid }]} />
+            )}
+
+            <View style={[hs.stepIconBox, { backgroundColor: step.color + '18' }]}>
+              <Ionicons name={step.icon} size={20} color={step.color} />
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <AppText variant="labelMD" color={colors.text.primary}>{step.title}</AppText>
+              <AppText variant="caption" color={colors.text.secondary} style={{ marginTop: 2, lineHeight: 17 }}>
+                {step.subtitle}
+              </AppText>
+            </View>
+
+            <View style={[hs.arrowBox, { backgroundColor: step.color + '12' }]}>
+              <Ionicons name="chevron-forward" size={16} color={step.color} />
+            </View>
+          </Pressable>
+        </Animated.View>
+      ))}
+
+      {/* Bottom tip */}
+      <Animated.View
+        entering={FadeInDown.springify().damping(20).stiffness(140).delay(300)}
+        style={[hs.tip, { backgroundColor: colors.brand.primary + '0C', borderColor: colors.brand.primary + '20' }]}
+      >
+        <Ionicons name="information-circle-outline" size={15} color={colors.brand.primary} />
+        <AppText variant="caption" color={colors.text.secondary} style={{ flex: 1, lineHeight: 17 }}>
+          All your data stays on this device. Nothing is uploaded without your permission.
+        </AppText>
+      </Animated.View>
+    </View>
+  );
+}
+
+const hs = StyleSheet.create({
+  root:        { gap: Spacing['3'], paddingTop: Spacing['2'] },
+  header:      { flexDirection: 'row', alignItems: 'center', gap: Spacing['3'], paddingBottom: Spacing['1'] },
+  rocketBadge: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  stepCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['3'],
+    padding: Spacing['4'],
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
+    position: 'relative',
+    overflow: 'visible',
+    ...Platform.select({
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10 },
+      android: { elevation: 3 },
+    }),
+  },
+  connector: {
+    position: 'absolute',
+    left: Spacing['4'] + 19,  // center of icon box (padding + half iconBox width)
+    bottom: -Spacing['3'],
+    width: 2,
+    height: Spacing['3'],
+    zIndex: 1,
+  },
+  stepIconBox: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  arrowBox:    { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  tip: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing['2'],
+    padding: Spacing['3'],
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginTop: Spacing['2'],
+  },
+});
 
 // ─── Section title ────────────────────────────────────────────────────────────
 

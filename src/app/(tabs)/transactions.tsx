@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, type ComponentProps } from 'react';
+import { useCallback, useMemo, useRef, type ComponentProps } from 'react';
 import {
   View,
   ScrollView,
@@ -25,7 +25,6 @@ import { useTransactions } from '@features/transactions/hooks/useTransactions';
 import { TransactionListItem } from '@features/transactions/components/TransactionListItem';
 import { FilterBar } from '@features/transactions/components/FilterBar';
 import { AppText } from '@components/AppText';
-import { EmptyState } from '@components/EmptyState';
 import { LoadingScreen } from '@components/LoadingScreen';
 import { Spacing, Layout, Radius, Typography } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
@@ -205,6 +204,128 @@ function AccountBar() {
   );
 }
 
+// ─── Activity empty state ─────────────────────────────────────────────────────
+
+function ActivityEmptyState() {
+  const { colors, isDark } = useTheme();
+  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
+
+  const FEATURES = [
+    { icon: 'trending-down-outline' as const, color: '#EF4444', text: 'Log expenses by category' },
+    { icon: 'trending-up-outline'   as const, color: '#10B981', text: 'Record income sources'    },
+    { icon: 'analytics-outline'     as const, color: '#6366F1', text: 'See monthly breakdowns'   },
+  ];
+
+  return (
+    <View style={ae.root}>
+      {/* Hero icon */}
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140)} style={ae.heroWrap}>
+        <View style={ae.outerRing}>
+          <View style={[ae.innerCircle, { overflow: 'hidden' }]}>
+            <LinearGradient
+              colors={[colors.brand.primary, colors.brand.accent] as [string, string]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <Ionicons name="receipt-outline" size={36} color="#fff" />
+          </View>
+        </View>
+        {/* Small floating badges */}
+        <View style={[ae.badge, ae.badgeTL, { backgroundColor: '#EF444418' }]}>
+          <Ionicons name="trending-down" size={13} color="#EF4444" />
+        </View>
+        <View style={[ae.badge, ae.badgeTR, { backgroundColor: '#10B98118' }]}>
+          <Ionicons name="trending-up" size={13} color="#10B981" />
+        </View>
+      </Animated.View>
+
+      {/* Text */}
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(80)} style={ae.textBlock}>
+        <AppText variant="headingMD" color={colors.text.primary} align="center">
+          No transactions yet
+        </AppText>
+        <AppText variant="bodySM" color={colors.text.secondary} align="center" style={ae.subtitle}>
+          Start logging your income and expenses to get a clear picture of your finances.
+        </AppText>
+      </Animated.View>
+
+      {/* Feature rows */}
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(160)} style={ae.featuresCol}>
+        {FEATURES.map(({ icon, color, text }) => (
+          <View
+            key={text}
+            style={[ae.featureRow, { backgroundColor: cardBg, borderColor: color + '22' }]}
+          >
+            <View style={[ae.featureIcon, { backgroundColor: color + '15' }]}>
+              <Ionicons name={icon} size={16} color={color} />
+            </View>
+            <AppText variant="bodySM" color={colors.text.secondary} style={{ flex: 1 }}>{text}</AppText>
+            <View style={[ae.dot, { backgroundColor: color + '60' }]} />
+          </View>
+        ))}
+      </Animated.View>
+
+      {/* CTA hint */}
+      <Animated.View
+        entering={FadeInDown.springify().damping(20).stiffness(140).delay(240)}
+        style={[ae.hint, { backgroundColor: colors.brand.primary + '0C', borderColor: colors.brand.primary + '25' }]}
+      >
+        <Ionicons name="home-outline" size={14} color={colors.brand.primary} />
+        <AppText variant="caption" color={colors.text.secondary} style={{ flex: 1 }}>
+          Go to{' '}
+          <AppText variant="caption" style={{ color: colors.brand.primary, fontWeight: '700' }}>Home</AppText>
+          {' '}and tap{' '}
+          <AppText variant="caption" style={{ color: colors.status.expense, fontWeight: '700' }}>Expense</AppText>
+          {' '}or{' '}
+          <AppText variant="caption" style={{ color: colors.status.income, fontWeight: '700' }}>Income</AppText>
+          {' '}to get started
+        </AppText>
+      </Animated.View>
+    </View>
+  );
+}
+
+const ae = StyleSheet.create({
+  root:        { alignItems: 'center', paddingHorizontal: Spacing['5'], paddingTop: Spacing['6'], gap: Spacing['5'] },
+  heroWrap:    { alignItems: 'center', justifyContent: 'center', width: 140, height: 140 },
+  outerRing: {
+    width: 110, height: 110, borderRadius: 55,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'transparent',
+  },
+  innerCircle: {
+    width: 80, height: 80, borderRadius: 40,
+    alignItems: 'center', justifyContent: 'center',
+    ...Platform.select({
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16 },
+      android: { elevation: 10 },
+    }),
+  },
+  badge: {
+    position: 'absolute', width: 28, height: 28, borderRadius: 9,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  badgeTL: { top: 10, left: 8 },
+  badgeTR: { top: 14, right: 6 },
+  textBlock:   { alignItems: 'center', gap: Spacing['2'] },
+  subtitle:    { maxWidth: 290, lineHeight: 20 },
+  featuresCol: { alignSelf: 'stretch', gap: Spacing['2'] },
+  featureRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
+    padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
+    ...Platform.select({
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      android: { elevation: 1 },
+    }),
+  },
+  featureIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  dot:         { width: 7, height: 7, borderRadius: 4 },
+  hint: {
+    alignSelf: 'stretch', flexDirection: 'row', alignItems: 'flex-start',
+    gap: Spacing['2'], padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
+  },
+});
+
 // ─── Swipeable transaction row ────────────────────────────────────────────────
 
 const TX_DELETE_W = 72;
@@ -360,7 +481,7 @@ export default function TransactionsScreen() {
 
       {/* ─── Scrollable list ─── */}
       {isEmpty ? (
-        <EmptyState emoji="📭" title="No transactions" subtitle="Add your first income or expense to get started." />
+        <ActivityEmptyState />
       ) : (
         <ScrollView
           contentContainerStyle={[styles.listContent, { paddingBottom: Layout.tabBarHeight + Spacing['8'] }]}

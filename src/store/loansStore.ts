@@ -59,7 +59,7 @@ function buildSeed(): Loan[] {
 export const useLoansStore = create<LoansState>()(
   persist(
     (set) => ({
-      loans:     buildSeed(),
+      loans:     [],
       isLoading: false,
 
       addLoan: (draft) => {

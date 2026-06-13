@@ -23,8 +23,8 @@ interface AccountState {
 export const useAccountStore = create<AccountState>()(
   persist(
     (set) => ({
-      accounts: MOCK_ACCOUNTS,
-      activeAccountId: MOCK_ACCOUNTS.find((a) => a.isDefault)?.id ?? null,
+      accounts: [],
+      activeAccountId: null,
       isLoading: false,
       isError: false,
       error: null,

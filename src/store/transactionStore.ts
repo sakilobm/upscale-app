@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { zustandStorage } from './storage';
 import type { Transaction, NewTransaction, TransactionType, TransactionCategory } from './types';
-import { MOCK_TRANSACTIONS } from '@features/dashboard/services/dashboardService';
 
 export interface TransactionFilters {
   type: TransactionType | 'all';
@@ -40,7 +39,7 @@ const DEFAULT_FILTERS: TransactionFilters = {
 export const useTransactionStore = create<TransactionState>()(
   persist(
     (set) => ({
-      transactions: MOCK_TRANSACTIONS,
+      transactions: [],
       filters: DEFAULT_FILTERS,
       isLoading: false,
       isError: false,

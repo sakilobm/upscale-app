@@ -69,7 +69,7 @@ function buildSeed(): PlannedPayment[] {
 export const usePlannedPaymentsStore = create<PlannedPaymentsState>()(
   persist(
     (set) => ({
-      payments:  buildSeed(),
+      payments:  [],
       isLoading: false,
 
       addPayment: (draft) => {

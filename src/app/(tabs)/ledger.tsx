@@ -13,12 +13,12 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  FadeInDown,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { AppHeader } from '@components/AppHeader';
-import { EmptyState } from '@components/EmptyState';
 import { FAB } from '@components/FAB';
 import { useTheme } from '@hooks/useTheme';
 import { Spacing, Layout, Radius } from '@constants/Dimensions';
@@ -216,6 +216,156 @@ function LedgerInfoSheet({
   );
 }
 
+// ─── Ledger Empty State ───────────────────────────────────────────────────────
+
+type LedgerEmptyVariant = 'owed_to_me' | 'i_owe' | 'loans';
+
+const LEDGER_EMPTY_CONFIG: Record<LedgerEmptyVariant, {
+  icon:     React.ComponentProps<typeof Ionicons>['name'];
+  grad:     [string, string];
+  title:    string;
+  subtitle: string;
+  hint:     string;
+}> = {
+  owed_to_me: {
+    icon:     'people-outline',
+    grad:     ['#6366F1', '#8B5CF6'],
+    title:    'No one owes you',
+    subtitle: 'Record hand-to-hand money you lent to friends or family.',
+    hint:     'Tap + to add an entry',
+  },
+  i_owe: {
+    icon:     'happy-outline',
+    grad:     ['#10B981', '#34D399'],
+    title:    "You're debt-free!",
+    subtitle: "No outstanding debts. You don't owe anyone right now.",
+    hint:     'Tap + if you borrow money',
+  },
+  loans: {
+    icon:     'business-outline',
+    grad:     ['#F59E0B', '#FBBF24'],
+    title:    'No loans tracked',
+    subtitle: 'Track mortgages, car loans, or money you have lent out.',
+    hint:     'Tap + to add a loan',
+  },
+};
+
+const LEDGER_FEATURES: Record<LedgerEmptyVariant, { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }[]> = {
+  owed_to_me: [
+    { icon: 'person-add-outline',  text: 'Add who owes you and how much'  },
+    { icon: 'card-outline',        text: 'Track partial returns over time' },
+    { icon: 'checkmark-done-outline', text: 'Mark as settled when paid back' },
+  ],
+  i_owe: [
+    { icon: 'cash-outline',          text: 'Log money you borrowed'         },
+    { icon: 'time-outline',          text: 'Set a due date as a reminder'   },
+    { icon: 'checkmark-done-outline', text: 'Settle when you pay it back'    },
+  ],
+  loans: [
+    { icon: 'home-outline',       text: 'Track home or car loans'          },
+    { icon: 'calculator-outline', text: 'See EMI and progress at a glance' },
+    { icon: 'trending-down-outline', text: 'Record each payment made'       },
+  ],
+};
+
+function LedgerEmptyState({ variant }: { variant: LedgerEmptyVariant }) {
+  const { colors, isDark } = useTheme();
+  const cfg      = LEDGER_EMPTY_CONFIG[variant];
+  const features = LEDGER_FEATURES[variant];
+  const cardBg   = isDark ? colors.background.secondary : '#FFFFFF';
+  const accentHex = cfg.grad[0];
+
+  return (
+    <View style={le.root}>
+      {/* Hero */}
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140)} style={le.heroWrap}>
+        <View style={[le.outerRing, { borderColor: accentHex + '25' }]} />
+        <View style={[le.iconCircle, { overflow: 'hidden' }]}>
+          <LinearGradient
+            colors={cfg.grad as [string, string]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <Ionicons name={cfg.icon} size={36} color="#fff" />
+        </View>
+        <View style={[le.badge, le.badgeBR, { backgroundColor: accentHex + '18' }]}>
+          <Ionicons name="add" size={14} color={accentHex} />
+        </View>
+      </Animated.View>
+
+      {/* Text */}
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(80)} style={le.textBlock}>
+        <AppText variant="headingMD" color={colors.text.primary} align="center">{cfg.title}</AppText>
+        <AppText variant="bodySM" color={colors.text.secondary} align="center" style={le.subtitle}>
+          {cfg.subtitle}
+        </AppText>
+      </Animated.View>
+
+      {/* Feature rows */}
+      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(160)} style={le.featuresCol}>
+        {features.map(({ icon, text }) => (
+          <View key={text} style={[le.featureRow, { backgroundColor: cardBg, borderColor: accentHex + '20' }]}>
+            <View style={[le.featureIcon, { backgroundColor: accentHex + '15' }]}>
+              <Ionicons name={icon} size={15} color={accentHex} />
+            </View>
+            <AppText variant="bodySM" color={colors.text.secondary} style={{ flex: 1 }}>{text}</AppText>
+          </View>
+        ))}
+      </Animated.View>
+
+      {/* Hint */}
+      <Animated.View
+        entering={FadeInDown.springify().damping(20).stiffness(140).delay(240)}
+        style={[le.hint, { backgroundColor: accentHex + '0C', borderColor: accentHex + '28' }]}
+      >
+        <Ionicons name="add-circle-outline" size={15} color={accentHex} />
+        <AppText variant="caption" color={colors.text.secondary}>
+          <AppText variant="caption" style={{ color: accentHex, fontWeight: '700' }}>{cfg.hint}</AppText>
+          {' '}using the button below
+        </AppText>
+      </Animated.View>
+    </View>
+  );
+}
+
+const le = StyleSheet.create({
+  root:        { alignItems: 'center', paddingHorizontal: Spacing['5'], paddingTop: Spacing['4'], gap: Spacing['4'] },
+  heroWrap:    { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
+  outerRing: {
+    position: 'absolute', width: 118, height: 118, borderRadius: 59,
+    borderWidth: 1.5, borderStyle: 'dashed',
+  },
+  iconCircle: {
+    width: 82, height: 82, borderRadius: 41,
+    alignItems: 'center', justifyContent: 'center',
+    ...Platform.select({
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16 },
+      android: { elevation: 10 },
+    }),
+  },
+  badge: {
+    position: 'absolute', width: 28, height: 28, borderRadius: 9,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  badgeBR: { bottom: 14, right: 10 },
+  textBlock:   { alignItems: 'center', gap: Spacing['2'] },
+  subtitle:    { maxWidth: 280, lineHeight: 20 },
+  featuresCol: { alignSelf: 'stretch', gap: Spacing['2'] },
+  featureRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
+    padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
+    ...Platform.select({
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      android: { elevation: 1 },
+    }),
+  },
+  featureIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  hint: {
+    alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center',
+    gap: Spacing['2'], padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
+  },
+});
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function LedgerScreen() {
@@ -318,11 +468,7 @@ export default function LedgerScreen() {
         {activeTab === 'loans' ? (
           <View style={styles.loansSection}>
             {loans.length === 0 ? (
-              <EmptyState
-                emoji="🏦"
-                title="No active loans"
-                subtitle="Track mortgages, car loans, or money you've lent"
-              />
+              <LedgerEmptyState variant="loans" />
             ) : (
               <View style={styles.debtStack}>
                 <DebtHorizonStack loans={loans} onRecordPayment={recordPayment} />
@@ -330,11 +476,7 @@ export default function LedgerScreen() {
             )}
           </View>
         ) : sections.length === 0 ? (
-          <EmptyState
-            emoji={activeTab === 'owed_to_me' ? '🤝' : '💸'}
-            title={activeTab === 'owed_to_me' ? 'No one owes you' : 'You\'re debt-free'}
-            subtitle="Tap + to record a hand-to-hand transaction"
-          />
+          <LedgerEmptyState variant={activeTab === 'owed_to_me' ? 'owed_to_me' : 'i_owe'} />
         ) : (
           <View style={styles.listSection}>
             {sections.map((section) => (
