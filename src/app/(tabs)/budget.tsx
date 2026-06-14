@@ -27,16 +27,15 @@ import Animated, {
 import { AppHeader } from '@components/AppHeader';
 import { FAB } from '@components/FAB';
 import { useBudgets } from '@features/budget/hooks/useBudgets';
+import { usePlannedPayments } from '@features/budget/hooks/usePlannedPayments';
+import { usePlannedPaymentForm } from '@features/budget/hooks/usePlannedPaymentForm';
 import { ProgressRingMatrix } from '@features/budget/components/ProgressRingMatrix';
 import { PlannedPaymentsTimeline } from '@features/budget/components/PlannedPaymentsTimeline';
 import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
 import { ProgressBar } from '@components/ProgressBar';
-import { usePlannedPaymentsStore } from '@store/plannedPaymentsStore';
-import { toast } from '@store/toastStore';
 import { Spacing, Layout, Radius } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
-import { useCategoryStore } from '@store/categoryStore';
 import { CategoryFormSheet } from '@components/CategoryFormSheet';
 
 
@@ -45,29 +44,22 @@ import { CategoryFormSheet } from '@components/CategoryFormSheet';
 interface AddPaymentSheetProps {
   visible:  boolean;
   onClose:  () => void;
-  onSubmit: (data: {
-    title:    string;
-    amount:   number;
-    dueDate:  string;
-    category: string;
-  }) => void;
+  onSubmit: (data: { title: string; amount: number; dueDate: string; category: string }) => void;
 }
 
 function AddPaymentSheet({ visible, onClose, onSubmit }: AddPaymentSheetProps) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const allCategories = useCategoryStore((s) => s.categories);
+  const [createVisible, setCreateVisible] = useState(false);
 
-  // Show all expense + both categories; always include 'other'
-  const cats = allCategories.filter(
-    (c) => c.applicableTo === 'expense' || c.applicableTo === 'both'
-  );
-
-  const [title,          setTitle]          = useState('');
-  const [amount,         setAmount]         = useState('');
-  const [dueDate,        setDueDate]        = useState('');
-  const [category,       setCategory]       = useState('other');
-  const [createVisible,  setCreateVisible]  = useState(false);
+  const {
+    title, setTitle,
+    amount, setAmount,
+    dueDate, setDueDate,
+    category, setCategory,
+    cats,
+    handleSubmit,
+  } = usePlannedPaymentForm(onSubmit, onClose);
 
   const scale = useSharedValue(0.86);
   const sheetStyle = useAnimatedStyle(() => ({
@@ -77,22 +69,6 @@ function AddPaymentSheet({ visible, onClose, onSubmit }: AddPaymentSheetProps) {
 
   const handleShow = () => scale.value = withSpring(1, { damping: 18, stiffness: 220 });
   const handleHide = () => scale.value = withSpring(0.86, { damping: 18, stiffness: 220 });
-
-  const reset = () => {
-    setTitle(''); setAmount(''); setDueDate(''); setCategory('other');
-  };
-
-  const handleSubmit = () => {
-    const parsed = parseFloat(amount);
-    if (!title.trim())          { toast.error('Title is required');       return; }
-    if (!parsed || parsed <= 0) { toast.error('Enter a valid amount');    return; }
-    if (!dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      toast.error('Date format: YYYY-MM-DD'); return;
-    }
-    onSubmit({ title: title.trim(), amount: parsed, dueDate, category });
-    reset();
-    onClose();
-  };
 
   const cardBg  = isDark ? colors.background.secondary : '#FFFFFF';
   const inputBg = isDark ? colors.background.primary : '#F5F5F7';
@@ -381,10 +357,7 @@ export default function BudgetScreen() {
   const { data: budgetsData, isLoading, isEmpty, refresh, summary } = useBudgets();
   const budgets = budgetsData ?? [];
 
-  const payments      = usePlannedPaymentsStore((s) => s.payments);
-  const settlePayment = usePlannedPaymentsStore((s) => s.settlePayment);
-  const deletePayment = usePlannedPaymentsStore((s) => s.deletePayment);
-  const addPayment    = usePlannedPaymentsStore((s) => s.addPayment);
+  const { payments, settlePayment, deletePayment, addPayment } = usePlannedPayments();
 
   const [addVisible, setAddVisible] = useState(false);
 
@@ -504,10 +477,9 @@ export default function BudgetScreen() {
       <AddPaymentSheet
         visible={addVisible}
         onClose={() => setAddVisible(false)}
-        onSubmit={({ title, amount, dueDate, category }) => {
-          addPayment({ title, amount, dueDate, category, isRecurring: false });
-          toast.success(`"${title}" added to planned payments`);
-        }}
+        onSubmit={({ title, amount, dueDate, category }) =>
+          addPayment({ title, amount, dueDate, category, isRecurring: false })
+        }
       />
 
       <FAB icon="add" label="Payment" onPress={() => setAddVisible(true)} />

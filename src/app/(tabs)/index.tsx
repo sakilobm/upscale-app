@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, type ComponentProps } from 'react';
+import { useState, useCallback, useEffect, type ComponentProps } from 'react';
 import {
   View,
   ScrollView,
@@ -24,6 +24,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useDashboardData } from '@features/dashboard/hooks/useDashboardData';
+import { useQuickAddTransaction } from '@features/transactions/hooks/useQuickAddTransaction';
+import { NUMPAD_KEYS } from '@features/transactions/utils/numpad';
 import { BalanceCard } from '@features/dashboard/components/BalanceCard';
 import { QuickStatCard } from '@features/dashboard/components/QuickStatCard';
 import { SpendingChart } from '@features/dashboard/components/SpendingChart';
@@ -31,30 +33,15 @@ import { RecentTransactionRow } from '@features/dashboard/components/RecentTrans
 import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
 import { EmptyState } from '@components/EmptyState';
-import { useCategoryStore } from '@store/categoryStore';
 import { CategoryFormSheet } from '@components/CategoryFormSheet';
 import { Spacing, Layout, Radius } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@store/authStore';
-import { useAccountStore } from '@store/accountStore';
-import { useTransactionStore } from '@store/transactionStore';
 import { toast } from '@store/toastStore';
 import type { Transaction } from '@store/types';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 const { height: SH } = Dimensions.get('window');
-
-// ─── Numpad ───────────────────────────────────────────────────────────────────
-
-const NUMPAD_KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫'] as const;
-
-function applyNumpad(current: string, key: string): string {
-  if (key === '⌫') return current.length > 1 ? current.slice(0, -1) : '0';
-  if (key === '.') return current.includes('.') ? current : current + '.';
-  if (current === '0') return key;
-  if (current.includes('.') && current.split('.')[1].length >= 2) return current;
-  return current + key;
-}
 
 // ─── Quick Add Sheet ──────────────────────────────────────────────────────────
 
@@ -69,30 +56,22 @@ function QuickAddSheet({
 }) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-
-  const accounts = useAccountStore((s) => s.accounts);
-  const addAccount_updateBalance = useAccountStore((s) => s.updateAccount);
-  const defaultAccount = accounts.find((a) => a.isDefault) ?? accounts[0] ?? null;
-
-  const addTransaction = useTransactionStore((s) => s.addTransaction);
-  const allCategories = useCategoryStore((s) => s.categories);
-
-  const [type, setType] = useState<'expense' | 'income'>(initialType);
-  const [amountStr, setAmountStr] = useState('0');
-  const [category, setCategory] = useState('food');
-  const [accountId, setAccountId] = useState(defaultAccount?.id ?? '');
-  const [note, setNote] = useState('');
   const [catFormVisible, setCatFormVisible] = useState(false);
+
+  const {
+    type, handleTypeChange,
+    handleKey, category, setCategory,
+    accountId, setAccountId,
+    note, setNote,
+    cats, accounts, amountDisplay, accentColor,
+    handleSave, reset,
+  } = useQuickAddTransaction(onClose);
 
   const slideY = useSharedValue(SH * 0.9);
 
   useEffect(() => {
     if (visible) {
-      setType(initialType);
-      setAmountStr('0');
-      setCategory(initialType === 'expense' ? 'food' : 'salary');
-      setAccountId(defaultAccount?.id ?? accounts[0]?.id ?? '');
-      setNote('');
+      reset(initialType);
       slideY.value = withTiming(0, { duration: 360, easing: Easing.out(Easing.cubic) });
     } else {
       slideY.value = withTiming(SH * 0.9, { duration: 280, easing: Easing.in(Easing.cubic) });
@@ -103,48 +82,8 @@ function QuickAddSheet({
     transform: [{ translateY: slideY.value }],
   }));
 
-  const handleSave = () => {
-    const amount = parseFloat(amountStr);
-    if (!amount || amount <= 0) { toast.error('Enter a valid amount'); return; }
-    const account = accounts.find((a) => a.id === accountId);
-    if (!account) { toast.error('Select an account'); return; }
-
-    const now = new Date().toISOString();
-    const newTx: Transaction = {
-      id: `tx-${Date.now()}`,
-      userId: 'user-1',
-      type,
-      category,
-      amount,
-      currency: account.currency,
-      description: note.trim() || (allCategories.find((c) => c.id === category)?.label ?? category),
-      note: note.trim() || null,
-      date: now,
-      accountId,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    addTransaction(newTx);
-    addAccount_updateBalance(accountId, {
-      balance: type === 'income' ? account.balance + amount : account.balance - amount,
-    });
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    toast.success(`${type === 'expense' ? 'Expense' : 'Income'} added`);
-    onClose();
-  };
-
-  const accentColor = type === 'expense' ? '#EF4444' : '#10B981';
-  const cats = allCategories.filter((c) =>
-    type === 'expense' ? c.applicableTo === 'expense' || c.applicableTo === 'both'
-                       : c.applicableTo === 'income'  || c.applicableTo === 'both'
-  );
   const sheetBg = isDark ? '#131722' : '#FFFFFF';
   const inputBg = isDark ? colors.background.primary : '#F3F4F6';
-
-  const amountDisplay = parseFloat(amountStr || '0')
-    .toLocaleString('en-US', { minimumFractionDigits: amountStr.includes('.') ? Math.min(amountStr.split('.')[1]?.length ?? 0, 2) : 0, maximumFractionDigits: 2 });
 
   return (
     <>
@@ -173,8 +112,7 @@ function QuickAddSheet({
                 <Pressable
                   key={t}
                   onPress={() => {
-                    setType(t);
-                    setCategory(t === 'expense' ? 'food' : 'salary');
+                    handleTypeChange(t);
                     Haptics.selectionAsync();
                   }}
                   style={[
@@ -220,7 +158,7 @@ function QuickAddSheet({
                 <Pressable
                   key={key}
                   onPress={() => {
-                    setAmountStr((prev) => applyNumpad(prev, key));
+                    handleKey(key);
                     Haptics.selectionAsync();
                   }}
                   style={({ pressed }) => [
@@ -398,23 +336,11 @@ function QuickAddSheet({
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
-  const { data, isLoading, isError, refresh } = useDashboardData();
+  const { data, isLoading, isError, isEmpty, refresh } = useDashboardData();
   const user = useAuthStore((s) => s.user);
-
-  const accounts = useAccountStore((s) => s.accounts);
-  const storeTransactions = useTransactionStore((s) => s.transactions);
 
   const [addVisible, setAddVisible] = useState(false);
   const [addType, setAddType] = useState<'expense' | 'income'>('expense');
-
-  // Live balance from store
-  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
-
-  // Live recent transactions (newest first, up to 5)
-  const recentTransactions = useMemo(
-    () => [...storeTransactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
-    [storeTransactions],
-  );
 
   const handleTransactionPress = useCallback((_tx: Transaction) => {
     router.push('/(tabs)/transactions');
@@ -520,7 +446,7 @@ export default function HomeScreen() {
 
         {/* ── Balance Card (live from store) ────────────────────── */}
         <BalanceCard
-          totalBalance={totalBalance}
+          totalBalance={data?.totalBalance ?? 0}
           monthSummary={data?.monthSummary ?? {
             month: '',
             totalIncome: 0,
@@ -575,7 +501,7 @@ export default function HomeScreen() {
         </View>
 
         {/* ── Data sections OR setup prompt ─────────────────────── */}
-        {accounts.length === 0 && storeTransactions.length === 0 ? (
+        {isEmpty ? (
           <View style={styles.section}>
             <HomeSetupPrompt onLogExpense={() => openAdd('expense')} />
           </View>
@@ -601,7 +527,7 @@ export default function HomeScreen() {
             )}
 
             {/* Recent Activity */}
-            {recentTransactions.length > 0 && (
+            {data && data.recentTransactions.length > 0 && (
               <View style={styles.section}>
                 <SectionTitle
                   title="Recent Activity"
@@ -609,10 +535,10 @@ export default function HomeScreen() {
                   onAction={() => router.push('/(tabs)/transactions')}
                 />
                 <GlassCard padding={0}>
-                  {recentTransactions.map((tx, idx) => (
+                  {data.recentTransactions.map((tx, idx) => (
                     <View
                       key={tx.id}
-                      style={[styles.txRow, idx === recentTransactions.length - 1 && styles.txRowLast]}
+                      style={[styles.txRow, idx === data.recentTransactions.length - 1 && styles.txRowLast]}
                     >
                       <RecentTransactionRow transaction={tx} onPress={handleTransactionPress} />
                     </View>

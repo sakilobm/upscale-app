@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Pressable,
   Switch,
-  Share,
   Platform,
   Modal,
 } from 'react-native';
@@ -22,23 +21,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { format } from 'date-fns';
 import { AppText } from '@components/AppText';
 import { ConfirmModal } from '@components/ConfirmModal';
 import { Spacing, Radius, Layout } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
-import { useAuth } from '@hooks/useAuth';
-import { useTransactionStore } from '@store/transactionStore';
-import { useAccountStore } from '@store/accountStore';
-import { useCategoryStore } from '@store/categoryStore';
-import { useBudgetStore } from '@store/budgetStore';
-import { usePlannedPaymentsStore } from '@store/plannedPaymentsStore';
-import { useLedgerStore } from '@store/ledgerStore';
-import { useLoansStore } from '@store/loansStore';
-import { clearAllPersistedData } from '@store/storage';
-import { toast } from '@store/toastStore';
+import { useProfile } from '@features/profile/hooks/useProfile';
 import { CURRENCY_SYMBOLS } from '@store/types';
 import type { CurrencyCode } from '@store/types';
+import { toast } from '@/store';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -486,8 +476,12 @@ function HelpSheet() {
 
 export default function ProfileScreen() {
   const { colors, isDark, toggle } = useTheme();
-  const { user, signOut, setUser } = useAuth();
-  const transactions = useTransactionStore((s) => s.transactions);
+  const {
+    user, txCount, memberSince, initials,
+    handleEditName, handleCurrencySelect: currencySelect,
+    handleExport: exportData, handleBackup,
+    handleClearAllData: clearAllData, handleSignOut,
+  } = useProfile();
 
   // Sheet visibility
   const [currencySheet, setCurrencySheet] = useState(false);
@@ -496,93 +490,36 @@ export default function ProfileScreen() {
   const [exportSheet, setExportSheet] = useState(false);
   const [helpSheet, setHelpSheet] = useState(false);
 
-  // Store reset actions
-  const resetTransactions    = useTransactionStore((s) => s.reset);
-  const resetAccounts        = useAccountStore((s) => s.reset);
-  const resetCategories      = useCategoryStore((s) => s.reset);
-  const resetBudgets         = useBudgetStore((s) => s.reset);
-  const resetPlannedPayments = usePlannedPaymentsStore((s) => s.reset);
-  const resetLedger          = useLedgerStore((s) => s.reset);
-  const resetLoans           = useLoansStore((s) => s.reset);
-
-  // Confirm dialog
-  const [signOutConfirm,   setSignOutConfirm]   = useState(false);
-  const [rateConfirm,      setRateConfirm]      = useState(false);
+  // Confirm dialogs
+  const [signOutConfirm, setSignOutConfirm] = useState(false);
+  const [rateConfirm, setRateConfirm] = useState(false);
   const [clearDataConfirm, setClearDataConfirm] = useState(false);
 
-  // Pref states
+  // Pref states (UI-local, not persisted)
   const [notifPrefs, setNotifPrefs] = useState({ transactions: true, budgetAlerts: true, plannedPay: true, weeklyReport: false });
   const [secPrefs, setSecPrefs] = useState({ biometric: false, autoLock: true, hideBalance: false });
 
-  const txCount = transactions.length;
-  const memberSince = user?.createdAt ? format(new Date(user.createdAt), 'MMM yyyy') : 'Jan 2025';
-  const initials = user?.fullName?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) ?? 'AM';
-
-  // ── Handlers ──
-
-  const handleEditName = useCallback(() => {
-    if (Platform.OS === 'ios') {
-      const { Alert } = require('react-native');
-      Alert.prompt('Edit Name', 'Enter your display name', (name: string) => {
-        if (name?.trim() && user) {
-          setUser({ ...user, fullName: name.trim() });
-          toast.success('Name updated');
-        }
-      }, 'plain-text', user?.fullName ?? '');
-    } else {
-      toast.info('Name editing available on iOS');
-    }
-  }, [user, setUser]);
+  // ── UI-level wrappers (close sheet, then delegate to hook) ──
 
   const handleCurrencySelect = useCallback((code: CurrencyCode) => {
-    if (user) {
-      setUser({ ...user, currency: code });
-      toast.success(`Currency changed to ${code}`);
-    }
+    currencySelect(code);
     setCurrencySheet(false);
-  }, [user, setUser]);
+  }, [currencySelect]);
 
   const handleExport = useCallback(async (fmt: 'CSV' | 'JSON') => {
     setExportSheet(false);
-    try {
-      let content = '';
-      if (fmt === 'CSV') {
-        const header = 'Date,Type,Category,Amount,Currency,Description\n';
-        const rows = transactions.map((t) =>
-          `${t.date},${t.type},${t.category},${t.amount},${t.currency},"${t.description}"`
-        ).join('\n');
-        content = header + rows;
-      } else {
-        content = JSON.stringify(transactions, null, 2);
-      }
-      await Share.share({ message: `WhereCash Export (${fmt})\n\n${content}`, title: `WhereCash ${fmt}` });
-      toast.success(`Exported ${txCount} transactions as ${fmt}`);
-    } catch (_) { }
-  }, [transactions, txCount]);
-
-  const handleBackup = useCallback(() => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    toast.success('All data is backed up and up to date!');
-  }, []);
+    await exportData(fmt);
+  }, [exportData]);
 
   const handleClearAllData = useCallback(async () => {
     setClearDataConfirm(false);
-    await clearAllPersistedData();
-    resetTransactions();
-    resetAccounts();
-    resetCategories();
-    resetBudgets();
-    resetPlannedPayments();
-    resetLedger();
-    resetLoans();
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    toast.success('All data cleared successfully');
-  }, [resetTransactions, resetAccounts, resetCategories, resetBudgets, resetPlannedPayments, resetLedger, resetLoans]);
+    await clearAllData();
+  }, [clearAllData]);
 
   const handleSignOutConfirm = useCallback(() => {
     setSignOutConfirm(false);
-    signOut();
-  }, [signOut]);
+    handleSignOut();
+  }, [handleSignOut]);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background.primary }]} edges={['top']}>

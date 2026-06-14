@@ -1,0 +1,96 @@
+import { useCallback } from 'react';
+import { Share, Platform } from 'react-native';
+import { format } from 'date-fns';
+import * as Haptics from 'expo-haptics';
+import { useAuth } from '@hooks/useAuth';
+import { useTransactionStore } from '@store/transactionStore';
+import { toast } from '@store/toastStore';
+import { resetAllStores } from '@store/resetAllStores';
+import type { CurrencyCode } from '@store/types';
+
+export function useProfile() {
+  const { user, signOut, setUser } = useAuth();
+  const transactions = useTransactionStore((s) => s.transactions);
+
+  const txCount     = transactions.length;
+  const memberSince = user?.createdAt ? format(new Date(user.createdAt), 'MMM yyyy') : 'Jan 2025';
+  const initials    = user?.fullName?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) ?? 'AM';
+
+  const handleEditName = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      const { Alert } = require('react-native');
+      Alert.prompt(
+        'Edit Name',
+        'Enter your display name',
+        (name: string) => {
+          if (name?.trim() && user) {
+            setUser({ ...user, fullName: name.trim() });
+            toast.success('Name updated');
+          }
+        },
+        'plain-text',
+        user?.fullName ?? '',
+      );
+    } else {
+      toast.info('Name editing available on iOS');
+    }
+  }, [user, setUser]);
+
+  const handleCurrencySelect = useCallback(
+    (code: CurrencyCode) => {
+      if (user) {
+        setUser({ ...user, currency: code });
+        toast.success(`Currency changed to ${code}`);
+      }
+    },
+    [user, setUser],
+  );
+
+  const handleExport = useCallback(
+    async (fmt: 'CSV' | 'JSON') => {
+      try {
+        let content = '';
+        if (fmt === 'CSV') {
+          const header = 'Date,Type,Category,Amount,Currency,Description\n';
+          const rows = transactions
+            .map((t) => `${t.date},${t.type},${t.category},${t.amount},${t.currency},"${t.description}"`)
+            .join('\n');
+          content = header + rows;
+        } else {
+          content = JSON.stringify(transactions, null, 2);
+        }
+        await Share.share({ message: `WhereCash Export (${fmt})\n\n${content}`, title: `WhereCash ${fmt}` });
+        toast.success(`Exported ${txCount} transactions as ${fmt}`);
+      } catch (_) {}
+    },
+    [transactions, txCount],
+  );
+
+  const handleBackup = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    toast.success('All data is backed up and up to date!');
+  }, []);
+
+  const handleClearAllData = useCallback(async () => {
+    await resetAllStores();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    toast.success('All data cleared successfully');
+  }, []);
+
+  const handleSignOut = useCallback(() => {
+    signOut();
+  }, [signOut]);
+
+  return {
+    user,
+    txCount,
+    memberSince,
+    initials,
+    handleEditName,
+    handleCurrencySelect,
+    handleExport,
+    handleBackup,
+    handleClearAllData,
+    handleSignOut,
+  };
+}
