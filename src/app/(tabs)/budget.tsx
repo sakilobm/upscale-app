@@ -1,365 +1,43 @@
-import { useState, useEffect } from 'react';
+/**
+ * @file budget.tsx
+ * @architecture Presentation Layer — Lean View Shell
+ * @description Budget screen. Pure declarative orchestrator: reads a single contract
+ *   from useBudgetScreen and renders extracted components. Zero business logic,
+ *   zero raw useState, zero store imports.
+ * @associatedFiles src/features/budget/hooks/useBudgetScreen.ts,
+ *   src/components/budget/ (AddPaymentSheet, BudgetEmptyState, AnimatedIcon)
+ */
+
 import {
-  View,
-  ScrollView,
-  StyleSheet,
-  RefreshControl,
-  ActivityIndicator,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
+  View, StyleSheet, ScrollView, RefreshControl, ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  withRepeat,
-  withSequence,
-  FadeInDown,
+  useSharedValue, useAnimatedStyle, withSpring, FadeInDown,
 } from 'react-native-reanimated';
-import { AppHeader } from '@components/AppHeader';
-import { FAB } from '@components/FAB';
-import { useBudgets } from '@features/budget/hooks/useBudgets';
-import { usePlannedPayments } from '@features/budget/hooks/usePlannedPayments';
-import { usePlannedPaymentForm } from '@features/budget/hooks/usePlannedPaymentForm';
+import { useEffect } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { useBudgetScreen } from '@features/budget/hooks/useBudgetScreen';
+import { AddPaymentSheet } from '@components/budget/AddPaymentSheet';
+import { BudgetEmptyState } from '@components/budget/BudgetEmptyState';
+import { AnimatedIcon } from '@components/budget/AnimatedIcon';
 import { ProgressRingMatrix } from '@features/budget/components/ProgressRingMatrix';
 import { PlannedPaymentsTimeline } from '@features/budget/components/PlannedPaymentsTimeline';
+import { AppHeader } from '@components/AppHeader';
 import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
-import { ProgressBar } from '@components/ProgressBar';
-import { Spacing, Layout, Radius } from '@constants/index';
+import { FAB } from '@components/FAB';
 import { useTheme } from '@hooks/useTheme';
-import { CategoryFormSheet } from '@components/CategoryFormSheet';
-
-
-// ─── Add Payment Sheet ────────────────────────────────────────────────────────
-
-interface AddPaymentSheetProps {
-  visible:  boolean;
-  onClose:  () => void;
-  onSubmit: (data: { title: string; amount: number; dueDate: string; category: string }) => void;
-}
-
-function AddPaymentSheet({ visible, onClose, onSubmit }: AddPaymentSheetProps) {
-  const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
-  const [createVisible, setCreateVisible] = useState(false);
-
-  const {
-    title, setTitle,
-    amount, setAmount,
-    dueDate, setDueDate,
-    category, setCategory,
-    cats,
-    handleSubmit,
-  } = usePlannedPaymentForm(onSubmit, onClose);
-
-  const scale = useSharedValue(0.86);
-  const sheetStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity:   scale.value,
-  }));
-
-  const handleShow = () => scale.value = withSpring(1, { damping: 18, stiffness: 220 });
-  const handleHide = () => scale.value = withSpring(0.86, { damping: 18, stiffness: 220 });
-
-  const cardBg  = isDark ? colors.background.secondary : '#FFFFFF';
-  const inputBg = isDark ? colors.background.primary : '#F5F5F7';
-
-  return (
-    <>
-      <Modal
-        visible={visible}
-        transparent
-        animationType="none"
-        onRequestClose={onClose}
-        onShow={handleShow}
-        onDismiss={handleHide}
-      >
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-          <BlurView intensity={isDark ? 40 : 30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.35)' }]} />
-        </Pressable>
-
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.sheetOuter}
-          pointerEvents="box-none"
-        >
-          <Animated.View
-            style={[
-              styles.sheet,
-              sheetStyle,
-              { backgroundColor: cardBg, paddingBottom: Math.max(insets.bottom, Spacing['5']) },
-            ]}
-          >
-            <View style={[styles.handle, { backgroundColor: colors.text.tertiary + '40' }]} />
-
-            {/* Header */}
-            <View style={styles.sheetHeader}>
-              <AppText variant="headingSM" color={colors.text.primary}>Add Planned Payment</AppText>
-              <Pressable onPress={onClose} hitSlop={12}>
-                <Ionicons name="close" size={22} color={colors.text.tertiary} />
-              </Pressable>
-            </View>
-
-            {/* Title */}
-            <AppText variant="labelSM" color={colors.text.tertiary} style={styles.fieldLabel}>TITLE</AppText>
-            <TextInput
-              style={[styles.input, { backgroundColor: inputBg, color: colors.text.primary }]}
-              placeholder="e.g. Rent, Netflix, Insurance"
-              placeholderTextColor={colors.text.tertiary}
-              value={title}
-              onChangeText={setTitle}
-            />
-
-            {/* Amount + Due Date */}
-            <View style={styles.rowFields}>
-              <View style={{ flex: 1 }}>
-                <AppText variant="labelSM" color={colors.text.tertiary} style={styles.fieldLabel}>AMOUNT ($)</AppText>
-                <TextInput
-                  style={[styles.input, { backgroundColor: inputBg, color: colors.text.primary }]}
-                  placeholder="0.00"
-                  placeholderTextColor={colors.text.tertiary}
-                  value={amount}
-                  onChangeText={setAmount}
-                  keyboardType="decimal-pad"
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <AppText variant="labelSM" color={colors.text.tertiary} style={styles.fieldLabel}>DUE DATE</AppText>
-                <TextInput
-                  style={[styles.input, { backgroundColor: inputBg, color: colors.text.primary }]}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={colors.text.tertiary}
-                  value={dueDate}
-                  onChangeText={setDueDate}
-                />
-              </View>
-            </View>
-
-            {/* Category */}
-            <View style={styles.catHeader}>
-              <AppText variant="labelSM" color={colors.text.tertiary} style={styles.fieldLabel}>CATEGORY</AppText>
-              <Pressable
-                onPress={() => setCreateVisible(true)}
-                style={[styles.createCatBtn, { backgroundColor: colors.brand.primary + '15', borderColor: colors.brand.primary + '45' }]}
-              >
-                <Ionicons name="add" size={13} color={colors.brand.primary} />
-                <AppText variant="caption" style={{ color: colors.brand.primary, fontWeight: '600' }}>New</AppText>
-              </Pressable>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.catRow}
-            >
-              {cats.map((cat) => {
-                const isSelected = cat.id === category;
-                return (
-                  <Pressable
-                    key={cat.id}
-                    onPress={() => setCategory(cat.id)}
-                    style={[
-                      styles.catChip,
-                      {
-                        backgroundColor: isSelected ? cat.color + '1A' : inputBg,
-                        borderColor:     isSelected ? cat.color + '55' : 'transparent',
-                        borderWidth: 1.5,
-                      },
-                    ]}
-                  >
-                    <View style={[styles.catIconBox, { backgroundColor: cat.color + '22' }]}>
-                      <Ionicons name={cat.icon as any} size={14} color={cat.color} />
-                    </View>
-                    <AppText
-                      variant="caption"
-                      style={{ color: isSelected ? cat.color : colors.text.secondary, fontWeight: isSelected ? '700' : '500' }}
-                    >
-                      {cat.label}
-                    </AppText>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            {/* Submit */}
-            <Pressable
-              onPress={handleSubmit}
-              style={({ pressed }) => [
-                styles.submitBtn,
-                { backgroundColor: colors.brand.primary, opacity: pressed ? 0.8 : 1 },
-              ]}
-            >
-              <Ionicons name="checkmark-circle" size={18} color={isDark ? '#000' : '#FFFFFF'} />
-              <AppText variant="labelLG" style={{ color: isDark ? '#000' : '#FFFFFF', fontWeight: '700' }}>
-                Add Payment
-              </AppText>
-            </Pressable>
-          </Animated.View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      <CategoryFormSheet
-        visible={createVisible}
-        onClose={() => setCreateVisible(false)}
-        onSaved={(id) => setCategory(id)}
-      />
-    </>
-  );
-}
-
-// ─── Budget Empty State ───────────────────────────────────────────────────────
-
-const BUDGET_FEATURES = [
-  { icon: 'pie-chart-outline'     as const, color: '#F59E0B', text: 'Set spending limits per category'   },
-  { icon: 'bar-chart-outline'     as const, color: '#6366F1', text: 'Visual progress bars for each limit' },
-  { icon: 'notifications-outline' as const, color: '#EF4444', text: 'Alerts before you overspend'         },
-] as const;
-
-function BudgetEmptyState() {
-  const { colors, isDark } = useTheme();
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
-  const accentHex = '#F59E0B';
-
-  return (
-    <View style={be.root}>
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140)} style={be.heroWrap}>
-        <View style={[be.outerRing, { borderColor: accentHex + '28' }]} />
-        <LinearGradient
-          colors={['#F59E0B', '#D97706']}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={be.iconCircle}
-        >
-          <Ionicons name="wallet-outline" size={36} color="#fff" />
-        </LinearGradient>
-        <View style={[be.badge, be.badgeBR, { backgroundColor: accentHex + '20' }]}>
-          <Ionicons name="add" size={16} color={accentHex} />
-        </View>
-      </Animated.View>
-
-      {/* ── Text ─────────────────────────────────────────────── */}
-      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(80)} style={be.textBlock}>
-        <AppText variant="headingMD" color={colors.text.primary} align="center">
-          No budgets set
-        </AppText>
-        <AppText variant="bodySM" color={colors.text.secondary} align="center" style={be.subtitle}>
-          Set monthly limits per category to stay on track and build better money habits.
-        </AppText>
-      </Animated.View>
-
-      {/* ── Feature rows ─────────────────────────────────────── */}
-      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(160)} style={be.featuresCol}>
-        {BUDGET_FEATURES.map(({ icon, color, text }) => (
-          <View
-            key={text}
-            style={[be.featureRow, { backgroundColor: cardBg, borderColor: accentHex + '20' }]}
-          >
-            <View style={[be.featureIcon, { backgroundColor: color + '15' }]}>
-              <Ionicons name={icon} size={16} color={color} />
-            </View>
-            <AppText variant="bodySM" color={colors.text.secondary} style={{ flex: 1 }}>{text}</AppText>
-          </View>
-        ))}
-      </Animated.View>
-
-      {/* ── Hint ─────────────────────────────────────────────── */}
-      <Animated.View
-        entering={FadeInDown.springify().damping(20).stiffness(140).delay(240)}
-        style={[be.hint, { backgroundColor: accentHex + '0C', borderColor: accentHex + '25' }]}
-      >
-        <Ionicons name="bulb-outline" size={14} color={accentHex} />
-        <AppText variant="caption" color={colors.text.secondary} style={{ flex: 1 }}>
-          Tap{' '}
-          <AppText variant="caption" style={{ color: accentHex, fontWeight: '700' }}>+ Payment</AppText>
-          {' '}below to schedule your first payment
-        </AppText>
-      </Animated.View>
-    </View>
-  );
-}
-
-const be = StyleSheet.create({
-  root:        { alignItems: 'center', paddingHorizontal: Spacing['5'], paddingTop: Spacing['4'], gap: Spacing['4'] },
-  heroWrap:    { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
-  outerRing:   { position: 'absolute', width: 118, height: 118, borderRadius: 59, borderWidth: 1.5, borderStyle: 'dashed' },
-  iconCircle: {
-    width: 82, height: 82, borderRadius: 41,
-    alignItems: 'center', justifyContent: 'center',
-    ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
-      android: { elevation: 12 },
-    }),
-  },
-  badge:       { position: 'absolute', width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  badgeBR:     { bottom: 14, right: 10 },
-  textBlock:   { alignItems: 'center', gap: Spacing['2'] },
-  subtitle:    { maxWidth: 280, lineHeight: 20 },
-  featuresCol: { alignSelf: 'stretch', gap: Spacing['2'] },
-  featureRow: {
-    flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
-    padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
-    ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
-      android: { elevation: 1 },
-    }),
-  },
-  featureIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  hint: {
-    alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center',
-    gap: Spacing['2'], padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
-  },
-});
-
-// ─── Animated Overview Icon ──────────────────────────────────────────────────
-interface AnimatedIconProps {
-  iconName: any;
-  iconColor: string;
-  badgeBg: string;
-  isOver: boolean;
-}
-
-function AnimatedIcon({ iconName, iconColor, badgeBg, isOver }: AnimatedIconProps) {
-  const scale = useSharedValue(1);
-
-  useEffect(() => {
-    if (isOver) {
-      scale.value = withRepeat(
-        withSequence(withTiming(1.15, { duration: 600 }), withTiming(1.0, { duration: 600 })),
-        -1, true
-      );
-    } else {
-      scale.value = withSpring(1);
-    }
-  }, [isOver, scale]);
-
-  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
-  return (
-    <Animated.View style={[styles.iconBadge, { backgroundColor: badgeBg }, animatedStyle]}>
-      <Ionicons name={iconName} size={18} color={iconColor} />
-    </Animated.View>
-  );
-}
-
-// ─── Screen ───────────────────────────────────────────────────────────────────
+import { Spacing, Layout, Radius } from '@constants/index';
 
 export default function BudgetScreen() {
   const { colors } = useTheme();
-  const { data: budgetsData, isLoading, isEmpty, refresh, summary } = useBudgets();
-  const budgets = budgetsData ?? [];
-
-  const { payments, settlePayment, deletePayment, addPayment } = usePlannedPayments();
-
-  const [addVisible, setAddVisible] = useState(false);
+  const {
+    budgets, isLoading, isEmpty, refresh, summary,
+    payments, settlePayment, deletePayment, addPayment,
+    addSheet,
+  } = useBudgetScreen();
 
   const percent   = summary ? summary.percentUsed : 0;
   const isOver    = percent > 100;
@@ -368,8 +46,8 @@ export default function BudgetScreen() {
   let iconName: any = 'wallet-outline';
   let iconColor = colors.brand.primary;
   let badgeBg   = colors.brand.primary + '18';
-  if (isOver)    { iconName = 'alert-circle'; iconColor = colors.status.expense; badgeBg = colors.status.expense + '20'; }
-  else if (isWarning) { iconName = 'trending-up'; iconColor = '#F59E0B'; badgeBg = '#F59E0B20'; }
+  if (isOver)         { iconName = 'alert-circle'; iconColor = colors.status.expense; badgeBg = colors.status.expense + '20'; }
+  else if (isWarning) { iconName = 'trending-up';  iconColor = '#F59E0B';            badgeBg = '#F59E0B20'; }
 
   const dynamicBorderColor = isOver
     ? colors.status.expense + '50'
@@ -390,28 +68,23 @@ export default function BudgetScreen() {
   const remaining = summary ? summary.totalLimit - summary.totalSpent : 0;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background.primary }]} edges={['top']}>
+    <SafeAreaView style={[s.safeArea, { backgroundColor: colors.background.primary }]} edges={['top']}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: Layout.tabBarHeight + Spacing['8'] }]}
+        contentContainerStyle={[s.scroll, { paddingBottom: Layout.tabBarHeight + Spacing['8'] }]}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} tintColor={colors.brand.primary} />}
       >
-        <AppHeader
-          title="Budget"
-          subtitle="Monthly spending limits"
-          noPadding
-        />
+        <AppHeader title="Budget" subtitle="Monthly spending limits" noPadding />
 
         {summary && (
           <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120)}>
             <GlassCard
-              padding={Spacing['5']}
-              borderRadius={Radius.xl}
+              padding={Spacing['5']} borderRadius={Radius.xl}
               borderGlow={isOver || isWarning}
-              style={[styles.overviewCard, { borderColor: dynamicBorderColor }]}
+              style={[s.overviewCard, { borderColor: dynamicBorderColor }]}
             >
-              <View style={styles.cardHeader}>
-                <View style={styles.cardHeaderLeft}>
+              <View style={s.cardHeader}>
+                <View style={s.cardHeaderLeft}>
                   <AnimatedIcon iconName={iconName} iconColor={iconColor} badgeBg={badgeBg} isOver={isOver} />
                   <View>
                     <AppText variant="labelMD" color={colors.text.secondary}>Monthly Overview</AppText>
@@ -426,7 +99,7 @@ export default function BudgetScreen() {
                 </AppText>
               </View>
 
-              <View style={styles.metricsRow}>
+              <View style={s.metricsRow}>
                 <View>
                   <AppText variant="numericLG" color={colors.text.primary}>${summary.totalSpent.toFixed(0)}</AppText>
                   <AppText variant="caption" color={colors.text.secondary}>spent of ${summary.totalLimit.toFixed(0)}</AppText>
@@ -435,20 +108,18 @@ export default function BudgetScreen() {
                   <AppText variant="numeric" color={isOver ? colors.status.expense : colors.status.income}>
                     {isOver ? '-' : ''}${Math.abs(remaining).toFixed(0)}
                   </AppText>
-                  <AppText variant="caption" color={colors.text.secondary}>
-                    {isOver ? 'over budget' : 'remaining'}
-                  </AppText>
+                  <AppText variant="caption" color={colors.text.secondary}>{isOver ? 'over budget' : 'remaining'}</AppText>
                 </View>
               </View>
 
-              <View style={[styles.progressContainer, { backgroundColor: colors.glass.backgroundMid }]}>
-                <Animated.View style={[styles.progressBarFill, animatedProgressStyle]}>
+              <View style={[s.progressContainer, { backgroundColor: colors.glass.backgroundMid }]}>
+                <Animated.View style={[s.progressBarFill, animatedProgressStyle]}>
                   <LinearGradient colors={overviewGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
                 </Animated.View>
               </View>
 
               {summary.overBudgetCount > 0 && (
-                <View style={styles.cardFooter}>
+                <View style={s.cardFooter}>
                   <Ionicons name="warning" size={14} color={colors.status.expense} />
                   <AppText variant="caption" style={{ color: colors.status.expense, fontWeight: '600' }}>
                     {summary.overBudgetCount} category budget{summary.overBudgetCount > 1 ? 's' : ''} exceeded
@@ -460,7 +131,7 @@ export default function BudgetScreen() {
         )}
 
         {isLoading && !budgets.length ? (
-          <ActivityIndicator color={colors.brand.primary} style={styles.loader} />
+          <ActivityIndicator color={colors.brand.primary} style={s.loader} />
         ) : isEmpty ? (
           <BudgetEmptyState />
         ) : (
@@ -469,146 +140,33 @@ export default function BudgetScreen() {
           </Animated.View>
         )}
 
-        <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120).delay(200)} style={styles.timelineWrapper}>
+        <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120).delay(200)}>
           <PlannedPaymentsTimeline payments={payments} onSettle={settlePayment} onDelete={deletePayment} />
         </Animated.View>
       </ScrollView>
 
       <AddPaymentSheet
-        visible={addVisible}
-        onClose={() => setAddVisible(false)}
+        visible={addSheet.isVisible}
+        onClose={addSheet.close}
         onSubmit={({ title, amount, dueDate, category }) =>
           addPayment({ title, amount, dueDate, category, isRecurring: false })
         }
       />
 
-      <FAB icon="add" label="Payment" onPress={() => setAddVisible(true)} />
+      <FAB icon="add" label="Payment" onPress={addSheet.open} />
     </SafeAreaView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   safeArea: { flex: 1 },
-  scroll: {
-    paddingHorizontal: Spacing['5'],
-    paddingTop:        Spacing['2'],
-    gap:               Spacing['4'],
-  },
+  scroll:   { paddingHorizontal: Spacing['5'], paddingTop: Spacing['2'], gap: Spacing['4'] },
   overviewCard: {},
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing['4'],
-  },
-  cardHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing['3'],
-  },
-  iconBadge: {
-    width: 36, height: 36, borderRadius: 18,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: Spacing['4'],
-  },
+  cardHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing['4'] },
+  cardHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing['3'] },
+  metricsRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: Spacing['4'] },
   progressContainer: { height: 8, borderRadius: 4, overflow: 'hidden', width: '100%' },
   progressBarFill:   { height: '100%', borderRadius: 4 },
   cardFooter: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: Spacing['4'] },
-  loader:          { marginTop: Spacing['10'] },
-  timelineWrapper: {},
-
-  // Add Payment Sheet
-  sheetOuter: { flex: 1, justifyContent: 'flex-end' },
-  sheet: {
-    borderTopLeftRadius:  Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    paddingHorizontal:    Spacing['5'],
-    paddingTop:           Spacing['3'],
-    gap:                  Spacing['3'],
-    ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.12, shadowRadius: 20 },
-      android: { elevation: 20 },
-    }),
-  },
-  handle: {
-    alignSelf: 'center', width: 36, height: 4,
-    borderRadius: 2, marginBottom: Spacing['2'],
-  },
-  sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  fieldLabel:  { fontSize: 10, letterSpacing: 0.8, marginBottom: -Spacing['1'] },
-  input: {
-    height: 46, borderRadius: Radius.lg,
-    paddingHorizontal: Spacing['4'], fontSize: 15,
-  },
-  rowFields: { flexDirection: 'row', gap: Spacing['3'] },
-  catHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  createCatBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: Radius.full, borderWidth: 1,
-  },
-  catRow: { gap: Spacing['2'] },
-  catChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: Spacing['3'], paddingVertical: 8,
-    borderRadius: Radius.lg,
-  },
-  catIconBox: {
-    width: 26, height: 26, borderRadius: 8,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  submitBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: Spacing['2'], height: 52, borderRadius: Radius.xl, marginTop: Spacing['2'],
-  },
-
-  // Create Category Modal
-  createOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
-  createSheet: {
-    borderTopLeftRadius:  Radius['2xl'],
-    borderTopRightRadius: Radius['2xl'],
-    paddingHorizontal:    Spacing['5'],
-    paddingTop:           Spacing['3'],
-    maxHeight:            '92%',
-    ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.18, shadowRadius: 24 },
-      android: { elevation: 28 },
-    }),
-  },
-  createScroll:  { gap: Spacing['4'], paddingBottom: Spacing['2'] },
-  previewRow:    { flexDirection: 'row', alignItems: 'center', gap: Spacing['3'] },
-  iconPreview: {
-    width: 60, height: 60, borderRadius: 18,
-    borderWidth: 2, alignItems: 'center', justifyContent: 'center',
-  },
-  nameInput: {
-    height: 52, borderRadius: Radius.lg,
-    paddingHorizontal: Spacing['4'], fontSize: 15,
-  },
-  pickerLabel: { fontSize: 10, letterSpacing: 0.8, marginBottom: -Spacing['1'] },
-  colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing['3'] },
-  colorDot: {
-    width: 34, height: 34, borderRadius: 17,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  colorDotActive: { borderWidth: 3, borderColor: '#FFFFFF', transform: [{ scale: 1.12 }] },
-  applyRow: { flexDirection: 'row', gap: Spacing['2'] },
-  applyChip: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 5, height: 42, borderRadius: Radius.lg,
-  },
-  iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing['2'] },
-  iconOption: { borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
-  createBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: Spacing['2'], height: 52, borderRadius: Radius.xl,
-  },
-  createBtnText: { color: '#FFF', fontWeight: '700', fontSize: 15 },
+  loader: { marginTop: Spacing['10'] },
 });

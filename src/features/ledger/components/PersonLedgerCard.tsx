@@ -269,7 +269,6 @@ const styles = StyleSheet.create({
   swipeContainer: {
     position: 'relative',
     marginBottom: Spacing['2'],
-    overflow: 'hidden',   // prevent action btns bleeding through card bg
   },
   actions: {
     position: 'absolute',

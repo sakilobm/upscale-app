@@ -48,15 +48,15 @@ function LedgerInfoSheet({
   onPartialReturn,
   onSettle,
 }: {
-  entry:           LedgerEntry | undefined;
-  onClose:         () => void;
+  entry: LedgerEntry | undefined;
+  onClose: () => void;
   onPartialReturn: (e: LedgerEntry) => void;
-  onSettle:        (id: string) => void;
+  onSettle: (id: string) => void;
 }) {
   const { colors, isDark } = useTheme();
   const translateY = useSharedValue(600);
   const backdropOp = useSharedValue(0);
-  const visible    = !!entry;
+  const visible = !!entry;
 
   useEffect(() => {
     if (visible) {
@@ -68,23 +68,23 @@ function LedgerInfoSheet({
     }
   }, [visible]);
 
-  const sheetStyle   = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOp.value }));
 
   if (!entry) return null;
 
-  const remaining  = entry.totalAmount - entry.amountReturned;
+  const remaining = entry.totalAmount - entry.amountReturned;
   const progressPct = entry.totalAmount > 0 ? entry.amountReturned / entry.totalAmount : 0;
-  const dirColor   = entry.direction === 'OWED_TO_ME' ? colors.status.income : colors.status.expense;
+  const dirColor = entry.direction === 'OWED_TO_ME' ? colors.status.income : colors.status.expense;
   const statusColor =
     entry.status === 'SETTLED' ? colors.status.income :
-    entry.status === 'OVERDUE' ? colors.status.expense : colors.status.info;
+      entry.status === 'OVERDUE' ? colors.status.expense : colors.status.info;
 
   const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
-  const stats  = [
-    { label: 'Total',     value: entry.totalAmount,      color: colors.text.primary },
-    { label: 'Returned',  value: entry.amountReturned,   color: colors.status.income },
-    { label: 'Remaining', value: remaining,              color: remaining > 0 ? dirColor : colors.status.income },
+  const stats = [
+    { label: 'Total', value: entry.totalAmount, color: colors.text.primary },
+    { label: 'Returned', value: entry.amountReturned, color: colors.status.income },
+    { label: 'Remaining', value: remaining, color: remaining > 0 ? dirColor : colors.status.income },
   ];
 
   return (
@@ -221,58 +221,58 @@ function LedgerInfoSheet({
 type LedgerEmptyVariant = 'owed_to_me' | 'i_owe' | 'loans';
 
 const LEDGER_EMPTY_CONFIG: Record<LedgerEmptyVariant, {
-  icon:     React.ComponentProps<typeof Ionicons>['name'];
-  grad:     [string, string];
-  title:    string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  grad: [string, string];
+  title: string;
   subtitle: string;
-  hint:     string;
+  hint: string;
 }> = {
   owed_to_me: {
-    icon:     'people-outline',
-    grad:     ['#6366F1', '#8B5CF6'],
-    title:    'No one owes you',
+    icon: 'people-outline',
+    grad: ['#6366F1', '#8B5CF6'],
+    title: 'No one owes you',
     subtitle: 'Record hand-to-hand money you lent to friends or family.',
-    hint:     'Tap + to add an entry',
+    hint: 'Tap + to add an entry',
   },
   i_owe: {
-    icon:     'happy-outline',
-    grad:     ['#10B981', '#34D399'],
-    title:    "You're debt-free!",
+    icon: 'happy-outline',
+    grad: ['#10B981', '#34D399'],
+    title: "You're debt-free!",
     subtitle: "No outstanding debts. You don't owe anyone right now.",
-    hint:     'Tap + if you borrow money',
+    hint: 'Tap + if you borrow money',
   },
   loans: {
-    icon:     'business-outline',
-    grad:     ['#F59E0B', '#FBBF24'],
-    title:    'No loans tracked',
+    icon: 'business-outline',
+    grad: ['#F59E0B', '#FBBF24'],
+    title: 'No loans tracked',
     subtitle: 'Track mortgages, car loans, or money you have lent out.',
-    hint:     'Tap + to add a loan',
+    hint: 'Tap + to add a loan',
   },
 };
 
 const LEDGER_FEATURES: Record<LedgerEmptyVariant, { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }[]> = {
   owed_to_me: [
-    { icon: 'person-add-outline',  text: 'Add who owes you and how much'  },
-    { icon: 'card-outline',        text: 'Track partial returns over time' },
+    { icon: 'person-add-outline', text: 'Add who owes you and how much' },
+    { icon: 'card-outline', text: 'Track partial returns over time' },
     { icon: 'checkmark-done-outline', text: 'Mark as settled when paid back' },
   ],
   i_owe: [
-    { icon: 'cash-outline',          text: 'Log money you borrowed'         },
-    { icon: 'time-outline',          text: 'Set a due date as a reminder'   },
-    { icon: 'checkmark-done-outline', text: 'Settle when you pay it back'    },
+    { icon: 'cash-outline', text: 'Log money you borrowed' },
+    { icon: 'time-outline', text: 'Set a due date as a reminder' },
+    { icon: 'checkmark-done-outline', text: 'Settle when you pay it back' },
   ],
   loans: [
-    { icon: 'home-outline',       text: 'Track home or car loans'          },
+    { icon: 'home-outline', text: 'Track home or car loans' },
     { icon: 'calculator-outline', text: 'See EMI and progress at a glance' },
-    { icon: 'trending-down-outline', text: 'Record each payment made'       },
+    { icon: 'trending-down-outline', text: 'Record each payment made' },
   ],
 };
 
 function LedgerEmptyState({ variant }: { variant: LedgerEmptyVariant }) {
   const { colors, isDark } = useTheme();
-  const cfg      = LEDGER_EMPTY_CONFIG[variant];
+  const cfg = LEDGER_EMPTY_CONFIG[variant];
   const features = LEDGER_FEATURES[variant];
-  const cardBg   = isDark ? colors.background.secondary : '#FFFFFF';
+  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
   const accentHex = cfg.grad[0];
 
   return (
@@ -329,8 +329,8 @@ function LedgerEmptyState({ variant }: { variant: LedgerEmptyVariant }) {
 }
 
 const le = StyleSheet.create({
-  root:        { alignItems: 'center', paddingHorizontal: Spacing['5'], paddingTop: Spacing['4'], gap: Spacing['4'] },
-  heroWrap:    { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
+  root: { alignItems: 'center', paddingHorizontal: Spacing['5'], paddingTop: Spacing['4'], gap: Spacing['4'] },
+  heroWrap: { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
   outerRing: {
     position: 'absolute', width: 118, height: 118, borderRadius: 59,
     borderWidth: 1.5, borderStyle: 'dashed',
@@ -339,7 +339,7 @@ const le = StyleSheet.create({
     width: 82, height: 82, borderRadius: 41,
     alignItems: 'center', justifyContent: 'center',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16 },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16 },
       android: { elevation: 10 },
     }),
   },
@@ -348,14 +348,14 @@ const le = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   badgeBR: { bottom: 14, right: 10 },
-  textBlock:   { alignItems: 'center', gap: Spacing['2'] },
-  subtitle:    { maxWidth: 280, lineHeight: 20 },
+  textBlock: { alignItems: 'center', gap: Spacing['2'] },
+  subtitle: { maxWidth: 280, lineHeight: 20 },
   featuresCol: { alignSelf: 'stretch', gap: Spacing['2'] },
   featureRow: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
     padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
       android: { elevation: 1 },
     }),
   },
@@ -397,7 +397,7 @@ export default function LedgerScreen() {
       ? owedToMeEntries.filter((e) => e.direction === 'I_OWE')
       : [];
 
-  const activeEntries  = directionEntries.filter((e) => e.status !== 'SETTLED');
+  const activeEntries = directionEntries.filter((e) => e.status !== 'SETTLED');
   const settledEntries = directionEntries.filter((e) => e.status === 'SETTLED');
 
   const openAddSheet = () => {
@@ -418,8 +418,8 @@ export default function LedgerScreen() {
   };
 
   const sections = [
-    ...(activeEntries.length > 0  ? [{ title: 'Active',  data: activeEntries  }] : []),
-    ...(settledEntries.length > 0  ? [{ title: 'Settled', data: settledEntries }] : []),
+    ...(activeEntries.length > 0 ? [{ title: 'Active', data: activeEntries }] : []),
+    ...(settledEntries.length > 0 ? [{ title: 'Settled', data: settledEntries }] : []),
   ];
 
   return (
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scroll: {
     paddingHorizontal: Spacing['5'],
-    paddingTop:        Spacing['2'],
+    paddingTop: Spacing['2'],
   },
   segmentWrapper: {
     marginBottom: Spacing['5'],
@@ -561,110 +561,110 @@ const styles = StyleSheet.create({
     marginBottom: Spacing['1'],
   },
   swipeHint: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    gap:               6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: Spacing['3'],
-    paddingVertical:   Spacing['2'],
-    borderRadius:      Radius.lg,
-    borderWidth:       1,
-    marginBottom:      Spacing['1'],
+    paddingVertical: Spacing['2'],
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing['5'],
   },
 
   // ── Info Sheet ──────────────────────────────────────────────────────────────
   infoSheet: {
-    position:             'absolute',
-    bottom:               0,
-    left:                 0,
-    right:                0,
-    borderTopLeftRadius:  Radius['2xl'],
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: Radius['2xl'],
     borderTopRightRadius: Radius['2xl'],
-    borderWidth:          1,
-    borderBottomWidth:    0,
-    paddingHorizontal:    Spacing['5'],
-    paddingBottom:        Platform.OS === 'ios' ? 40 : 28,
-    gap:                  Spacing['4'],
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    paddingHorizontal: Spacing['5'],
+    paddingBottom: Platform.OS === 'ios' ? 40 : 28,
+    gap: Spacing['4'],
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.14, shadowRadius: 20 },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.14, shadowRadius: 20 },
       android: { elevation: 20 },
     }),
   },
   infoHandle: {
-    alignSelf:    'center',
-    width:        36,
-    height:       4,
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
     borderRadius: 2,
-    marginTop:    12,
+    marginTop: 12,
   },
   infoClose: {
     position: 'absolute',
-    top:      16,
-    right:    Spacing['5'],
+    top: 16,
+    right: Spacing['5'],
   },
   infoAvatarRow: {
     flexDirection: 'row',
-    alignItems:    'center',
-    gap:           Spacing['3'],
-    marginTop:     Spacing['1'],
+    alignItems: 'center',
+    gap: Spacing['3'],
+    marginTop: Spacing['1'],
   },
   infoAvatar: {
-    width:          52,
-    height:         52,
-    borderRadius:   26,
-    borderWidth:    2,
-    alignItems:     'center',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 2,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   infoAvatarText: {
-    fontSize:   18,
+    fontSize: 18,
     fontWeight: '700',
   },
   infoNameBlock: {
     flex: 1,
-    gap:  6,
+    gap: 6,
   },
   infoName: {
-    fontSize:   20,
+    fontSize: 20,
     fontWeight: '700',
   },
   infoChipRow: {
     flexDirection: 'row',
-    gap:           8,
-    alignItems:    'center',
-    flexWrap:      'wrap',
+    gap: 8,
+    alignItems: 'center',
+    flexWrap: 'wrap',
   },
   infoDirectionChip: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    gap:               4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 9,
-    paddingVertical:   3,
-    borderRadius:      Radius.full,
-    borderWidth:       1,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   infoStatusChip: {
     paddingHorizontal: 9,
-    paddingVertical:   3,
-    borderRadius:      Radius.full,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
   },
   infoChipText: {
-    fontSize:   11,
+    fontSize: 11,
     fontWeight: '600',
   },
   statsCard: {
-    flexDirection:  'row',
-    borderRadius:   Radius.xl,
-    borderWidth:    1,
-    overflow:       'hidden',
+    flexDirection: 'row',
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
   statCell: {
-    flex:            1,
-    alignItems:      'center',
+    flex: 1,
+    alignItems: 'center',
     paddingVertical: Spacing['4'],
-    gap:             4,
+    gap: 4,
   },
   statValue: {
-    fontSize:   16,
+    fontSize: 16,
     fontWeight: '700',
   },
   statLabel: {
@@ -673,12 +673,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   infoProgressTrack: {
-    height:       4,
+    height: 4,
     borderRadius: 2,
-    overflow:     'hidden',
+    overflow: 'hidden',
   },
   infoProgressFill: {
-    height:       4,
+    height: 4,
     borderRadius: 2,
   },
   infoMeta: {
@@ -686,32 +686,32 @@ const styles = StyleSheet.create({
   },
   infoMetaRow: {
     flexDirection: 'row',
-    alignItems:    'center',
-    gap:           6,
+    alignItems: 'center',
+    gap: 6,
   },
   infoActions: {
     gap: Spacing['3'],
     marginTop: Spacing['1'],
   },
   infoActionBtn: {
-    height:         52,
-    borderRadius:   Radius.xl,
-    flexDirection:  'row',
-    alignItems:     'center',
+    height: 52,
+    borderRadius: Radius.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap:            8,
+    gap: 8,
   },
   infoActionPrimary: {},
   infoActionPrimaryText: {
-    color:      '#fff',
+    color: '#fff',
     fontWeight: '700',
-    fontSize:   15,
+    fontSize: 15,
   },
   infoActionSecondary: {
     borderWidth: 1,
   },
   infoActionSecondaryText: {
     fontWeight: '600',
-    fontSize:   15,
+    fontSize: 15,
   },
 });

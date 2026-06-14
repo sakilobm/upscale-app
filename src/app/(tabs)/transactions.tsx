@@ -1,448 +1,52 @@
-import { useCallback, useMemo, useRef, type ComponentProps } from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  RefreshControl,
-  TextInput,
-  Platform,
-  Pressable,
-} from 'react-native';
+/**
+ * @file transactions.tsx
+ * @architecture Presentation Layer — Lean View Shell
+ * @description Activity / Transactions screen. Pure declarative orchestrator: reads a
+ *   single contract from useActivityScreen and renders extracted components. Zero
+ *   business logic, zero raw useState, zero store imports.
+ * @associatedFiles src/features/transactions/hooks/useActivityScreen.ts,
+ *   src/components/activity/ (ActivityHero, AccountBar, ActivityEmptyState, SwipeableTransactionRow)
+ */
+
+import { View, ScrollView, StyleSheet, RefreshControl, TextInput, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  FadeInDown,
-} from 'react-native-reanimated';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { router } from 'expo-router';
-import { format } from 'date-fns';
-import { useTransactions } from '@features/transactions/hooks/useTransactions';
-import { TransactionListItem } from '@features/transactions/components/TransactionListItem';
+import { useActivityScreen } from '@features/transactions/hooks/useActivityScreen';
+import { ActivityHero } from '@components/activity/ActivityHero';
+import { AccountBar } from '@components/activity/AccountBar';
+import { ActivityEmptyState } from '@components/activity/ActivityEmptyState';
+import { SwipeableTransactionRow } from '@components/activity/SwipeableTransactionRow';
 import { FilterBar } from '@features/transactions/components/FilterBar';
 import { AppText } from '@components/AppText';
 import { LoadingScreen } from '@components/LoadingScreen';
-import { Spacing, Layout, Radius, Typography } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
-import { useTransactionStore } from '@store/transactionStore';
-import { useAccountStore } from '@store/accountStore';
-import type { Account, Transaction } from '@store/types';
-
-type IoniconName = ComponentProps<typeof Ionicons>['name'];
-
-// ─── Month summary strip ──────────────────────────────────────────────────────
-
-interface SummaryData { income: number; expense: number; count: number }
-
-function ActivityHero({
-  summary,
-  monthLabel,
-}: {
-  summary: SummaryData;
-  monthLabel: string;
-}) {
-  const { colors, isDark } = useTheme();
-  const net = summary.income - summary.expense;
-
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
-  const cardBorder = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
-
-  const stats: { label: string; value: number; color: string; icon: IoniconName; sign?: string }[] = [
-    { label: 'Income', value: summary.income, color: colors.status.income, icon: 'arrow-down-circle-outline', sign: '+' },
-    { label: 'Expenses', value: summary.expense, color: colors.status.expense, icon: 'arrow-up-circle-outline', sign: '-' },
-    { label: 'Net', value: Math.abs(net), color: net >= 0 ? colors.status.income : colors.status.expense, icon: net >= 0 ? 'trending-up-outline' : 'trending-down-outline', sign: net >= 0 ? '+' : '-' },
-  ];
-
-  return (
-    <Animated.View entering={FadeInDown.springify().damping(18).stiffness(130)}>
-      {/* Month label row */}
-      <View style={styles.heroTitleRow}>
-        <View style={styles.heroTitleLeft}>
-          <AppText variant="headingLG" color={colors.text.primary} style={styles.heroTitle}>
-            Activity
-          </AppText>
-          <View style={[styles.monthChip, { backgroundColor: colors.brand.primary + '15', borderColor: colors.brand.primary + '35' }]}>
-            <Ionicons name="calendar-outline" size={12} color={colors.brand.primary} />
-            <AppText variant="labelSM" style={{ color: colors.brand.primary, fontWeight: '600', fontSize: 11 }}>
-              {monthLabel}
-            </AppText>
-          </View>
-        </View>
-        <AppText variant="caption" color={colors.text.tertiary} style={styles.heroCount}>
-          {summary.count} transactions
-        </AppText>
-      </View>
-
-      {/* 3-stat card */}
-      <View style={[styles.summaryCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-        {stats.map((stat, idx) => (
-          <View key={stat.label} style={[styles.statCell, idx < 2 && { borderRightWidth: 1, borderRightColor: cardBorder }]}>
-            <View style={[styles.statIconWrap, { backgroundColor: stat.color + '15' }]}>
-              <Ionicons name={stat.icon} size={15} color={stat.color} />
-            </View>
-            <AppText variant="caption" color={colors.text.tertiary} style={styles.statLabel}>
-              {stat.label}
-            </AppText>
-            <AppText
-              variant="labelLG"
-              style={[styles.statValue, { color: stat.color }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {stat.sign}${stat.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </AppText>
-          </View>
-        ))}
-        {/* Gradient accent line */}
-        <LinearGradient
-          colors={[colors.status.income, colors.brand.primary, colors.status.expense]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.summaryAccentLine}
-        />
-      </View>
-    </Animated.View>
-  );
-}
-
-// ─── Account chip ─────────────────────────────────────────────────────────────
-
-interface ChipData {
-  id: string | null;
-  name: string;
-  icon: IoniconName;
-  color: string;
-  balance: number;
-}
-
-function AccountChip({
-  chip,
-  isActive,
-  onPress,
-}: {
-  chip: ChipData;
-  isActive: boolean;
-  onPress: () => void;
-}) {
-  const { colors, isDark } = useTheme();
-  const scale = useSharedValue(1);
-
-  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
-  const handlePress = () => {
-    scale.value = withSpring(0.94, { damping: 14, stiffness: 320 }, () => {
-      scale.value = withSpring(1, { damping: 14, stiffness: 320 });
-    });
-    onPress();
-  };
-
-  const bg = isActive ? chip.color + '1E' : (isDark ? '#FFFFFF0A' : '#F1F1F5');
-  const border = isActive ? chip.color + '55' : 'transparent';
-  const nameClr = isActive ? chip.color : colors.text.secondary;
-  const balClr = isActive ? chip.color + 'BB' : colors.text.tertiary;
-
-  return (
-    <Pressable onPress={handlePress} style={styles.chipWrapper}>
-      <Animated.View style={[styles.chip, animStyle, { backgroundColor: bg, borderColor: border, borderWidth: 1 }]}>
-        <View style={[styles.chipIcon, { backgroundColor: chip.color + (isActive ? '28' : '14') }]}>
-          <Ionicons name={chip.icon} size={17} color={chip.color} />
-        </View>
-        <View style={styles.chipLabels}>
-          <AppText variant="labelSM" style={{ color: nameClr, fontWeight: isActive ? '700' : '500', lineHeight: 15 }} numberOfLines={1}>
-            {chip.name}
-          </AppText>
-          <AppText style={{ color: balClr, fontSize: 11, lineHeight: 14 }} numberOfLines={1}>
-            ${chip.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-          </AppText>
-        </View>
-        {isActive && <View style={[styles.chipActiveLine, { backgroundColor: chip.color }]} />}
-      </Animated.View>
-    </Pressable>
-  );
-}
-
-// ─── Account bar ─────────────────────────────────────────────────────────────
-
-function AccountBar() {
-  const accounts = useAccountStore((s) => s.accounts);
-  const filters = useTransactionStore((s) => s.filters);
-  const setFilters = useTransactionStore((s) => s.setFilters);
-  const { colors } = useTheme();
-
-  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
-
-  const allChip: ChipData = { id: null, name: 'All', icon: 'wallet-outline', color: colors.brand.primary, balance: totalBalance };
-  const chips: ChipData[] = [
-    allChip,
-    ...accounts.map((a) => ({ id: a.id, name: a.name, icon: a.icon as IoniconName, color: a.color, balance: a.balance })),
-  ];
-
-  return (
-    <View style={styles.accountBarOuter}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountBarContent}>
-        {chips.map((chip) => (
-          <AccountChip
-            key={chip.id ?? 'all'}
-            chip={chip}
-            isActive={chip.id === filters.accountId}
-            onPress={() => setFilters({ accountId: chip.id })}
-          />
-        ))}
-        <Pressable
-          onPress={() => router.push('/accounts')}
-          style={({ pressed }) => [styles.manageBtn, { opacity: pressed ? 0.65 : 1 }]}
-        >
-          <Ionicons name="settings-outline" size={14} color={colors.text.tertiary} />
-          <AppText variant="labelSM" color={colors.text.tertiary} style={{ fontSize: 12 }}>Manage</AppText>
-        </Pressable>
-      </ScrollView>
-    </View>
-  );
-}
-
-// ─── Activity empty state ─────────────────────────────────────────────────────
-
-function ActivityEmptyState() {
-  const { colors, isDark } = useTheme();
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
-  const accentHex = colors.brand.primary;
-
-  const FEATURES = [
-    { icon: 'trending-down-outline' as const, color: '#EF4444', text: 'Log expenses by category' },
-    { icon: 'trending-up-outline'   as const, color: '#10B981', text: 'Record income sources'    },
-    { icon: 'analytics-outline'     as const, color: '#6366F1', text: 'See monthly breakdowns'   },
-  ];
-
-  return (
-    <View style={ae.root}>
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140)} style={ae.heroWrap}>
-        <View style={[ae.outerRing, { borderColor: accentHex + '28' }]} />
-        <LinearGradient
-          colors={[accentHex, colors.brand.accent] as [string, string]}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={ae.iconCircle}
-        >
-          <Ionicons name="receipt-outline" size={36} color="#fff" />
-        </LinearGradient>
-        <View style={[ae.badge, ae.badgeBR, { backgroundColor: '#10B98120' }]}>
-          <Ionicons name="add" size={16} color="#10B981" />
-        </View>
-      </Animated.View>
-
-      {/* ── Text ─────────────────────────────────────────────── */}
-      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(80)} style={ae.textBlock}>
-        <AppText variant="headingMD" color={colors.text.primary} align="center">
-          No transactions yet
-        </AppText>
-        <AppText variant="bodySM" color={colors.text.secondary} align="center" style={ae.subtitle}>
-          Start logging your income and expenses to get a clear picture of your finances.
-        </AppText>
-      </Animated.View>
-
-      {/* ── Feature rows ─────────────────────────────────────── */}
-      <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(160)} style={ae.featuresCol}>
-        {FEATURES.map(({ icon, color, text }) => (
-          <View
-            key={text}
-            style={[ae.featureRow, { backgroundColor: cardBg, borderColor: accentHex + '20' }]}
-          >
-            <View style={[ae.featureIcon, { backgroundColor: color + '15' }]}>
-              <Ionicons name={icon} size={16} color={color} />
-            </View>
-            <AppText variant="bodySM" color={colors.text.secondary} style={{ flex: 1 }}>{text}</AppText>
-          </View>
-        ))}
-      </Animated.View>
-
-      {/* ── Hint ─────────────────────────────────────────────── */}
-      <Animated.View
-        entering={FadeInDown.springify().damping(20).stiffness(140).delay(240)}
-        style={[ae.hint, { backgroundColor: accentHex + '0C', borderColor: accentHex + '25' }]}
-      >
-        <Ionicons name="home-outline" size={14} color={accentHex} />
-        <AppText variant="caption" color={colors.text.secondary} style={{ flex: 1 }}>
-          Go to{' '}
-          <AppText variant="caption" style={{ color: accentHex, fontWeight: '700' }}>Home</AppText>
-          {' '}and tap{' '}
-          <AppText variant="caption" style={{ color: colors.status.expense, fontWeight: '700' }}>Expense</AppText>
-          {' '}or{' '}
-          <AppText variant="caption" style={{ color: colors.status.income, fontWeight: '700' }}>Income</AppText>
-          {' '}to get started
-        </AppText>
-      </Animated.View>
-    </View>
-  );
-}
-
-const ae = StyleSheet.create({
-  root:        { alignItems: 'center', paddingHorizontal: Spacing['5'], paddingTop: Spacing['4'], gap: Spacing['4'] },
-  heroWrap:    { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
-  outerRing:   { position: 'absolute', width: 118, height: 118, borderRadius: 59, borderWidth: 1.5, borderStyle: 'dashed' },
-  iconCircle: {
-    width: 82, height: 82, borderRadius: 41,
-    alignItems: 'center', justifyContent: 'center',
-    ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
-      android: { elevation: 12 },
-    }),
-  },
-  badge:       { position: 'absolute', width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  badgeBR:     { bottom: 14, right: 10 },
-  textBlock:   { alignItems: 'center', gap: Spacing['2'] },
-  subtitle:    { maxWidth: 280, lineHeight: 20 },
-  featuresCol: { alignSelf: 'stretch', gap: Spacing['2'] },
-  featureRow: {
-    flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
-    padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
-    ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
-      android: { elevation: 1 },
-    }),
-  },
-  featureIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  hint: {
-    alignSelf: 'stretch', flexDirection: 'row', alignItems: 'flex-start',
-    gap: Spacing['2'], padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
-  },
-});
-
-// ─── Swipeable transaction row ────────────────────────────────────────────────
-
-const TX_DELETE_W = 72;
-const TX_SNAP_AT = TX_DELETE_W / 2;
-
-function SwipeableTransactionRow({
-  tx,
-  onDelete,
-  onPress,
-}: {
-  tx: Transaction;
-  onDelete: () => void;
-  onPress: (tx: Transaction) => void;
-}) {
-  const { colors, isDark } = useTheme();
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
-  const translateX = useSharedValue(0);
-  const rowOpacity = useSharedValue(1);
-  const swipedRef = useRef(false);
-
-  const dismiss = () => {
-    translateX.value = withTiming(-400, { duration: 260 });
-    rowOpacity.value = withTiming(0, { duration: 200 });
-    setTimeout(onDelete, 240);
-  };
-
-  const panGesture = Gesture.Pan()
-    .runOnJS(true)
-    .activeOffsetX([-10, 10000])
-    .failOffsetY([-12, 12])
-    .onBegin(() => { swipedRef.current = false; })
-    .onUpdate((e) => {
-      if (e.translationX < -5) swipedRef.current = true;
-      translateX.value = Math.min(Math.max(e.translationX, -(TX_DELETE_W + 8)), 0);
-    })
-    .onEnd((e) => {
-      if (e.velocityX < -600 || e.translationX < -180) {
-        dismiss();
-      } else if (e.translationX < -TX_SNAP_AT) {
-        translateX.value = withSpring(-TX_DELETE_W, { damping: 20, stiffness: 200 });
-      } else {
-        translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
-        setTimeout(() => { swipedRef.current = false; }, 100);
-      }
-    });
-
-  const rowStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-    opacity: rowOpacity.value,
-    backgroundColor: cardBg,
-  }));
-
-  return (
-    <View style={styles.swipeRowWrapper}>
-      {/* Delete action behind the row */}
-      <Pressable
-        onPress={dismiss}
-        style={[styles.txDeleteAction, { backgroundColor: colors.status.expense }]}
-      >
-        <Ionicons name="trash-outline" size={17} color="#fff" />
-      </Pressable>
-
-      <GestureDetector gesture={panGesture}>
-        <Animated.View style={rowStyle}>
-          <TransactionListItem
-            transaction={tx}
-            onPress={(t) => {
-              if (swipedRef.current) {
-                translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
-                setTimeout(() => { swipedRef.current = false; }, 100);
-              } else {
-                onPress(t);
-              }
-            }}
-          />
-        </Animated.View>
-      </GestureDetector>
-    </View>
-  );
-}
-
-// ─── Screen ───────────────────────────────────────────────────────────────────
+import { Spacing, Layout, Radius, Typography } from '@constants/index';
 
 export default function TransactionsScreen() {
   const { colors, isDark } = useTheme();
-  const { data: groups, isLoading, isEmpty, refresh, removeTransaction, formatDateHeader } = useTransactions();
+  const {
+    groups, isLoading, isEmpty, refresh, removeTransaction, formatDateHeader,
+    filters, setFilters, selectedAccount, summary, monthLabel, handleTransactionPress,
+  } = useActivityScreen();
 
-  const accounts = useAccountStore((s) => s.accounts);
-  const filters = useTransactionStore((s) => s.filters);
-  const setFilters = useTransactionStore((s) => s.setFilters);
-
-  const selectedAccount: Account | null = filters.accountId
-    ? (accounts.find((a) => a.id === filters.accountId) ?? null)
-    : null;
-  const balanceColor = selectedAccount?.color ?? colors.brand.primary;
-  const balanceIcon = (selectedAccount?.icon ?? 'wallet-outline') as IoniconName;
-
-  // Compute summary from visible (filtered) data
-  const summary = useMemo<SummaryData>(() => {
-    const allTxs = (groups ?? []).flatMap((g) => g.transactions);
-    return {
-      income: allTxs.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0),
-      expense: allTxs.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
-      count: allTxs.length,
-    };
-  }, [groups]);
-
-  const monthLabel = filters.month
-    ? format(new Date(filters.month + '-01'), 'MMMM yyyy')
-    : format(new Date(), 'MMMM yyyy');
-
-  const handleTransactionPress = useCallback((_tx: Transaction) => { }, []);
+  const balanceColor  = selectedAccount?.color ?? colors.brand.primary;
+  const balanceIcon   = (selectedAccount?.icon ?? 'wallet-outline') as any;
+  const cardBg        = isDark ? colors.background.secondary : '#FFFFFF';
+  const cardBorder    = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
+  const dividerColor  = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
 
   if (isLoading && !groups) return <LoadingScreen message="Loading transactions..." />;
 
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
-  const cardBorder = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
-  const dividerColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
-
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background.primary }]} edges={['top']}>
-
-      {/* ─── Fixed top: hero + filters ─── */}
-      <View style={styles.topArea}>
+    <SafeAreaView style={[s.safe, { backgroundColor: colors.background.primary }]} edges={['top']}>
+      <View style={s.topArea}>
         <ActivityHero summary={summary} monthLabel={monthLabel} />
 
-        {/* Search */}
-        <View style={styles.searchWrapper}>
-          <View style={[styles.searchBox, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+        <View style={s.searchOuter}>
+          <View style={[s.searchBox, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <Ionicons name="search-outline" size={18} color={colors.text.tertiary} />
             <TextInput
-              style={[styles.searchInput, { ...Typography.bodyMD, lineHeight: undefined, color: colors.text.primary }]}
+              style={[s.searchInput, { ...Typography.bodyMD, lineHeight: undefined, color: colors.text.primary }]}
               placeholder="Search transactions..."
               placeholderTextColor={colors.text.tertiary}
               value={filters.searchQuery}
@@ -455,38 +59,26 @@ export default function TransactionsScreen() {
           </View>
         </View>
 
-        {/* Account filter */}
         <AccountBar />
-
-        {/* Type filter */}
         <FilterBar activeType={filters.type} onTypeChange={(type) => setFilters({ type })} />
-
-        <View style={[styles.listDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} />
+        <View style={[s.dividerLine, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} />
       </View>
 
-      {/* ─── Scrollable list ─── */}
       {isEmpty ? (
-        <ScrollView
-          contentContainerStyle={{ paddingTop: Spacing['4'], paddingBottom: Layout.tabBarHeight + Spacing['8'] }}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={{ paddingTop: Spacing['4'], paddingBottom: Layout.tabBarHeight + Spacing['8'] }} showsVerticalScrollIndicator={false}>
           <ActivityEmptyState />
         </ScrollView>
       ) : (
         <ScrollView
-          contentContainerStyle={[styles.listContent, { paddingBottom: Layout.tabBarHeight + Spacing['8'] }]}
+          contentContainerStyle={[s.list, { paddingBottom: Layout.tabBarHeight + Spacing['8'] }]}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={isLoading} onRefresh={refresh} tintColor={colors.brand.primary} />
-          }
+          refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} tintColor={colors.brand.primary} />}
         >
           {(groups ?? []).map((group) => (
-            <View key={group.date} style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <AppText variant="labelMD" color={colors.text.secondary}>
-                  {formatDateHeader(group.date)}
-                </AppText>
-                <View style={[styles.balancePill, { backgroundColor: balanceColor + '16' }]}>
+            <View key={group.date} style={s.section}>
+              <View style={s.dateHeader}>
+                <AppText variant="labelMD" color={colors.text.secondary}>{formatDateHeader(group.date)}</AppText>
+                <View style={[s.balancePill, { backgroundColor: balanceColor + '16' }]}>
                   <Ionicons name={balanceIcon} size={12} color={balanceColor} />
                   <AppText variant="labelSM" style={{ color: balanceColor, fontWeight: '600', fontSize: 12 }}>
                     ${group.balanceAfter.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -494,18 +86,16 @@ export default function TransactionsScreen() {
                 </View>
               </View>
 
-              <View style={[styles.groupCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+              <View style={[s.groupCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
                 {group.transactions.map((tx, idx) => (
                   <View key={tx.id}>
                     <SwipeableTransactionRow
                       tx={tx}
                       onPress={handleTransactionPress}
-                      onDelete={async () => {
-                        try { await removeTransaction(tx.id); } catch { /* no-op */ }
-                      }}
+                      onDelete={async () => { try { await removeTransaction(tx.id); } catch { /* no-op */ } }}
                     />
                     {idx < group.transactions.length - 1 && (
-                      <View style={[styles.divider, { backgroundColor: dividerColor }]} />
+                      <View style={[s.rowDivider, { backgroundColor: dividerColor }]} />
                     )}
                   </View>
                 ))}
@@ -518,219 +108,33 @@ export default function TransactionsScreen() {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  safe:    { flex: 1 },
+  topArea: { gap: Spacing['4'], paddingBottom: Spacing['2'] },
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-
-  // Top fixed area
-  topArea: {
-    gap: Spacing['4'],
-    paddingBottom: Spacing['2'],
-  },
-
-  // Hero
-  heroTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing['5'],
-    paddingTop: Spacing['4'],
-  },
-  heroTitleLeft: {
-    gap: Spacing['2'],
-  },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    lineHeight: 34,
-  },
-  monthChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    alignSelf: 'flex-start',
-  },
-  heroCount: {
-    fontSize: 12,
-    paddingBottom: 4,
-  },
-
-  // Summary card
-  summaryCard: {
-    flexDirection: 'row',
-    marginHorizontal: Spacing['5'],
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    overflow: 'hidden',
-    position: 'relative',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 12 },
-      android: { elevation: 3 },
-    }),
-  },
-  statCell: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: Spacing['4'],
-    gap: Spacing['1'],
-  },
-  statIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 10,
-    letterSpacing: 0.4,
-    fontWeight: '500',
-  },
-  statValue: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  summaryAccentLine: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 2.5,
-  },
-
-  // Search
-  searchWrapper: {
-    paddingHorizontal: Spacing['5'],
-  },
+  searchOuter: { paddingHorizontal: Spacing['5'] },
   searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing['2'],
-    paddingHorizontal: Spacing['4'],
-    height: 46,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing['2'],
+    paddingHorizontal: Spacing['4'], height: 46, borderRadius: Radius.lg, borderWidth: 1,
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
       android: { elevation: 1 },
     }),
   },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 0,
-  },
+  searchInput: { flex: 1, paddingVertical: 0 },
 
-  // Account bar
-  accountBarOuter: {},
-  accountBarContent: {
-    paddingHorizontal: Spacing['5'],
-    gap: Spacing['2'],
-    alignItems: 'center',
-  },
-  chipWrapper: {},
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing['2'],
-    paddingLeft: Spacing['2'],
-    paddingRight: Spacing['3'],
-    paddingTop: 8,
-    paddingBottom: 10,
-    borderRadius: Radius.xl,
-    minWidth: 90,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  chipIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  chipLabels: {
-    flex: 1,
-    minWidth: 60,
-    gap: 1,
-  },
-  chipActiveLine: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 2.5,
-    borderRadius: 1.5,
-  },
-  manageBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Spacing['3'],
-    paddingVertical: Spacing['2'],
-  },
+  dividerLine: { height: StyleSheet.hairlineWidth, marginHorizontal: Spacing['5'] },
 
-  // Divider between filters and list
-  listDivider: {
-    height: StyleSheet.hairlineWidth,
-    marginHorizontal: Spacing['5'],
-  },
-
-  // Tx list
-  listContent: {
-    paddingHorizontal: Spacing['5'],
-    paddingTop: Spacing['2'],
-    gap: Spacing['4'],
-  },
-  section: {
-    gap: Spacing['2'],
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['1'],
-  },
-  balancePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-  },
+  list:    { paddingHorizontal: Spacing['5'], paddingTop: Spacing['2'], gap: Spacing['4'] },
+  section: { gap: Spacing['2'] },
+  dateHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing['1'] },
+  balancePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: Radius.full },
   groupCard: {
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    overflow: 'hidden',
+    borderRadius: Radius.xl, borderWidth: 1, overflow: 'hidden',
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10 },
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10 },
       android: { elevation: 2 },
     }),
   },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    marginHorizontal: Spacing['4'],
-  },
-
-  // Swipe-to-delete
-  swipeRowWrapper: {
-    position: 'relative',
-  },
-  txDeleteAction: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: TX_DELETE_W,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  rowDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: Spacing['4'] },
 });
