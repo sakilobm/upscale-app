@@ -5,6 +5,7 @@ import { useBudgetStore }          from './budgetStore';
 import { usePlannedPaymentsStore } from './plannedPaymentsStore';
 import { useLedgerStore }          from './ledgerStore';
 import { useLoansStore }           from './loansStore';
+import { useNotificationStore }    from './notificationStore';
 import { clearAllPersistedData }   from './storage';
 
 export async function resetAllStores(): Promise<void> {
@@ -16,4 +17,5 @@ export async function resetAllStores(): Promise<void> {
   usePlannedPaymentsStore.getState().reset();
   useLedgerStore.getState().reset();
   useLoansStore.getState().reset();
+  useNotificationStore.getState().reset();
 }

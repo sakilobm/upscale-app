@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useHomeScreen } from '@features/dashboard/hooks/useHomeScreen';
+import { useNotificationStore } from '@store/notificationStore';
 import { QuickAddSheet } from '@components/home/QuickAddSheet';
 import { HomeSetupPrompt } from '@components/home/HomeSetupPrompt';
 import { SectionTitle } from '@components/home/SectionTitle';
@@ -29,7 +30,6 @@ import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
 import { EmptyState } from '@components/EmptyState';
 import { useTheme } from '@hooks/useTheme';
-import { toast } from '@store/toastStore';
 import { Spacing, Layout } from '@constants/index';
 import type { ComponentProps } from 'react';
 
@@ -38,6 +38,7 @@ type IoniconName = ComponentProps<typeof Ionicons>['name'];
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
   const { dashboard, user, addSheet, quickActions, handleTransactionPress } = useHomeScreen();
+  const unreadCount = useNotificationStore((s) => s.notifications.filter((n) => !n.isRead).length);
   const { data, isLoading, isError, isEmpty, refresh } = dashboard;
 
   if (isError) {
@@ -83,7 +84,7 @@ export default function HomeScreen() {
           </View>
 
           <Pressable
-            onPress={() => toast.info('No new notifications')}
+            onPress={() => router.push('/notifications')}
             style={({ pressed }) => [
               s.headerAction,
               {
@@ -97,7 +98,12 @@ export default function HomeScreen() {
               },
             ]}
           >
-            <Ionicons name="notifications-outline" size={19} color={colors.text.primary} />
+            <Ionicons name={unreadCount > 0 ? 'notifications' : 'notifications-outline'} size={19} color={colors.text.primary} />
+            {unreadCount > 0 && (
+              <View style={s.bellBadge}>
+                <AppText style={s.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</AppText>
+              </View>
+            )}
           </Pressable>
         </View>
 
@@ -191,6 +197,8 @@ const s = StyleSheet.create({
   greetingBlock: { flex: 1, gap: 1 },
   greetingName:  { lineHeight: 22 },
   headerAction:  { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  bellBadge:     { position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
+  bellBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
 
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing['3'] },
 
