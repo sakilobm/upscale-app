@@ -6,7 +6,8 @@
  * @associatedFiles src/app/accounts.tsx
  */
 
-import { View, StyleSheet, Platform, type ComponentProps } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
+import type { ComponentProps } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { Radius } from '@constants/Dimensions';
