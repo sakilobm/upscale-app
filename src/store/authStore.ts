@@ -1,26 +1,34 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { zustandStorage } from './storage';
 import type { User } from './types';
 
 interface AuthState {
-  user: User | null;
+  user:            User | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  // Actions
-  setUser: (user: User | null) => void;
-  setLoading: (loading: boolean) => void;
-  signOut: () => void;
+  isLoading:       boolean;
+  setUser:         (user: User | null) => void;
+  signOut:         () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user:            null,
+      isAuthenticated: false,
+      isLoading:       true,
 
-  setUser: (user) =>
-    set({ user, isAuthenticated: user !== null, isLoading: false }),
+      setUser: (user) => set({ user, isAuthenticated: user !== null, isLoading: false }),
 
-  setLoading: (isLoading) => set({ isLoading }),
-
-  signOut: () =>
-    set({ user: null, isAuthenticated: false, isLoading: false }),
-}));
+      signOut: () => set({ user: null, isAuthenticated: false, isLoading: false }),
+    }),
+    {
+      name:    'wc-auth',
+      storage: zustandStorage,
+      partialize: (s) => ({ user: s.user, isAuthenticated: s.isAuthenticated }),
+      onRehydrateStorage: () => (state) => {
+        if (state) state.isLoading = false;
+      },
+    }
+  )
+);

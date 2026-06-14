@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { zustandStorage } from './storage';
-import { addDays, subDays, format } from 'date-fns';
+import { format } from 'date-fns';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,18 +62,6 @@ function computeStatus(entry: Pick<LedgerEntry, 'amountReturned' | 'totalAmount'
   if (entry.amountReturned >= entry.totalAmount) return 'SETTLED';
   if (entry.dueDate && new Date(entry.dueDate) < new Date()) return 'OVERDUE';
   return 'ACTIVE';
-}
-
-// ─── Demo seed ────────────────────────────────────────────────────────────────
-
-function buildSeed(): LedgerEntry[] {
-  const today = new Date();
-  return [
-    { id: 'l-1', personName: 'Marcus Chen',  personInitials: 'MC', personColor: '#6C63FF', direction: 'OWED_TO_ME', totalAmount: 562,  amountReturned: 0,   currency: 'USD', date: format(subDays(today, 20), 'yyyy-MM-dd'), dueDate: format(addDays(today, 5), 'yyyy-MM-dd'),   note: 'Vacation fund advance',  status: 'ACTIVE',   partialReturns: [] },
-    { id: 'l-2', personName: 'Sofia Rivera', personInitials: 'SR', personColor: '#10B981', direction: 'OWED_TO_ME', totalAmount: 200,  amountReturned: 80,  currency: 'USD', date: format(subDays(today, 10), 'yyyy-MM-dd'), dueDate: format(addDays(today, 15), 'yyyy-MM-dd'),  note: 'Concert tickets',        status: 'ACTIVE',   partialReturns: [{ id: 'pr-1', amount: 80,  date: format(subDays(today, 3),  'yyyy-MM-dd'), note: 'First installment' }] },
-    { id: 'l-3', personName: 'James Park',   personInitials: 'JP', personColor: '#FB923C', direction: 'I_OWE',      totalAmount: 350,  amountReturned: 100, currency: 'USD', date: format(subDays(today, 30), 'yyyy-MM-dd'), dueDate: format(subDays(today, 5), 'yyyy-MM-dd'),   note: 'Dinner + drinks',        status: 'OVERDUE',  partialReturns: [{ id: 'pr-2', amount: 100, date: format(subDays(today, 15), 'yyyy-MM-dd'), note: 'Partial' }] },
-    { id: 'l-4', personName: 'Priya Sharma', personInitials: 'PS', personColor: '#EC4899', direction: 'I_OWE',      totalAmount: 120,  amountReturned: 120, currency: 'USD', date: format(subDays(today, 45), 'yyyy-MM-dd'),                                                         note: 'Grocery run',            status: 'SETTLED',  partialReturns: [{ id: 'pr-3', amount: 120, date: format(subDays(today, 40), 'yyyy-MM-dd') }] },
-  ];
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────

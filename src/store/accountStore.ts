@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { zustandStorage } from './storage';
 import type { Account } from './types';
-import { MOCK_ACCOUNTS } from '@features/dashboard/services/dashboardService';
 
 interface AccountState {
   accounts: Account[];

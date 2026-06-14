@@ -1,19 +1,17 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { fetchAllTransactions, createTransaction, deleteTransaction } from '../services/transactionService';
+import { useCallback, useMemo } from 'react';
+import { buildTransaction } from '../services/transactionService';
 import { useTransactionStore } from '@store/transactionStore';
-import type { Transaction, NewTransaction, AsyncState } from '@store/types';
-import { createAsyncState } from '@store/types';
+import type { NewTransaction } from '@store/types';
 import type { TransactionGroupHeader } from '../types';
 import { format, isToday, isYesterday } from 'date-fns';
 
 function buildBalanceLookup(
-  allTransactions: Transaction[],
+  transactions: ReturnType<typeof useTransactionStore.getState>['transactions'],
   accountId?: string | null,
 ): Map<string, number> {
-  // Optionally scope to a single account so per-account balance is accurate.
   const src = accountId
-    ? allTransactions.filter((t) => t.accountId === accountId)
-    : allTransactions;
+    ? transactions.filter((t) => t.accountId === accountId)
+    : transactions;
   const sorted = [...src].sort((a, b) => a.date.localeCompare(b.date));
   const lookup = new Map<string, number>();
   let running = 0;
@@ -25,22 +23,19 @@ function buildBalanceLookup(
 }
 
 function groupTransactionsByDate(
-  transactions: Transaction[],
+  transactions: ReturnType<typeof useTransactionStore.getState>['transactions'],
   balanceLookup: Map<string, number>,
 ): TransactionGroupHeader[] {
-  const groups = new Map<string, Transaction[]>();
-
+  const groups = new Map<string, typeof transactions>();
   for (const tx of transactions) {
-    const dateKey = tx.date.slice(0, 10);
-    const existing = groups.get(dateKey) ?? [];
-    groups.set(dateKey, [...existing, tx]);
+    const key = tx.date.slice(0, 10);
+    groups.set(key, [...(groups.get(key) ?? []), tx]);
   }
-
   return Array.from(groups.entries()).map(([date, txs]) => ({
     date,
     totalAmount: txs.reduce(
       (sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount),
-      0
+      0,
     ),
     balanceAfter: balanceLookup.get(date) ?? 0,
     transactions: txs,
@@ -54,74 +49,49 @@ function formatDateHeader(dateStr: string): string {
   return format(d, 'MMMM d, yyyy');
 }
 
-interface UseTransactionsReturn extends AsyncState<TransactionGroupHeader[]> {
-  refresh: () => Promise<void>;
-  addTransaction: (data: NewTransaction) => Promise<void>;
+interface UseTransactionsReturn {
+  data:              TransactionGroupHeader[];
+  isLoading:         boolean;
+  isError:           boolean;
+  isEmpty:           boolean;
+  error:             string | null;
+  refresh:           () => Promise<void>;
+  addTransaction:    (data: NewTransaction) => Promise<void>;
   removeTransaction: (id: string) => Promise<void>;
-  formatDateHeader: (date: string) => string;
+  formatDateHeader:  (date: string) => string;
 }
 
 export function useTransactions(): UseTransactionsReturn {
-  const [state, setState] = useState<AsyncState<Transaction[]>>(
-    createAsyncState({ isLoading: true })
-  );
-
   const storeTransactions = useTransactionStore((s) => s.transactions);
-  const filters = useTransactionStore((s) => s.filters);
-  const storeSetTransactions = useTransactionStore((s) => s.setTransactions);
-  const storeAdd = useTransactionStore((s) => s.addTransaction);
-  const storeDelete = useTransactionStore((s) => s.deleteTransaction);
-
-  const load = useCallback(async () => {
-    setState(createAsyncState({ isLoading: true }));
-    try {
-      const data = await fetchAllTransactions();
-      storeSetTransactions(data);
-      setState({ data, isLoading: false, isError: false, isEmpty: data.length === 0, error: null });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load transactions';
-      setState({ data: null, isLoading: false, isError: true, isEmpty: true, error: message });
-    }
-  }, [storeSetTransactions]);
-
-  useEffect(() => { load(); }, [load]);
+  const filters           = useTransactionStore((s) => s.filters);
+  const storeAdd          = useTransactionStore((s) => s.addTransaction);
+  const storeDelete       = useTransactionStore((s) => s.deleteTransaction);
 
   const addTransaction = useCallback(async (data: NewTransaction) => {
-    try {
-      const tx = await createTransaction(data);
-      storeAdd(tx);
-    } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to create transaction');
-    }
+    storeAdd(buildTransaction(data));
   }, [storeAdd]);
 
   const removeTransaction = useCallback(async (id: string) => {
-    try {
-      await deleteTransaction(id);
-      storeDelete(id);
-    } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to delete transaction');
-    }
+    storeDelete(id);
   }, [storeDelete]);
 
   const filtered = useMemo(() => {
     let txs = storeTransactions;
-    if (filters.type !== 'all') txs = txs.filter((t) => t.type === filters.type);
-    if (filters.category !== 'all') txs = txs.filter((t) => t.category === filters.category);
-    if (filters.month) txs = txs.filter((t) => t.date.startsWith(filters.month!));
-    if (filters.accountId) txs = txs.filter((t) => t.accountId === filters.accountId);
+    if (filters.type !== 'all')       txs = txs.filter((t) => t.type === filters.type);
+    if (filters.category !== 'all')   txs = txs.filter((t) => t.category === filters.category);
+    if (filters.month)                txs = txs.filter((t) => t.date.startsWith(filters.month!));
+    if (filters.accountId)            txs = txs.filter((t) => t.accountId === filters.accountId);
     if (filters.searchQuery) {
       const q = filters.searchQuery.toLowerCase();
       txs = txs.filter(
         (t) =>
           t.description.toLowerCase().includes(q) ||
-          t.category.toLowerCase().includes(q)
+          t.category.toLowerCase().includes(q),
       );
     }
     return txs;
   }, [storeTransactions, filters]);
 
-  // Balance lookup is scoped to the active account when one is selected.
   const balanceLookup = useMemo(
     () => buildBalanceLookup(storeTransactions, filters.accountId),
     [storeTransactions, filters.accountId],
@@ -133,12 +103,12 @@ export function useTransactions(): UseTransactionsReturn {
   );
 
   return {
-    data: grouped,
-    isLoading: state.isLoading,
-    isError: state.isError,
-    isEmpty: grouped.length === 0,
-    error: state.error,
-    refresh: load,
+    data:              grouped,
+    isLoading:         false,
+    isError:           false,
+    isEmpty:           grouped.length === 0,
+    error:             null,
+    refresh:           async () => {},
     addTransaction,
     removeTransaction,
     formatDateHeader,

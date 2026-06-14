@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { Share, Platform } from 'react-native';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { useAuth } from '@hooks/useAuth';
 import { useTransactionStore } from '@store/transactionStore';
 import { toast } from '@store/toastStore';
@@ -79,6 +80,7 @@ export function useProfile() {
 
   const handleSignOut = useCallback(() => {
     signOut();
+    router.replace('/onboarding');
   }, [signOut]);
 
   return {
