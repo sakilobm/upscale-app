@@ -67,7 +67,10 @@ export default function RootLayout() {
 
   const handleSplashDismiss = () => {
     setShowSplash(false);
-    if (!isAuthenticated) {
+    // Guard against the edge case where the Zustand store hasn't finished
+    // rehydrating from AsyncStorage yet. If still loading, the useEffect
+    // below will handle routing once isLoading settles to false.
+    if (!isLoading && !isAuthenticated) {
       router.replace('/onboarding');
     }
   };

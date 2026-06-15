@@ -36,7 +36,8 @@
         {
           "faceIDPermission": "Allow WhereCash to access Face ID for secure authentication."
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true

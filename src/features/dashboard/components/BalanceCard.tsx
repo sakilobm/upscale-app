@@ -5,6 +5,7 @@ import { BlurView } from 'expo-blur';
 import { AppText } from '@components/AppText';
 import { Radius, Spacing, BlurConfigs } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
+import { CURRENCY_SYMBOLS } from '@store/types';
 import type { BalanceCardProps } from '../types';
 
 const CARD_HEIGHT = Math.max(Math.round(Dimensions.get('window').height * 0.22), 200);
@@ -20,20 +21,23 @@ export const BalanceCard = memo(function BalanceCard({
   totalBalance,
   monthSummary,
   isLoading,
+  currency,
 }: BalanceCardProps) {
   const { isDark, colors } = useTheme();
 
   if (!isDark) {
-    return <LightCard totalBalance={totalBalance} monthSummary={monthSummary} isLoading={isLoading} />;
+    return <LightCard totalBalance={totalBalance} monthSummary={monthSummary} isLoading={isLoading} currency={currency} />;
   }
-  return <DarkCard totalBalance={totalBalance} monthSummary={monthSummary} isLoading={isLoading} />;
+  return <DarkCard totalBalance={totalBalance} monthSummary={monthSummary} isLoading={isLoading} currency={currency} />;
 });
 
 const LightCard = memo(function LightCard({
   totalBalance,
   monthSummary,
   isLoading,
+  currency,
 }: BalanceCardProps) {
+  const sym = CURRENCY_SYMBOLS[currency] ?? '$';
   return (
     <View style={[styles.container, lightStyles.container]}>
       {/* Background neon gradient base */}
@@ -76,7 +80,7 @@ const LightCard = memo(function LightCard({
             </AppText>
           </View>
           <View style={styles.currencyChip}>
-            <AppText variant="labelSM" color="#0A0A0A">USD</AppText>
+            <AppText variant="labelSM" color="#0A0A0A">{currency}</AppText>
           </View>
         </View>
 
@@ -101,7 +105,7 @@ const LightCard = memo(function LightCard({
                 color="#0A0A0A"
                 style={styles.balanceAmount}
               >
-                ${formatBalance(totalBalance)}
+                {sym}{formatBalance(totalBalance)}
               </AppText>
             )}
           </View>
@@ -118,7 +122,9 @@ const DarkCard = memo(function DarkCard({
   totalBalance,
   monthSummary,
   isLoading,
+  currency,
 }: BalanceCardProps) {
+  const sym = CURRENCY_SYMBOLS[currency] ?? '$';
   return (
     <View style={[styles.container, darkStyles.container]}>
       {/* Background gradient base */}
@@ -145,7 +151,7 @@ const DarkCard = memo(function DarkCard({
           <ActivityIndicator size="small" color="#A78BFA" style={styles.loader} />
         ) : (
           <AppText variant="numericLG" color="#F1F5F9" style={darkStyles.balance}>
-            ${formatBalance(totalBalance)}
+            {sym}{formatBalance(totalBalance)}
           </AppText>
         )}
 
@@ -155,14 +161,14 @@ const DarkCard = memo(function DarkCard({
           <View style={darkStyles.statItem}>
             <AppText variant="labelSM" color="rgba(148,163,184,0.8)">INCOME</AppText>
             <AppText variant="headingSM" color="#10B981">
-              +${formatBalance(monthSummary.totalIncome)}
+              +{sym}{formatBalance(monthSummary.totalIncome)}
             </AppText>
           </View>
           <View style={darkStyles.statDivider} />
           <View style={darkStyles.statItem}>
             <AppText variant="labelSM" color="rgba(148,163,184,0.8)">EXPENSES</AppText>
             <AppText variant="headingSM" color="#EF4444">
-              -${formatBalance(monthSummary.totalExpense)}
+              -{sym}{formatBalance(monthSummary.totalExpense)}
             </AppText>
           </View>
           <View style={darkStyles.statDivider} />
@@ -172,7 +178,7 @@ const DarkCard = memo(function DarkCard({
               variant="headingSM"
               color={monthSummary.netSavings >= 0 ? '#10B981' : '#EF4444'}
             >
-              {monthSummary.netSavings >= 0 ? '+' : '-'}${formatBalance(Math.abs(monthSummary.netSavings))}
+              {monthSummary.netSavings >= 0 ? '+' : '-'}{sym}{formatBalance(Math.abs(monthSummary.netSavings))}
             </AppText>
           </View>
         </View>

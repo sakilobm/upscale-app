@@ -36,12 +36,10 @@ export async function setupNotificationChannel(): Promise<void> {
     name:             'WhereCash',
     importance:       Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
-    sound:            'default',
   });
   await Notifications.setNotificationChannelAsync('reminders', {
     name:       'Reminders',
     importance: Notifications.AndroidImportance.HIGH,
-    sound:      'default',
   });
 }
 

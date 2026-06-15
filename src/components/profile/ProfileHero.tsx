@@ -19,10 +19,12 @@ import { useTheme } from '@hooks/useTheme';
 import { CURRENCY_SYMBOLS } from '@store/types';
 import { Spacing, Radius } from '@constants/index';
 import type { CurrencyCode } from '@store/types';
+import { getAvatar } from '@constants/avatars';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 interface Props {
+  avatarId?:   string;
   initials:    string;
   fullName:    string;
   email:       string;
@@ -45,9 +47,11 @@ function useEntrance(delay: number) {
   }));
 }
 
-export function ProfileHero({ initials, fullName, email, memberSince, txCount, currency, onEditPress }: Props) {
+export function ProfileHero({ avatarId, initials, fullName, email, memberSince, txCount, currency, onEditPress }: Props) {
   const { colors, isDark } = useTheme();
   const anim = useEntrance(0);
+
+  const avatar = getAvatar(avatarId);
 
   const gradient: [string, string] = isDark
     ? ['#1A1040', '#0D0826']
@@ -69,10 +73,10 @@ export function ProfileHero({ initials, fullName, email, memberSince, txCount, c
       <View style={s.inner}>
         <Pressable onPress={onEditPress} style={s.avatarWrap}>
           <LinearGradient
-            colors={isDark ? ['#6C63FF', '#A78BFA'] : ['#000000', '#1A1A2E']}
+            colors={avatar.gradient}
             style={s.avatarCircle}
           >
-            <AppText style={s.avatarText}>{initials}</AppText>
+            <AppText style={s.avatarEmoji}>{avatar.emoji}</AppText>
           </LinearGradient>
           <View style={[s.editBadge, { backgroundColor: isDark ? colors.brand.primary : '#000000' }]}>
             <Ionicons name="pencil" size={9} color="#FFFFFF" />
@@ -123,7 +127,7 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.25)',
   },
-  avatarText: { fontSize: 30, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
+  avatarEmoji: { fontSize: 36, lineHeight: 44, textAlign: 'center' },
   editBadge: {
     position: 'absolute', bottom: 2, right: 2,
     width: 22, height: 22, borderRadius: 11,

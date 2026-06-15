@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { Radius, Spacing } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
+import { CURRENCY_SYMBOLS } from '@store/types';
 import type { QuickStatCardProps } from '../types';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -19,8 +20,10 @@ export const QuickStatCard = memo(function QuickStatCard({
   label,
   amount,
   type,
+  currency,
 }: QuickStatCardProps) {
   const { colors, isDark } = useTheme();
+  const sym = CURRENCY_SYMBOLS[currency] ?? '$';
 
   const baseColor =
     type === 'income'  ? colors.status.income  :
@@ -79,7 +82,7 @@ export const QuickStatCard = memo(function QuickStatCard({
           numberOfLines={1}
           adjustsFontSizeToFit
         >
-          {type === 'expense' ? '-' : '+'}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {type === 'expense' ? '-' : '+'}{sym}{amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </AppText>
 
         {/* Bottom gradient accent */}
@@ -130,7 +133,7 @@ export const QuickStatCard = memo(function QuickStatCard({
         numberOfLines={1}
         adjustsFontSizeToFit
       >
-        {type === 'expense' ? '-' : '+'}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        {type === 'expense' ? '-' : '+'}{sym}{amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </AppText>
 
       <LinearGradient

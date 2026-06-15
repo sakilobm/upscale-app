@@ -3,6 +3,7 @@ import type {
   Account,
   MonthSummary,
   SpendingByCategory,
+  CurrencyCode,
 } from '@store/types';
 
 export interface DashboardViewModel {
@@ -17,6 +18,7 @@ export interface BalanceCardProps {
   totalBalance: number;
   monthSummary: MonthSummary;
   isLoading: boolean;
+  currency: CurrencyCode;
 }
 
 export interface QuickStatCardProps {
@@ -24,6 +26,7 @@ export interface QuickStatCardProps {
   amount: number;
   type: 'income' | 'expense' | 'savings';
   iconEmoji: string;
+  currency: CurrencyCode;
 }
 
 export interface SpendingChartProps {

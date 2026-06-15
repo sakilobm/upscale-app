@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useHomeScreen } from '@features/dashboard/hooks/useHomeScreen';
 import { useNotificationStore } from '@store/notificationStore';
+import { getAvatar } from '@constants/avatars';
 import { QuickAddSheet } from '@components/home/QuickAddSheet';
 import { HomeSetupPrompt } from '@components/home/HomeSetupPrompt';
 import { SectionTitle } from '@components/home/SectionTitle';
@@ -40,6 +41,7 @@ export default function HomeScreen() {
   const { dashboard, user, addSheet, quickActions, handleTransactionPress } = useHomeScreen();
   const unreadCount = useNotificationStore((s) => s.notifications.filter((n) => !n.isRead).length);
   const { data, isLoading, isError, isEmpty, refresh } = dashboard;
+  const avatar = getAvatar(user.avatarId);
 
   if (isError) {
     return (
@@ -64,17 +66,9 @@ export default function HomeScreen() {
       >
         {/* ── Header ── */}
         <View style={s.header}>
-          <View style={[
-            s.avatar,
-            {
-              backgroundColor: isDark ? colors.brand.primary + '28' : colors.brand.primary,
-              borderColor:     isDark ? colors.brand.primary + '55' : 'transparent',
-            },
-          ]}>
-            <AppText style={[s.avatarText, { color: isDark ? colors.brand.primary : '#000000' }]}>
-              {user.initials}
-            </AppText>
-          </View>
+          <LinearGradient colors={avatar.gradient} style={s.avatar}>
+            <AppText style={s.avatarEmoji}>{avatar.emoji}</AppText>
+          </LinearGradient>
 
           <View style={s.greetingBlock}>
             <AppText variant="caption" color={colors.text.tertiary}>Good day,</AppText>
@@ -119,6 +113,7 @@ export default function HomeScreen() {
           totalBalance={data?.totalBalance ?? 0}
           monthSummary={data?.monthSummary ?? { month: '', totalIncome: 0, totalExpense: 0, netSavings: 0, transactionCount: 0 }}
           isLoading={isLoading && data === null}
+          currency={user.currency}
         />
 
         {/* ── Quick Actions ── */}
@@ -153,8 +148,8 @@ export default function HomeScreen() {
               <View style={s.section}>
                 <SectionTitle title="This Month" />
                 <View style={s.statsRow}>
-                  <QuickStatCard label="Income"   amount={data.monthSummary.totalIncome}  type="income"  iconEmoji="💰" />
-                  <QuickStatCard label="Expenses" amount={data.monthSummary.totalExpense} type="expense" iconEmoji="💸" />
+                  <QuickStatCard label="Income"   amount={data.monthSummary.totalIncome}  type="income"  iconEmoji="💰" currency={user.currency} />
+                  <QuickStatCard label="Expenses" amount={data.monthSummary.totalExpense} type="expense" iconEmoji="💸" currency={user.currency} />
                 </View>
               </View>
             )}
@@ -192,8 +187,8 @@ const s = StyleSheet.create({
   scroll:   { paddingHorizontal: Spacing['5'], paddingTop: Spacing['3'] },
 
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing['5'], gap: Spacing['3'] },
-  avatar: { width: 46, height: 46, borderRadius: 23, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  avatarText:    { fontSize: 15, fontWeight: '800', letterSpacing: -0.3 },
+  avatar:      { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarEmoji: { fontSize: 24, lineHeight: 30 },
   greetingBlock: { flex: 1, gap: 1 },
   greetingName:  { lineHeight: 22 },
   headerAction:  { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

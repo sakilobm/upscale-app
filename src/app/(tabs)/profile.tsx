@@ -57,6 +57,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <ProfileHero
+          avatarId={data.user?.avatarUrl ?? undefined}
           initials={data.initials}
           fullName={data.user?.fullName ?? 'Guest'}
           email={data.user?.email ?? ''}

@@ -63,7 +63,7 @@ export function useHomeScreen() {
 
   return {
     dashboard,
-    user: { firstName, initials },
+    user: { firstName, initials, avatarId: user?.avatarUrl ?? undefined, currency: user?.currency ?? 'USD' },
     addSheet: {
       isVisible: addVisible,
       type:      addType,
