@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
-  View, StyleSheet, Pressable, TextInput, Modal, Platform,
+  View, StyleSheet, Pressable, TextInput, Modal,
+  Platform, ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
@@ -12,24 +14,29 @@ import type { ReminderFormState } from '@features/notifications/hooks/useNotific
 import { DEFAULT_REMINDER_FORM } from '@features/notifications/hooks/useNotificationsScreen';
 import type { RepeatInterval } from '@store/notificationStore';
 
-const ACCENT = '#8B5CF6';
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-const REPEAT_OPTIONS: { label: string; value: RepeatInterval }[] = [
-  { label: 'Once',    value: 'none'    },
-  { label: 'Daily',   value: 'daily'   },
-  { label: 'Weekly',  value: 'weekly'  },
-  { label: 'Monthly', value: 'monthly' },
+const ACCENT = '#8B5CF6';
+const DAY_ABBREVS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+const REPEAT_OPTIONS: { label: string; value: RepeatInterval; icon: string }[] = [
+  { label: 'Once',    value: 'none',    icon: 'flash-outline'           },
+  { label: 'Daily',   value: 'daily',   icon: 'sunny-outline'           },
+  { label: 'Weekly',  value: 'weekly',  icon: 'calendar-outline'        },
+  { label: 'Monthly', value: 'monthly', icon: 'refresh-circle-outline'  },
 ];
 
-// ─── Time utilities ─────────────────────────────────────────────────────────
+// ─── Time helpers ─────────────────────────────────────────────────────────────
 
 interface TimeState { hour: number; minute: number; ampm: 'AM' | 'PM'; }
 
 function parse24h(time: string): TimeState {
   const [h, m] = time.split(':').map(Number);
   const ampm: 'AM' | 'PM' = h < 12 ? 'AM' : 'PM';
-  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return { hour: hour12, minute: m, ampm };
+  return { hour: h === 0 ? 12 : h > 12 ? h - 12 : h, minute: m, ampm };
 }
 
 function to24h(hour: number, minute: number, ampm: 'AM' | 'PM'): string {
@@ -39,44 +46,38 @@ function to24h(hour: number, minute: number, ampm: 'AM' | 'PM'): string {
   return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
-// ─── TimeStepper ────────────────────────────────────────────────────────────
+function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
-function TimeStepper({
-  label, display, onIncrement, onDecrement, isDark,
-}: {
-  label: string;
-  display: string;
-  onIncrement: () => void;
-  onDecrement: () => void;
+function formatDisplayTime(time: string): string {
+  const t = parse24h(time);
+  return `${String(t.hour).padStart(2, '0')}:${String(t.minute).padStart(2, '0')} ${t.ampm}`;
+}
+
+// ─── TimeStepper ─────────────────────────────────────────────────────────────
+
+function TimeStepper({ label, display, onInc, onDec, isDark }: {
+  label: string; display: string;
+  onInc: () => void; onDec: () => void;
   isDark: boolean;
 }) {
+  const textColor = isDark ? '#F1F5F9' : '#111827';
+  const dimColor  = isDark ? 'rgba(148,163,184,0.55)' : 'rgba(0,0,0,0.32)';
   return (
     <View style={ts.wrap}>
-      <Pressable
-        onPress={onIncrement}
-        hitSlop={14}
-        style={({ pressed }) => [ts.btn, { opacity: pressed ? 0.55 : 1 }]}
-      >
+      <Pressable onPress={onInc} hitSlop={16}
+        style={({ pressed }) => [ts.btn, { opacity: pressed ? 0.4 : 1 }]}>
         <Ionicons name="chevron-up" size={22} color={ACCENT} />
       </Pressable>
-
-      <View style={[ts.display, { backgroundColor: ACCENT + '18', borderColor: ACCENT + '50' }]}>
-        <AppText style={[ts.value, { color: isDark ? '#F1F5F9' : '#0A0A0A' }]}>
-          {display}
-        </AppText>
+      <View style={[ts.display, { backgroundColor: ACCENT + '18', borderColor: ACCENT + '55' }]}>
+        <AppText style={[ts.value, { color: textColor }]}>{display}</AppText>
       </View>
-
-      <Pressable
-        onPress={onDecrement}
-        hitSlop={14}
-        style={({ pressed }) => [ts.btn, { opacity: pressed ? 0.55 : 1 }]}
-      >
+      <Pressable onPress={onDec} hitSlop={16}
+        style={({ pressed }) => [ts.btn, { opacity: pressed ? 0.4 : 1 }]}>
         <Ionicons name="chevron-down" size={22} color={ACCENT} />
       </Pressable>
-
-      <AppText style={[ts.label, { color: isDark ? 'rgba(148,163,184,0.7)' : 'rgba(0,0,0,0.4)' }]}>
-        {label}
-      </AppText>
+      <AppText style={[ts.lbl, { color: dimColor }]}>{label}</AppText>
     </View>
   );
 }
@@ -84,42 +85,30 @@ function TimeStepper({
 const ts = StyleSheet.create({
   wrap:    { alignItems: 'center', gap: 4 },
   btn:     { width: 44, height: 36, alignItems: 'center', justifyContent: 'center' },
-  display: {
-    width: 76, height: 62, borderRadius: 18, borderWidth: 1.5,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  value: {
-    fontSize: 30, fontWeight: '800', letterSpacing: -1,
-    // fontVariant: ['tabular-nums'],  // not supported on Android < 12
-  },
-  label: { fontSize: 11, fontWeight: '600', letterSpacing: 0.6, marginTop: 2 },
+  display: { width: 78, height: 64, borderRadius: 18, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  value:   { fontSize: 32, fontWeight: '800', letterSpacing: -1.5 },
+  lbl:     { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, marginTop: 2 },
 });
 
-// ─── AmPmToggle ─────────────────────────────────────────────────────────────
+// ─── AmPmToggle ──────────────────────────────────────────────────────────────
 
-function AmPmToggle({
-  value, onChange, isDark,
-}: {
-  value: 'AM' | 'PM';
-  onChange: (v: 'AM' | 'PM') => void;
-  isDark: boolean;
+function AmPmToggle({ value, onChange, isDark }: {
+  value: 'AM' | 'PM'; onChange: (v: 'AM' | 'PM') => void; isDark: boolean;
 }) {
-  const trackBg  = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
-  const trackBdr = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)';
-
   return (
-    <View style={[amp.track, { backgroundColor: trackBg, borderColor: trackBdr }]}>
+    <View style={[amp.track, {
+      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+      borderColor:     isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)',
+    }]}>
       {(['AM', 'PM'] as const).map((v) => {
         const active = value === v;
         return (
-          <Pressable
-            key={v}
+          <Pressable key={v}
             onPress={() => { Haptics.selectionAsync(); onChange(v); }}
-            style={[amp.btn, active && [amp.btnActive, { backgroundColor: ACCENT }]]}
-          >
-            <AppText style={[amp.txt, { color: active ? '#fff' : (isDark ? 'rgba(148,163,184,0.7)' : 'rgba(0,0,0,0.4)') }]}>
-              {v}
-            </AppText>
+            style={[amp.btn, active && { backgroundColor: ACCENT }]}>
+            <AppText style={[amp.txt, {
+              color: active ? '#fff' : (isDark ? 'rgba(148,163,184,0.65)' : 'rgba(0,0,0,0.38)'),
+            }]}>{v}</AppText>
           </Pressable>
         );
       })}
@@ -128,13 +117,182 @@ function AmPmToggle({
 }
 
 const amp = StyleSheet.create({
-  track:     { borderRadius: 14, borderWidth: 1, overflow: 'hidden', padding: 3, gap: 3, alignSelf: 'center', marginTop: 8 },
-  btn:       { paddingHorizontal: 12, paddingVertical: 10, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  btnActive: {},
-  txt:       { fontSize: 14, fontWeight: '800', letterSpacing: 0.5 },
+  track: { borderRadius: 14, borderWidth: 1, overflow: 'hidden', padding: 3, gap: 3 },
+  btn:   { paddingHorizontal: 13, paddingVertical: 11, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  txt:   { fontSize: 14, fontWeight: '800', letterSpacing: 0.4 },
 });
 
-// ─── AddReminderSheet ────────────────────────────────────────────────────────
+// ─── WeekdaySelector ─────────────────────────────────────────────────────────
+
+function WeekdaySelector({ selected, onChange, hasError, isDark }: {
+  selected: number[]; onChange: (d: number[]) => void;
+  hasError: boolean; isDark: boolean;
+}) {
+  function toggle(day: number) {
+    Haptics.selectionAsync();
+    onChange(selected.includes(day)
+      ? selected.filter((d) => d !== day)
+      : [...selected, day].sort((a, b) => a - b));
+  }
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={wd.row}>
+        {DAY_ABBREVS.map((abbr, i) => {
+          const active = selected.includes(i);
+          return (
+            <Pressable key={i} onPress={() => toggle(i)}
+              style={[wd.pill, {
+                backgroundColor: active
+                  ? ACCENT
+                  : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                borderColor: active
+                  ? ACCENT
+                  : hasError
+                    ? '#EF444440'
+                    : (isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'),
+              }]}>
+              <AppText style={[wd.txt, {
+                color: active ? '#fff' : (isDark ? 'rgba(148,163,184,0.7)' : 'rgba(0,0,0,0.42)'),
+                fontWeight: active ? '800' : '600',
+              }]}>{abbr}</AppText>
+            </Pressable>
+          );
+        })}
+      </View>
+      {hasError && (
+        <View style={s.errRow}>
+          <Ionicons name="alert-circle" size={13} color="#EF4444" />
+          <AppText style={s.errTxt}>Select at least one day</AppText>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const wd = StyleSheet.create({
+  row:  { flexDirection: 'row', gap: 5 },
+  pill: { flex: 1, height: 38, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  txt:  { fontSize: 12, letterSpacing: 0.1 },
+});
+
+// ─── MiniCalendar ─────────────────────────────────────────────────────────────
+
+function MiniCalendar({ selected, onSelect, isDark }: {
+  selected: string; onSelect: (d: string) => void; isDark: boolean;
+}) {
+  const [viewDate, setViewDate] = useState(() => {
+    if (selected) {
+      const [yr, mo] = selected.split('-').map(Number);
+      return new Date(yr, mo - 1, 1);
+    }
+    const n = new Date();
+    return new Date(n.getFullYear(), n.getMonth(), 1);
+  });
+
+  const prevSel = useRef(selected?.substring(0, 7) ?? '');
+  useEffect(() => {
+    const selMonth = selected?.substring(0, 7) ?? '';
+    if (selMonth && selMonth !== prevSel.current) {
+      const [yr, mo] = selected.split('-').map(Number);
+      setViewDate((prev) => {
+        if (prev.getFullYear() === yr && prev.getMonth() === mo - 1) return prev;
+        return new Date(yr, mo - 1, 1);
+      });
+    }
+    prevSel.current = selMonth;
+  }, [selected]);
+
+  const year  = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+
+  const firstDow    = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: (number | null)[] = [
+    ...Array(firstDow).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  function dayStr(d: number) {
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  const textPrimary = isDark ? '#F1F5F9'               : '#111827';
+  const textDim     = isDark ? 'rgba(148,163,184,0.35)' : 'rgba(0,0,0,0.22)';
+  const hdrColor    = isDark ? 'rgba(148,163,184,0.55)' : 'rgba(0,0,0,0.35)';
+  const todayBg     = ACCENT + (isDark ? '28' : '18');
+
+  return (
+    <View style={{ gap: 2 }}>
+      <View style={cl.header}>
+        <Pressable onPress={() => setViewDate(new Date(year, month - 1, 1))} hitSlop={12}
+          style={({ pressed }) => [cl.navBtn, {
+            opacity: pressed ? 0.5 : 1,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+          }]}>
+          <Ionicons name="chevron-back" size={16} color={ACCENT} />
+        </Pressable>
+        <AppText style={[cl.monthLbl, { color: textPrimary }]}>{MONTH_NAMES[month]} {year}</AppText>
+        <Pressable onPress={() => setViewDate(new Date(year, month + 1, 1))} hitSlop={12}
+          style={({ pressed }) => [cl.navBtn, {
+            opacity: pressed ? 0.5 : 1,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+          }]}>
+          <Ionicons name="chevron-forward" size={16} color={ACCENT} />
+        </Pressable>
+      </View>
+
+      <View style={cl.row}>
+        {DAY_ABBREVS.map((d) => (
+          <AppText key={d} style={[cl.dow, { color: hdrColor }]}>{d}</AppText>
+        ))}
+      </View>
+
+      {Array.from({ length: cells.length / 7 }, (_, wi) => (
+        <View key={wi} style={cl.row}>
+          {cells.slice(wi * 7, wi * 7 + 7).map((day, ci) => {
+            if (!day) return <View key={ci} style={cl.cell} />;
+            const ds     = dayStr(day);
+            const cellDt = new Date(year, month, day);
+            const isPast = cellDt < today;
+            const isToday = ds === toDateStr(today);
+            const isSel   = ds === selected;
+            return (
+              <Pressable key={ci}
+                onPress={() => { if (!isPast) { Haptics.selectionAsync(); onSelect(ds); } }}
+                style={[
+                  cl.cell,
+                  isToday && !isSel && { backgroundColor: todayBg, borderRadius: 10 },
+                  isSel             && { backgroundColor: ACCENT,  borderRadius: 10 },
+                ]}>
+                <AppText style={[
+                  cl.dayNum,
+                  { color: isPast ? textDim : textPrimary },
+                  isToday && !isSel && { color: ACCENT, fontWeight: '700' },
+                  isSel             && { color: '#fff',  fontWeight: '800' },
+                ]}>{day}</AppText>
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const cl = StyleSheet.create({
+  header:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  navBtn:   { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  monthLbl: { fontSize: 15, fontWeight: '700', letterSpacing: -0.3 },
+  row:      { flexDirection: 'row' },
+  dow:      { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600', paddingVertical: 5 },
+  cell:     { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
+  dayNum:   { fontSize: 14, fontWeight: '500' },
+});
+
+// ─── AddReminderSheet ─────────────────────────────────────────────────────────
 
 interface Props {
   visible: boolean;
@@ -142,114 +300,153 @@ interface Props {
   onSave:  (form: ReminderFormState) => void;
 }
 
+interface FormErrors { title?: string; weekdays?: string; }
+
 export function AddReminderSheet({ visible, onClose, onSave }: Props) {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+
   const [form,      setForm]      = useState<ReminderFormState>(DEFAULT_REMINDER_FORM);
   const [timeState, setTimeState] = useState<TimeState>(parse24h(DEFAULT_REMINDER_FORM.time));
+  const [errors,    setErrors]    = useState<FormErrors>({});
 
+  // Sync timeState → form.time (avoids nested setState anti-pattern)
+  useEffect(() => {
+    setForm((f) => ({ ...f, time: to24h(timeState.hour, timeState.minute, timeState.ampm) }));
+  }, [timeState]);
+
+  // Reset all state when sheet opens
   useEffect(() => {
     if (visible) {
-      setForm(DEFAULT_REMINDER_FORM);
+      const todayStr = toDateStr(new Date());
+      setForm({ ...DEFAULT_REMINDER_FORM, date: todayStr });
       setTimeState(parse24h(DEFAULT_REMINDER_FORM.time));
+      setErrors({});
     }
   }, [visible]);
 
-  const inputBg     = isDark ? colors.background.secondary : '#F4F4F8';
-  const inputBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)';
-
-  function updateHour(h: number) {
-    setTimeState((t) => {
-      const next = { ...t, hour: h };
-      setForm((f) => ({ ...f, time: to24h(next.hour, next.minute, next.ampm) }));
-      return next;
-    });
-  }
-
-  function updateMinute(m: number) {
-    setTimeState((t) => {
-      const next = { ...t, minute: m };
-      setForm((f) => ({ ...f, time: to24h(next.hour, next.minute, next.ampm) }));
-      return next;
-    });
-  }
-
-  function updateAmPm(ampm: 'AM' | 'PM') {
-    setTimeState((t) => {
-      const next = { ...t, ampm };
-      setForm((f) => ({ ...f, time: to24h(next.hour, next.minute, next.ampm) }));
-      return next;
-    });
-  }
-
-  const sheetBg = isDark ? colors.background.secondary : '#FFFFFF';
+  const inputBg = isDark ? 'rgba(255,255,255,0.07)' : '#F3F4F8';
+  const bdColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.09)';
   const divider = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+  const safeBot = Math.max(insets.bottom, 20);
+
+  function validate(): boolean {
+    const errs: FormErrors = {};
+    if (!form.title.trim()) errs.title = 'Title is required';
+    if (form.repeat === 'weekly' && form.weekdays.length === 0) errs.weekdays = 'true';
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return false;
+    }
+    return true;
+  }
+
+  function handleSave() {
+    if (validate()) onSave(form);
+  }
+
+  // Stepper handlers — stable closures, no captured stale state
+  const incHour = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, hour:   t.hour   >= 12 ? 1  : t.hour   + 1 })); };
+  const decHour = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, hour:   t.hour   <= 1  ? 12 : t.hour   - 1 })); };
+  const incMin  = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, minute: t.minute >= 59 ? 0  : t.minute + 1 })); };
+  const decMin  = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, minute: t.minute <= 0  ? 59 : t.minute - 1 })); };
 
   return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="none"
-      onRequestClose={onClose}
-      statusBarTranslucent
-    >
-      {/* Root: positions sheet at bottom */}
+    <Modal transparent visible={visible} animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={s.root}>
 
         {/* Backdrop */}
         <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(200)}
+          entering={FadeIn.duration(220)}
+          exiting={FadeOut.duration(180)}
           style={StyleSheet.absoluteFill}
         >
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-            <View style={[RN.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.52)' }]} />
-          </Pressable>
+          <Pressable style={[StyleSheet.absoluteFill, s.backdrop]} onPress={onClose} />
         </Animated.View>
 
         {/* Sheet */}
         <Animated.View
-          entering={SlideInDown.springify().damping(28).stiffness(220)}
-          exiting={SlideOutDown.springify().damping(28).stiffness(220)}
-          style={[s.sheet, { backgroundColor: sheetBg }]}
+          entering={SlideInDown.duration(320)}
+          exiting={SlideOutDown.duration(240)}
+          style={[s.sheet, { backgroundColor: isDark ? colors.background.secondary : '#FFFFFF' }]}
         >
           {/* Drag handle */}
-          <View style={[s.handle, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)' }]} />
+          <View style={[s.handle, {
+            backgroundColor: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.12)',
+          }]} />
 
           {/* Header */}
           <View style={s.header}>
-            <View style={[s.headerIcon, { backgroundColor: ACCENT + '18' }]}>
-              <Ionicons name="alarm" size={18} color={ACCENT} />
+            <LinearGradient
+              colors={[ACCENT, '#A78BFA']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={s.hdrIcon}
+            >
+              <Ionicons name="alarm" size={18} color="#fff" />
+            </LinearGradient>
+            <View style={{ flex: 1 }}>
+              <AppText variant="headingSM" color={colors.text.primary}>Add Reminder</AppText>
+              {form.title.trim() !== '' && (
+                <AppText style={[s.hdrSub, { color: colors.text.tertiary }]}>
+                  {formatDisplayTime(form.time)} · {REPEAT_OPTIONS.find((r) => r.value === form.repeat)?.label}
+                </AppText>
+              )}
             </View>
-            <AppText variant="headingSM" color={colors.text.primary} style={{ flex: 1 }}>
-              Add Reminder
-            </AppText>
-            <Pressable onPress={onClose} hitSlop={12}>
-              <Ionicons name="close" size={22} color={colors.text.tertiary} />
+            <Pressable onPress={onClose} hitSlop={12}
+              style={({ pressed }) => [s.closeBtn, {
+                opacity: pressed ? 0.5 : 1,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+              }]}>
+              <Ionicons name="close" size={16} color={colors.text.secondary} />
             </Pressable>
           </View>
 
-          {/* Body */}
-          <View style={s.body}>
-
-            {/* Title */}
+          {/* Scrollable body */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={s.body}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* ── Title ─────────────────────────────────────────────── */}
             <View style={s.field}>
-              <AppText variant="labelSM" color={colors.text.secondary} style={s.fieldLabel}>Title</AppText>
-              <View style={[s.inputBox, { backgroundColor: inputBg, borderColor: form.title ? ACCENT + '80' : inputBorder }]}>
+              <View style={s.fieldLblRow}>
+                <AppText style={[s.fieldLbl, { color: colors.text.secondary }]}>Title</AppText>
+                <AppText style={{ color: '#EF4444', fontSize: 13 }}> *</AppText>
+              </View>
+              <View style={[s.inputBox, {
+                backgroundColor: inputBg,
+                borderColor: errors.title
+                  ? '#EF4444'
+                  : form.title ? ACCENT + '90' : bdColor,
+              }]}>
                 <TextInput
                   style={[s.input, { color: colors.text.primary }]}
                   value={form.title}
-                  onChangeText={(v) => setForm((f) => ({ ...f, title: v }))}
+                  onChangeText={(v) => {
+                    setForm((f) => ({ ...f, title: v }));
+                    if (errors.title && v.trim()) setErrors((e) => ({ ...e, title: undefined }));
+                  }}
                   placeholder="e.g. Check my budget"
                   placeholderTextColor={colors.text.tertiary}
                   returnKeyType="next"
                 />
               </View>
+              {errors.title && (
+                <View style={s.errRow}>
+                  <Ionicons name="alert-circle" size={13} color="#EF4444" />
+                  <AppText style={s.errTxt}>{errors.title}</AppText>
+                </View>
+              )}
             </View>
 
-            {/* Note */}
+            {/* ── Note ──────────────────────────────────────────────── */}
             <View style={s.field}>
-              <AppText variant="labelSM" color={colors.text.secondary} style={s.fieldLabel}>Note (optional)</AppText>
-              <View style={[s.inputBox, { backgroundColor: inputBg, borderColor: inputBorder }]}>
+              <View style={s.fieldLblRow}>
+                <AppText style={[s.fieldLbl, { color: colors.text.secondary }]}>Note</AppText>
+                <AppText style={[s.fieldLbl, { color: colors.text.tertiary }]}> (optional)</AppText>
+              </View>
+              <View style={[s.inputBox, { backgroundColor: inputBg, borderColor: bdColor }]}>
                 <TextInput
                   style={[s.input, { color: colors.text.primary }]}
                   value={form.body}
@@ -261,72 +458,114 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
               </View>
             </View>
 
-            {/* Time picker */}
+            {/* ── Time picker ───────────────────────────────────────── */}
             <View style={s.field}>
-              <AppText variant="labelSM" color={colors.text.secondary} style={s.fieldLabel}>Time</AppText>
-              <View style={[s.timePicker, { backgroundColor: inputBg, borderColor: inputBorder }]}>
+              <AppText style={[s.fieldLbl, { color: colors.text.secondary }]}>Time</AppText>
+              <View style={[s.timeBox, { backgroundColor: inputBg, borderColor: bdColor }]}>
                 <TimeStepper
                   label="HR"
                   display={String(timeState.hour).padStart(2, '0')}
                   isDark={isDark}
-                  onIncrement={() => { Haptics.selectionAsync(); updateHour(timeState.hour >= 12 ? 1 : timeState.hour + 1); }}
-                  onDecrement={() => { Haptics.selectionAsync(); updateHour(timeState.hour <= 1  ? 12 : timeState.hour - 1); }}
+                  onInc={incHour}
+                  onDec={decHour}
                 />
-
-                <AppText style={[s.colon, { color: isDark ? '#F1F5F9' : '#0A0A0A' }]}>:</AppText>
-
+                <AppText style={[s.colon, { color: isDark ? '#F1F5F9' : '#111827' }]}>:</AppText>
                 <TimeStepper
                   label="MIN"
                   display={String(timeState.minute).padStart(2, '0')}
                   isDark={isDark}
-                  onIncrement={() => { Haptics.selectionAsync(); updateMinute(timeState.minute >= 59 ? 0  : timeState.minute + 1); }}
-                  onDecrement={() => { Haptics.selectionAsync(); updateMinute(timeState.minute <= 0  ? 59 : timeState.minute - 1); }}
+                  onInc={incMin}
+                  onDec={decMin}
                 />
-
                 <View style={s.ampmWrap}>
-                  <AmPmToggle value={timeState.ampm} onChange={updateAmPm} isDark={isDark} />
+                  <AmPmToggle
+                    value={timeState.ampm}
+                    onChange={(ampm) => setTimeState((t) => ({ ...t, ampm }))}
+                    isDark={isDark}
+                  />
                 </View>
               </View>
             </View>
 
-            {/* Repeat */}
+            {/* ── Repeat ────────────────────────────────────────────── */}
             <View style={s.field}>
-              <AppText variant="labelSM" color={colors.text.secondary} style={s.fieldLabel}>Repeat</AppText>
-              <View style={s.repeatRow}>
-                {REPEAT_OPTIONS.map(({ label, value }) => {
+              <AppText style={[s.fieldLbl, { color: colors.text.secondary }]}>Repeat</AppText>
+              <View style={s.repeatGrid}>
+                {REPEAT_OPTIONS.map(({ label, value, icon }) => {
                   const active = form.repeat === value;
                   return (
                     <Pressable
                       key={value}
-                      onPress={() => { Haptics.selectionAsync(); setForm((f) => ({ ...f, repeat: value })); }}
-                      style={[
-                        s.repeatChip,
-                        { backgroundColor: active ? ACCENT : inputBg, borderColor: active ? ACCENT : inputBorder },
-                      ]}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setForm((f) => ({ ...f, repeat: value }));
+                        if (errors.weekdays) setErrors((e) => ({ ...e, weekdays: undefined }));
+                      }}
+                      style={[s.repeatChip, {
+                        backgroundColor: active ? ACCENT + '18' : inputBg,
+                        borderColor:     active ? ACCENT         : bdColor,
+                      }]}
                     >
-                      <AppText style={{ fontSize: 13, fontWeight: '700', color: active ? '#fff' : colors.text.secondary }}>
-                        {label}
-                      </AppText>
+                      <Ionicons name={icon as any} size={14} color={active ? ACCENT : colors.text.tertiary} />
+                      <AppText style={[s.repeatLbl, {
+                        color:      active ? ACCENT : colors.text.secondary,
+                        fontWeight: active ? '700'  : '600',
+                      }]}>{label}</AppText>
                     </Pressable>
                   );
                 })}
               </View>
             </View>
-          </View>
 
-          {/* Save button */}
-          <View style={[s.footer, { borderTopColor: divider }]}>
+            {/* ── Weekday selector (weekly) ──────────────────────────── */}
+            {form.repeat === 'weekly' && (
+              <View style={s.field}>
+                <AppText style={[s.fieldLbl, { color: colors.text.secondary }]}>Days</AppText>
+                <WeekdaySelector
+                  selected={form.weekdays}
+                  onChange={(days) => {
+                    setForm((f) => ({ ...f, weekdays: days }));
+                    if (errors.weekdays && days.length > 0)
+                      setErrors((e) => ({ ...e, weekdays: undefined }));
+                  }}
+                  hasError={!!errors.weekdays}
+                  isDark={isDark}
+                />
+              </View>
+            )}
+
+            {/* ── Date picker (once) ────────────────────────────────── */}
+            {form.repeat === 'none' && (
+              <View style={s.field}>
+                <AppText style={[s.fieldLbl, { color: colors.text.secondary }]}>Date</AppText>
+                <View style={[s.calBox, {
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+                  borderColor: bdColor,
+                }]}>
+                  <MiniCalendar
+                    selected={form.date}
+                    onSelect={(date) => setForm((f) => ({ ...f, date }))}
+                    isDark={isDark}
+                  />
+                </View>
+              </View>
+            )}
+
+            <View style={{ height: 8 }} />
+          </ScrollView>
+
+          {/* Footer */}
+          <View style={[s.footer, { borderTopColor: divider, paddingBottom: safeBot }]}>
             <Pressable
-              onPress={() => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); onSave(form); }}
-              style={({ pressed }) => [s.saveBtn, { opacity: pressed ? 0.85 : 1 }]}
+              onPress={handleSave}
+              style={({ pressed }) => [s.saveBtn, { opacity: pressed ? 0.82 : 1 }]}
             >
               <LinearGradient
                 colors={[ACCENT, '#A78BFA']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 style={s.saveGrad}
               >
-                <Ionicons name="checkmark" size={18} color="#fff" />
+                <Ionicons name="checkmark-circle" size={20} color="#fff" />
                 <AppText style={s.saveTxt}>Save Reminder</AppText>
               </LinearGradient>
             </Pressable>
@@ -337,38 +576,59 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const s = StyleSheet.create({
-  root:  { flex: 1, justifyContent: 'flex-end' },
+  root:    { flex: 1, justifyContent: 'flex-end' },
+  backdrop:{ backgroundColor: 'rgba(0,0,0,0.55)' },
+
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    maxHeight: '92%',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.14, shadowRadius: 20 },
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.18, shadowRadius: 24 },
       android: { elevation: 24 },
     }),
   },
-  handle:    { width: 38, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 4 },
-  header:    { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16 },
-  headerIcon:{ width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
 
-  body:  { paddingHorizontal: 20, paddingBottom: 8, gap: 20 },
-  field: { gap: 10 },
-  fieldLabel: { letterSpacing: 0.2, fontWeight: '600' },
+  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 4 },
+
+  header:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 14 },
+  hdrIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  hdrSub:  { fontSize: 12, marginTop: 1 },
+  closeBtn:{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+
+  body: { paddingHorizontal: 20, paddingTop: 4, gap: 20 },
+
+  field:       { gap: 9 },
+  fieldLblRow: { flexDirection: 'row', alignItems: 'baseline' },
+  fieldLbl:    { fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
 
   inputBox: { height: 50, borderRadius: 14, borderWidth: 1.5, paddingHorizontal: 14, justifyContent: 'center' },
   input:    { fontSize: 15, fontWeight: '500', paddingVertical: 0 },
 
-  timePicker: {
+  errRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
+  errTxt: { color: '#EF4444', fontSize: 12, fontWeight: '500' },
+
+  timeBox: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    borderRadius: 20, borderWidth: 1.5, paddingVertical: 16, paddingHorizontal: 20, gap: 12,
+    borderRadius: 20, borderWidth: 1.5, paddingVertical: 16, paddingHorizontal: 12, gap: 8,
   },
-  colon:   { fontSize: 32, fontWeight: '800', marginBottom: 22, letterSpacing: -2 },
-  ampmWrap:{ alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
+  colon:   { fontSize: 36, fontWeight: '900', marginBottom: 24, letterSpacing: -2, lineHeight: 40 },
+  ampmWrap:{ marginLeft: 6 },
 
-  repeatRow:  { flexDirection: 'row', gap: 8 },
-  repeatChip: { flex: 1, height: 40, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  repeatGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  repeatChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, height: 40, borderRadius: 12, borderWidth: 1.5,
+    minWidth: '45%', flex: 1,
+  },
+  repeatLbl: { fontSize: 13 },
 
-  footer:   { borderTopWidth: 1, padding: 16, paddingBottom: Platform.OS === 'ios' ? 34 : 16 },
+  calBox: { borderRadius: 18, borderWidth: 1.5, padding: 16 },
+
+  footer:   { borderTopWidth: 1, padding: 16 },
   saveBtn:  { borderRadius: 16, overflow: 'hidden' },
-  saveGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 52 },
+  saveGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 54 },
   saveTxt:  { color: '#fff', fontSize: 16, fontWeight: '800' },
 });

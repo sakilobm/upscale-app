@@ -18,10 +18,12 @@ export interface NotificationReminder {
   id:        string;
   title:     string;
   body:      string;
-  time:      string; // "HH:MM" 24-hour
+  time:      string;         // "HH:MM" 24-hour
   repeat:    RepeatInterval;
   isActive:  boolean;
-  expoId:    string | null;
+  expoId:    string | null;  // pipe-delimited when multiple notifications scheduled
+  weekdays?: number[];       // 0=Sun..6=Sat; for 'weekly' custom days
+  date?:     string | null;  // "YYYY-MM-DD" for 'none' one-time reminders
   createdAt: string;
 }
 

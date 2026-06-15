@@ -12,17 +12,21 @@ import type { NotificationSettings, RepeatInterval } from '@store/notificationSt
 export type NotificationTab = 'inbox' | 'reminders';
 
 export interface ReminderFormState {
-  title:  string;
-  body:   string;
-  time:   string;
-  repeat: RepeatInterval;
+  title:    string;
+  body:     string;
+  time:     string;      // "HH:MM" 24h
+  repeat:   RepeatInterval;
+  weekdays: number[];    // 0=Sun..6=Sat; used when repeat='weekly'
+  date:     string;      // "YYYY-MM-DD"; used when repeat='none'
 }
 
 export const DEFAULT_REMINDER_FORM: ReminderFormState = {
-  title:  '',
-  body:   '',
-  time:   '09:00',
-  repeat: 'daily',
+  title:    '',
+  body:     '',
+  time:     '09:00',
+  repeat:   'daily',
+  weekdays: [1, 2, 3, 4, 5], // Mon–Fri
+  date:     '',
 };
 
 export function useNotificationsScreen() {
@@ -120,6 +124,10 @@ export function useNotificationsScreen() {
         toast.error('Please enter a reminder title');
         return;
       }
+      if (form.repeat === 'weekly' && form.weekdays.length === 0) {
+        toast.error('Select at least one day');
+        return;
+      }
       let expoId: string | null = null;
       if (hasPermission && settings.remindersEnabled) {
         expoId = await scheduleReminderNotification(
@@ -127,6 +135,8 @@ export function useNotificationsScreen() {
           form.body.trim() || 'Time to check your finances!',
           form.time,
           form.repeat,
+          form.weekdays,
+          form.date || null,
         );
       }
       addReminder({
@@ -136,6 +146,8 @@ export function useNotificationsScreen() {
         repeat:   form.repeat,
         isActive: true,
         expoId,
+        weekdays: form.weekdays,
+        date:     form.date || null,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       toast.success('Reminder added');
@@ -157,6 +169,7 @@ export function useNotificationsScreen() {
         if (hasPermission && settings.remindersEnabled) {
           expoId = await scheduleReminderNotification(
             reminder.title, reminder.body, reminder.time, reminder.repeat,
+            reminder.weekdays ?? [], reminder.date ?? null,
           );
         }
         updateReminder(id, { isActive: true, expoId });

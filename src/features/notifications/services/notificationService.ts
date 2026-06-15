@@ -81,38 +81,70 @@ export async function sendImmediateNotification(
 }
 
 export async function scheduleReminderNotification(
-  title:  string,
-  body:   string,
-  time:   string,
-  repeat: RepeatInterval,
+  title:    string,
+  body:     string,
+  time:     string,
+  repeat:   RepeatInterval,
+  weekdays: number[]      = [],
+  date:     string | null = null,
 ): Promise<string | null> {
   const Notifications = await N();
   if (!Notifications) return null;
 
   const [hour, minute] = time.split(':').map(Number);
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let trigger: any;
+  const content: any = { title, body, sound: true };
+
   if (repeat === 'daily') {
-    trigger = { hour, minute, repeats: true };
-  } else if (repeat === 'weekly') {
-    trigger = { weekday: new Date().getDay() + 1, hour, minute, repeats: true };
-  } else {
-    const d = new Date();
-    d.setHours(hour, minute, 0, 0);
-    if (d <= new Date()) d.setDate(d.getDate() + 1);
-    trigger = { date: d };
+    return Notifications.scheduleNotificationAsync({
+      content,
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour, minute, channelId: 'reminders',
+      },
+    });
   }
 
+  if (repeat === 'weekly') {
+    const days = weekdays.length > 0 ? weekdays : [new Date().getDay()];
+    const ids  = await Promise.all(
+      days.map((wd) =>
+        Notifications.scheduleNotificationAsync({
+          content,
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+            weekday: wd + 1, // expo: 1=Sun … 7=Sat
+            hour, minute, channelId: 'reminders',
+          },
+        }),
+      ),
+    );
+    return ids.join('|');
+  }
+
+  // 'none' — specific date or next occurrence
+  let d: Date;
+  if (date) {
+    const [yr, mo, da] = date.split('-').map(Number);
+    d = new Date(yr, mo - 1, da, hour, minute, 0, 0);
+  } else {
+    d = new Date();
+    d.setHours(hour, minute, 0, 0);
+    if (d <= new Date()) d.setDate(d.getDate() + 1);
+  }
   return Notifications.scheduleNotificationAsync({
-    content: { title, body, sound: true },
-    trigger,
+    content,
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: d, channelId: 'reminders',
+    },
   });
 }
 
 export async function cancelScheduledReminder(expoId: string): Promise<void> {
   const Notifications = await N();
   if (!Notifications) return;
-
-  await Notifications.cancelScheduledNotificationAsync(expoId);
+  // expoId may be pipe-delimited for multi-day weekly schedules
+  const ids = expoId.split('|').filter(Boolean);
+  await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id)));
 }
