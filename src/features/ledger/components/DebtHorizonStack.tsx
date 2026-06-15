@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { AppText } from '@components/AppText';
 import { ProgressBar } from '@components/ProgressBar';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Radius, Spacing } from '@constants/Dimensions';
 import { loanProgress, daysUntilPayment } from '@store/loansStore';
 import type { Loan } from '@store/loansStore';
@@ -34,6 +35,7 @@ function LoanCard({
   onRecord: (id: string) => void;
 }) {
   const { isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
 
   const progress  = loanProgress(loan);
   const days      = daysUntilPayment(loan);
@@ -85,17 +87,17 @@ function LoanCard({
             <View style={styles.emiBadge}>
               <AppText style={styles.emiLabel}>EMI</AppText>
               <AppText style={styles.emiAmount}>
-                ${loan.emiAmount.toLocaleString()}
+                {symbol}{loan.emiAmount.toLocaleString()}
               </AppText>
             </View>
           </View>
 
           {/* Balance */}
           <AppText style={styles.balance}>
-            ${remaining.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            {symbol}{remaining.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </AppText>
           <AppText style={styles.balanceSub}>
-            remaining of ${loan.principalAmount.toLocaleString()}
+            remaining of {symbol}{loan.principalAmount.toLocaleString()}
           </AppText>
 
           {/* Progress */}

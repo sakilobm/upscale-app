@@ -1,4 +1,4 @@
-import { useState, type ComponentProps } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import {
   View,
   Modal,
@@ -22,6 +22,7 @@ import * as Haptics from 'expo-haptics';
 import { AppText } from './AppText';
 import { ConfirmModal } from './ConfirmModal';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { useAccountStore } from '@store/accountStore';
 import { toast } from '@store/toastStore';
 import { Spacing, Radius } from '@constants/Dimensions';
@@ -62,7 +63,7 @@ const SPRING = { damping: 18, stiffness: 220 };
 
 // ─── Field label ──────────────────────────────────────────────────────────────
 
-function FieldLabel({ children }: { children: string }) {
+function FieldLabel({ children }: { children: ReactNode }) {
   const { colors } = useTheme();
   return (
     <AppText
@@ -86,6 +87,7 @@ interface AccountRowProps {
 
 function AccountRow({ account, cardBg, onEdit, onDelete }: AccountRowProps) {
   const { colors } = useTheme();
+  const { symbol } = useFormatCurrency();
   const scale = useSharedValue(1);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -137,7 +139,7 @@ function AccountRow({ account, cardBg, onEdit, onDelete }: AccountRowProps) {
         {/* Balance + actions */}
         <View style={{ alignItems: 'flex-end', gap: Spacing['2'] }}>
           <AppText variant="labelLG" style={{ color: account.color, fontWeight: '700' }}>
-            ${account.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {symbol}{account.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </AppText>
           <View style={{ flexDirection: 'row', gap: Spacing['3'] }}>
             <Pressable onPress={onEdit} hitSlop={10}>
@@ -162,6 +164,7 @@ export interface AccountsSheetProps {
 
 export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
   const { colors, isDark } = useTheme();
+  const { symbol, currency: userCurrency } = useFormatCurrency();
   const insets = useSafeAreaInsets();
 
   const accounts      = useAccountStore((s) => s.accounts);
@@ -260,7 +263,7 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
         name:      name.trim(),
         type:      accType,
         balance:   parsed,
-        currency:  'USD',
+        currency:  userCurrency,
         color,
         icon:      iconName,
         isDefault: accounts.length === 0,
@@ -329,7 +332,7 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
                     variant="caption"
                     style={{ color: colors.brand.primary, fontWeight: '700' }}
                   >
-                    ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {symbol}{totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </AppText>
                 </AppText>
               </View>
@@ -432,7 +435,7 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
                       </AppText>
                     </View>
                     <AppText style={{ color: '#FFF', fontSize: 18, fontWeight: '800' }}>
-                      ${parseFloat(balance || '0').toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      {symbol}{parseFloat(balance || '0').toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </AppText>
                   </View>
 
@@ -486,7 +489,7 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
 
                   {/* Balance */}
                   <View style={styles.field}>
-                    <FieldLabel>BALANCE ($)</FieldLabel>
+                    <FieldLabel>BALANCE ({symbol})</FieldLabel>
                     <TextInput
                       style={[styles.input, { backgroundColor: inputBg, color: colors.text.primary }]}
                       placeholder="0.00"

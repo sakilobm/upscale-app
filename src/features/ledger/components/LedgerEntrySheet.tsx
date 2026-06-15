@@ -22,6 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Radius, Spacing } from '@constants/Dimensions';
 import type { LedgerDirection, LedgerEntry } from '@store/ledgerStore';
 
@@ -56,6 +57,7 @@ export function LedgerEntrySheet({
   onPartialReturn,
 }: LedgerEntrySheetProps) {
   const { colors, isDark } = useTheme();
+  const { currency: userCurrency } = useFormatCurrency();
 
   const [personName,  setPersonName]  = useState('');
   const [amount,      setAmount]      = useState('');
@@ -107,7 +109,7 @@ export function LedgerEntrySheet({
         personName: personName.trim(),
         direction,
         totalAmount: parsed,
-        currency:   'USD',
+        currency:   userCurrency,
         note:       note.trim() || undefined,
         dueDate:    dueDate.trim() || undefined,
       });
@@ -232,7 +234,7 @@ export function LedgerEntrySheet({
               </>
             )}
 
-            <Field label="Amount (USD)" icon="cash-outline" colors={colors} isDark={isDark}>
+            <Field label={`Amount (${userCurrency})`} icon="cash-outline" colors={colors} isDark={isDark}>
               <TextInput
                 style={[styles.input, { color: colors.text.primary }]}
                 value={amount}

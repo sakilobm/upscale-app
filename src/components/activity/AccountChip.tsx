@@ -12,6 +12,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-na
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Radius } from '@constants/index';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
@@ -32,6 +33,7 @@ interface Props {
 
 export function AccountChip({ chip, isActive, onPress }: Props) {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
   const scale    = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -58,7 +60,7 @@ export function AccountChip({ chip, isActive, onPress }: Props) {
             {chip.name}
           </AppText>
           <AppText style={{ color: balClr, fontSize: 11, lineHeight: 14 }} numberOfLines={1}>
-            ${chip.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            {symbol}{chip.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </AppText>
         </View>
         {isActive && <View style={[s.activeLine, { backgroundColor: chip.color }]} />}

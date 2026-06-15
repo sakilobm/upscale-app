@@ -6,6 +6,7 @@ import { ProgressBar } from '@components/ProgressBar';
 import { CategoryIcon } from '@components/CategoryIcon';
 import { Radius, Spacing } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import type { BudgetCardProps } from '../types';
 
 export const BudgetCard = memo(function BudgetCard({
@@ -13,6 +14,7 @@ export const BudgetCard = memo(function BudgetCard({
   onPress,
 }: BudgetCardProps) {
   const { colors } = useTheme();
+  const { symbol } = useFormatCurrency();
   const progress = budget.limit > 0 ? budget.spent / budget.limit : 0;
   const isOver = budget.spent > budget.limit;
   const remaining = budget.limit - budget.spent;
@@ -42,10 +44,10 @@ export const BudgetCard = memo(function BudgetCard({
             variant="labelLG"
             color={isOver ? colors.status.expense : colors.text.primary}
           >
-            ${budget.spent.toFixed(0)}
+            {symbol}{budget.spent.toFixed(0)}
           </AppText>
           <AppText variant="caption" color={colors.text.secondary}>
-            of ${budget.limit.toFixed(0)}
+            of {symbol}{budget.limit.toFixed(0)}
           </AppText>
         </View>
       </View>
@@ -63,8 +65,8 @@ export const BudgetCard = memo(function BudgetCard({
           color={isOver ? colors.status.expense : colors.text.tertiary}
         >
           {isOver
-            ? `$${Math.abs(remaining).toFixed(2)} over budget`
-            : `$${remaining.toFixed(2)} remaining`}
+            ? `${symbol}${Math.abs(remaining).toFixed(2)} over budget`
+            : `${symbol}${remaining.toFixed(2)} remaining`}
         </AppText>
         <AppText variant="caption" color={colors.text.tertiary}>
           {(progress * 100).toFixed(0)}%

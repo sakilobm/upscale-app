@@ -29,10 +29,12 @@ import { GlassCard } from '@components/GlassCard';
 import { AppText } from '@components/AppText';
 import { FAB } from '@components/FAB';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Layout, Radius } from '@constants/index';
 
 export default function BudgetScreen() {
   const { colors } = useTheme();
+  const { symbol } = useFormatCurrency();
   const {
     budgets, isLoading, isEmpty, refresh, summary,
     payments, settlePayment, deletePayment, addPayment,
@@ -101,12 +103,12 @@ export default function BudgetScreen() {
 
               <View style={s.metricsRow}>
                 <View>
-                  <AppText variant="numericLG" color={colors.text.primary}>${summary.totalSpent.toFixed(0)}</AppText>
-                  <AppText variant="caption" color={colors.text.secondary}>spent of ${summary.totalLimit.toFixed(0)}</AppText>
+                  <AppText variant="numericLG" color={colors.text.primary}>{symbol}{summary.totalSpent.toFixed(0)}</AppText>
+                  <AppText variant="caption" color={colors.text.secondary}>spent of {symbol}{summary.totalLimit.toFixed(0)}</AppText>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <AppText variant="numeric" color={isOver ? colors.status.expense : colors.status.income}>
-                    {isOver ? '-' : ''}${Math.abs(remaining).toFixed(0)}
+                    {isOver ? '-' : ''}{symbol}{Math.abs(remaining).toFixed(0)}
                   </AppText>
                   <AppText variant="caption" color={colors.text.secondary}>{isOver ? 'over budget' : 'remaining'}</AppText>
                 </View>

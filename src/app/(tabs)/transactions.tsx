@@ -20,10 +20,12 @@ import { FilterBar } from '@features/transactions/components/FilterBar';
 import { AppText } from '@components/AppText';
 import { LoadingScreen } from '@components/LoadingScreen';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Layout, Radius, Typography } from '@constants/index';
 
 export default function TransactionsScreen() {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
   const {
     groups, isLoading, isEmpty, refresh, removeTransaction, formatDateHeader,
     filters, setFilters, selectedAccount, summary, monthLabel, handleTransactionPress,
@@ -81,7 +83,7 @@ export default function TransactionsScreen() {
                 <View style={[s.balancePill, { backgroundColor: balanceColor + '16' }]}>
                   <Ionicons name={balanceIcon} size={12} color={balanceColor} />
                   <AppText variant="labelSM" style={{ color: balanceColor, fontWeight: '600', fontSize: 12 }}>
-                    ${group.balanceAfter.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {symbol}{group.balanceAfter.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </AppText>
                 </View>
               </View>

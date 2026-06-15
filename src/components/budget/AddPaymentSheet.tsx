@@ -20,6 +20,7 @@ import { AppText } from '@components/AppText';
 import { CategoryFormSheet } from '@components/CategoryFormSheet';
 import { usePlannedPaymentForm } from '@features/budget/hooks/usePlannedPaymentForm';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Radius } from '@constants/index';
 
 interface Props {
@@ -30,6 +31,7 @@ interface Props {
 
 export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
   const insets = useSafeAreaInsets();
   const [createVisible, setCreateVisible] = useState(false);
 
@@ -93,7 +95,7 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
 
             <View style={s.rowFields}>
               <View style={{ flex: 1 }}>
-                <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>AMOUNT ($)</AppText>
+                <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>AMOUNT ({symbol})</AppText>
                 <TextInput
                   style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
                   placeholder="0.00" placeholderTextColor={colors.text.tertiary}

@@ -21,6 +21,7 @@ import { AppText } from '@components/AppText';
 import { AppHeader } from '@components/AppHeader';
 import { FAB } from '@components/FAB';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Layout, Radius } from '@constants/Dimensions';
 import { useLedger } from '@features/ledger/hooks/useLedger';
 import { useLoans } from '@features/ledger/hooks/useLoans';
@@ -54,6 +55,7 @@ function LedgerInfoSheet({
   onSettle: (id: string) => void;
 }) {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
   const translateY = useSharedValue(600);
   const backdropOp = useSharedValue(0);
   const visible = !!entry;
@@ -146,7 +148,7 @@ function LedgerInfoSheet({
           {stats.map((s, i) => (
             <View key={s.label} style={[styles.statCell, i < 2 && { borderRightWidth: 1, borderRightColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
               <AppText style={[styles.statValue, { color: s.color }]}>
-                ${s.value.toFixed(2)}
+                {symbol}{s.value.toFixed(2)}
               </AppText>
               <AppText variant="caption" color={colors.text.tertiary} style={styles.statLabel}>
                 {s.label}

@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Radius } from '@constants/index';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
@@ -27,6 +28,7 @@ interface Props {
 
 export function ActivityHero({ summary, monthLabel }: Props) {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
   const net = summary.income - summary.expense;
 
   const cardBg     = isDark ? colors.background.secondary : '#FFFFFF';
@@ -63,7 +65,7 @@ export function ActivityHero({ summary, monthLabel }: Props) {
             </View>
             <AppText variant="caption" color={colors.text.tertiary} style={s.statLabel}>{stat.label}</AppText>
             <AppText variant="labelLG" style={[s.statValue, { color: stat.color }]} numberOfLines={1} adjustsFontSizeToFit>
-              {stat.sign}${stat.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              {stat.sign}{symbol}{stat.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </AppText>
           </View>
         ))}

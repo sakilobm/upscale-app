@@ -4,6 +4,7 @@ import { ProgressRing } from '@components/ProgressRing';
 import { AppText } from '@components/AppText';
 import { GlassCard } from '@components/GlassCard';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Radius } from '@constants/Dimensions';
 import type { Budget } from '@store/types';
 import { getCategoryById } from '@store/categoryStore';
@@ -17,6 +18,7 @@ interface RingCellProps {
 
 function RingCell({ budget, onPress }: RingCellProps) {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
   const pct = budget.limit > 0 ? budget.spent / budget.limit : 0;
   const isOver = pct > 1;
   const remaining = Math.max(budget.limit - budget.spent, 0);
@@ -55,8 +57,8 @@ function RingCell({ budget, onPress }: RingCellProps) {
         numberOfLines={1}
       >
         {isOver
-          ? `$${(budget.spent - budget.limit).toFixed(0)} over`
-          : `$${remaining.toFixed(0)} left`}
+          ? `${symbol}${(budget.spent - budget.limit).toFixed(0)} over`
+          : `${symbol}${remaining.toFixed(0)} left`}
       </AppText>
     </Pressable>
   );

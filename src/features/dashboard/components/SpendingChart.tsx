@@ -6,6 +6,7 @@ import { CategoryIcon } from '@components/CategoryIcon';
 import { getCategoryById } from '@store/categoryStore';
 import { Spacing, Radius } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import type { SpendingChartProps } from '../types';
 
 const MAX_ITEMS = 5;
@@ -15,6 +16,7 @@ export const SpendingChart = memo(function SpendingChart({
   isLoading,
 }: SpendingChartProps) {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
   const items = data.slice(0, MAX_ITEMS);
 
   return (
@@ -56,7 +58,7 @@ export const SpendingChart = memo(function SpendingChart({
                       {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
                     </AppText>
                     <AppText variant="labelMD" color={colors.text.primary} style={styles.rowAmount}>
-                      ${item.amount.toFixed(0)}
+                      {symbol}{item.amount.toFixed(0)}
                     </AppText>
                   </View>
                   <ProgressBar

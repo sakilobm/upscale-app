@@ -24,6 +24,7 @@ import { NUMPAD_KEYS } from '@features/transactions/utils/numpad';
 import { CategoryFormSheet } from '@components/CategoryFormSheet';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Radius } from '@constants/index';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
@@ -37,6 +38,7 @@ interface Props {
 
 export function QuickAddSheet({ visible, initialType, onClose }: Props) {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
   const insets = useSafeAreaInsets();
   const [catFormVisible, setCatFormVisible] = useState(false);
 
@@ -106,7 +108,7 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
 
             {/* Amount */}
             <View style={s.amountSection}>
-              <AppText style={[s.amountDisplay, { color: accentColor }]}>${amountDisplay}</AppText>
+              <AppText style={[s.amountDisplay, { color: accentColor }]}>{symbol}{amountDisplay}</AppText>
               <AppText variant="caption" style={{ color: colors.text.tertiary }}>
                 {accounts.find((a) => a.id === accountId)?.currency ?? 'USD'}
               </AppText>

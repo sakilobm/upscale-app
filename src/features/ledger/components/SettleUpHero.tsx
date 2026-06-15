@@ -5,16 +5,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Radius, Spacing } from '@constants/Dimensions';
 
 interface SettleUpHeroProps {
   totalOwedToMe: number;
   totalIOwe:     number;
-  currency?:     string;
 }
 
-export function SettleUpHero({ totalOwedToMe, totalIOwe, currency = '$' }: SettleUpHeroProps) {
+export function SettleUpHero({ totalOwedToMe, totalIOwe }: SettleUpHeroProps) {
   const { colors, isDark } = useTheme();
+  const { symbol: currency } = useFormatCurrency();
   const net       = totalOwedToMe - totalIOwe;
   const isPositive = net >= 0;
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@hooks/useTheme';
+import { getCurrencySymbol } from '@hooks/useFormatCurrency';
 import { Radius } from '@constants/Dimensions';
 import type { LedgerEntry } from '@store/ledgerStore';
 
@@ -14,10 +15,11 @@ export function NudgeButton({ entry, size = 32 }: NudgeButtonProps) {
   const { colors, isDark } = useTheme();
 
   const remaining = entry.totalAmount - entry.amountReturned;
+  const sym = getCurrencySymbol();
   const directionPhrase =
     entry.direction === 'OWED_TO_ME'
-      ? `Hey ${entry.personName}, just a friendly reminder — you owe me $${remaining.toFixed(2)}. ${entry.note ? `(${entry.note})` : ''} Let me know when it's convenient. 🙏`
-      : `Hi ${entry.personName}, I wanted to check in about the $${remaining.toFixed(2)} I owe you. ${entry.note ? `(${entry.note})` : ''} I'll sort it out soon!`;
+      ? `Hey ${entry.personName}, just a friendly reminder — you owe me ${sym}${remaining.toFixed(2)}. ${entry.note ? `(${entry.note})` : ''} Let me know when it's convenient. 🙏`
+      : `Hi ${entry.personName}, I wanted to check in about the ${sym}${remaining.toFixed(2)} I owe you. ${entry.note ? `(${entry.note})` : ''} I'll sort it out soon!`;
 
   const handleNudge = async () => {
     try {

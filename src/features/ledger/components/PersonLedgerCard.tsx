@@ -17,6 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Radius, Spacing } from '@constants/Dimensions';
 import { NudgeButton } from './NudgeButton';
 import type { LedgerEntry } from '@store/ledgerStore';
@@ -115,6 +116,7 @@ interface PersonLedgerCardProps {
 
 export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonLedgerCardProps) {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
 
   const translateX = useSharedValue(0);
   const rowHeight = useSharedValue(80);
@@ -225,7 +227,7 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
                   variant="labelLG"
                   style={[styles.amount, { color: dirColor }]}
                 >
-                  {entry.direction === 'OWED_TO_ME' ? '+' : '-'}${remaining.toFixed(2)}
+                  {entry.direction === 'OWED_TO_ME' ? '+' : '-'}{symbol}{remaining.toFixed(2)}
                 </AppText>
               </View>
 
@@ -255,7 +257,7 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
             <View style={styles.right}>
               {entry.status !== 'SETTLED' && <NudgeButton entry={entry} size={30} />}
               <AppText variant="caption" color={colors.text.tertiary} style={styles.total}>
-                of ${entry.totalAmount.toFixed(0)}
+                of {symbol}{entry.totalAmount.toFixed(0)}
               </AppText>
             </View>
           </Pressable>

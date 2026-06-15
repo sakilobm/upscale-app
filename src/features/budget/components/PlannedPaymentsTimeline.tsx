@@ -19,6 +19,7 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Radius } from '@constants/Dimensions';
 import { daysUntilDue, isUrgent } from '@store/plannedPaymentsStore';
 import type { PlannedPayment } from '@store/plannedPaymentsStore';
@@ -58,6 +59,7 @@ interface PaymentRowProps {
 
 function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
 
   const translateX = useSharedValue(0);
   const rowOpacity = useSharedValue(1);
@@ -303,7 +305,7 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
                   },
                 ]}
               >
-                ${payment.amount.toFixed(2)}
+                {symbol}{payment.amount.toFixed(2)}
               </AppText>
             </View>
           </Animated.View>
