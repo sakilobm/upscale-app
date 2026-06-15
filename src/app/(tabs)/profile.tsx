@@ -66,7 +66,7 @@ export default function ProfileScreen() {
           onEditPress={handlers.editName}
         />
 
-        <SectionCard title="Appearance" delay={80}>
+        <SectionCard title="Appearance" delay={80} accentColor="#A78BFA">
           <SettingRow
             icon={isDark ? 'moon' : 'sunny-outline'}
             iconColor={isDark ? '#A78BFA' : '#F59E0B'}
@@ -85,29 +85,17 @@ export default function ProfileScreen() {
           />
         </SectionCard>
 
-        <SectionCard title="Account" delay={160}>
-          <SettingRow icon="wallet-outline"      iconColor="#6C63FF" label="Manage Accounts"   subtitle="Add, edit, or delete accounts"                onPress={() => router.push('/accounts')} />
-          <SettingRow icon="grid-outline"        iconColor="#10B981" label="Manage Categories" subtitle="Create & customize spending categories"        onPress={() => router.push('/categories')} />
-          <SettingRow
-            icon="notifications-outline" iconColor="#F97316" label="Notifications"
-            subtitle={`${Object.values(preferences.notifications).filter(Boolean).length} of 4 enabled`}
-            onPress={sheets.notifications.open}
-          />
-          <SettingRow
-            icon="globe-outline" iconColor="#3B82F6" label="Currency & Region"
-            subtitle={`${data.user?.currency ?? 'USD'} · ${CURRENCY_SYMBOLS[data.user?.currency ?? 'USD']}`}
-            onPress={sheets.currency.open}
-          />
-          <SettingRow
-            icon="shield-checkmark-outline" iconColor="#EF4444" label="Security & Privacy"
-            subtitle={preferences.security.biometric ? 'Biometrics on' : 'PIN only'}
-            onPress={sheets.security.open}
-            isLast
-          />
+        <SectionCard title="Account" delay={160} accentColor="#6C63FF">
+          <SettingRow animDelay={0}   icon="wallet-outline"           iconColor="#6C63FF" label="Manage Accounts"   subtitle="Add, edit, or delete accounts"                         onPress={() => router.push('/accounts')} />
+          <SettingRow animDelay={40}  icon="grid-outline"             iconColor="#10B981" label="Manage Categories" subtitle="Create & customize spending categories"                 onPress={() => router.push('/categories')} />
+          <SettingRow animDelay={80}  icon="notifications-outline"    iconColor="#F97316" label="Notifications"     subtitle={`${Object.values(preferences.notifications).filter(Boolean).length} of 4 enabled`} onPress={sheets.notifications.open} />
+          <SettingRow animDelay={120} icon="globe-outline"            iconColor="#3B82F6" label="Currency & Region" subtitle={`${data.user?.currency ?? 'USD'} · ${CURRENCY_SYMBOLS[data.user?.currency ?? 'USD']}`} onPress={sheets.currency.open} />
+          <SettingRow animDelay={160} icon="shield-checkmark-outline" iconColor="#EF4444" label="Security & Privacy" subtitle={preferences.security.biometric ? 'Biometrics on' : 'PIN only'} onPress={sheets.security.open} isLast />
         </SectionCard>
 
-        <SectionCard title="Data" delay={240}>
+        <SectionCard title="Data" delay={240} accentColor="#10B981">
           <SettingRow
+            animDelay={0}
             icon="cloud-done-outline" iconColor="#10B981" label="Backup & Sync"
             subtitle="Last synced: Today" onPress={handlers.backup}
             right={
@@ -116,27 +104,14 @@ export default function ProfileScreen() {
               </View>
             }
           />
-          <SettingRow
-            icon="download-outline" iconColor="#8B5CF6" label="Export Data"
-            subtitle={`${data.txCount} transactions ready`}
-            onPress={sheets.export.open}
-          />
-          <SettingRow
-            icon="trash-outline" iconColor="#EF4444" label="Clear All Data"
-            subtitle="Reset to demo — cannot be undone"
-            onPress={confirms.clearData.show}
-            isLast
-          />
+          <SettingRow animDelay={40}  icon="download-outline" iconColor="#8B5CF6" label="Export Data"   subtitle={`${data.txCount} transactions ready`}      onPress={sheets.export.open} />
+          <SettingRow animDelay={80}  icon="trash-outline"    iconColor="#EF4444" label="Clear All Data" subtitle="Permanently erase all app data"             onPress={confirms.clearData.show} isLast />
         </SectionCard>
 
-        <SectionCard title="Support" delay={320}>
-          <SettingRow icon="help-circle-outline"        iconColor="#06B6D4" label="Help & Support"   subtitle="FAQs and contact"       onPress={sheets.help.open} />
-          <SettingRow icon="star-outline"               iconColor="#FBBF24" label="Rate WhereCash"   subtitle="Share your feedback"    onPress={confirms.rate.show} />
-          <SettingRow
-            icon="information-circle-outline" iconColor={colors.text.tertiary}
-            label="About" subtitle="v1.0.0 · Build 100" isLast
-            onPress={() => toast.info('WhereCash v1.0.0 — Built with Expo & React Native')}
-          />
+        <SectionCard title="Support" delay={320} accentColor="#06B6D4">
+          <SettingRow animDelay={0}   icon="help-circle-outline"        iconColor="#06B6D4"             label="Help & Support" subtitle="FAQs and contact"    onPress={sheets.help.open} />
+          <SettingRow animDelay={40}  icon="star-outline"               iconColor="#FBBF24"             label="Rate WhereCash" subtitle="Share your feedback"  onPress={confirms.rate.show} />
+          <SettingRow animDelay={80}  icon="information-circle-outline" iconColor={colors.text.tertiary} label="About"         subtitle="v1.0.0 · Build 100"  onPress={() => toast.info('WhereCash v1.0.0 — Built with Expo & React Native')} isLast />
         </SectionCard>
 
         <Animated.View style={useEntrance(400)}>

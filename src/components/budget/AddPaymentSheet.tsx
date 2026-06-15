@@ -23,8 +23,8 @@ import { useTheme } from '@hooks/useTheme';
 import { Spacing, Radius } from '@constants/index';
 
 interface Props {
-  visible:  boolean;
-  onClose:  () => void;
+  visible: boolean;
+  onClose: () => void;
   onSubmit: (data: { title: string; amount: number; dueDate: string; category: string }) => void;
 }
 
@@ -42,14 +42,14 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
     handleSubmit,
   } = usePlannedPaymentForm(onSubmit, onClose);
 
-  const scale      = useSharedValue(0.86);
+  const scale = useSharedValue(0.86);
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }], opacity: scale.value }));
 
-  const handleShow = () => { scale.value = withSpring(1,    { damping: 18, stiffness: 220 }); };
+  const handleShow = () => { scale.value = withSpring(1, { damping: 18, stiffness: 220 }); };
   const handleHide = () => { scale.value = withSpring(0.86, { damping: 18, stiffness: 220 }); };
 
-  const cardBg  = isDark ? colors.background.secondary : '#FFFFFF';
-  const inputBg = isDark ? colors.background.primary   : '#F5F5F7';
+  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
+  const inputBg = isDark ? colors.background.primary : '#F5F5F7';
 
   return (
     <>
@@ -83,7 +83,7 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
               </Pressable>
             </View>
 
-            <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>TITLE</AppText>
+            <AppText variant="labelSM" color={colors.text.tertiary} style={[s.fieldLabel, { marginBottom: -Spacing['1'] }]}>TITLE</AppText>
             <TextInput
               style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
               placeholder="e.g. Rent, Netflix, Insurance"
@@ -111,7 +111,7 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
             </View>
 
             <View style={s.catHeader}>
-              <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>CATEGORY</AppText>
+              <AppText variant="labelSM" color={colors.text.tertiary} style={[s.fieldLabel, , { marginBottom: -Spacing['1'] }]}>CATEGORY</AppText>
               <Pressable
                 onPress={() => setCreateVisible(true)}
                 style={[s.createCatBtn, { backgroundColor: colors.brand.primary + '15', borderColor: colors.brand.primary + '45' }]}
@@ -132,7 +132,7 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
                       s.catChip,
                       {
                         backgroundColor: active ? cat.color + '1A' : inputBg,
-                        borderColor:     active ? cat.color + '55' : 'transparent',
+                        borderColor: active ? cat.color + '55' : 'transparent',
                         borderWidth: 1.5,
                       },
                     ]}
@@ -179,16 +179,16 @@ const s = StyleSheet.create({
     borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl,
     paddingHorizontal: Spacing['5'], paddingTop: Spacing['3'], gap: Spacing['3'],
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.12, shadowRadius: 20 },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.12, shadowRadius: 20 },
       android: { elevation: 20 },
     }),
   },
   handle: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, marginBottom: Spacing['2'] },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  fieldLabel: { fontSize: 10, letterSpacing: 0.8, marginBottom: -Spacing['1'] },
-  input:      { height: 46, borderRadius: Radius.lg, paddingHorizontal: Spacing['4'], fontSize: 15 },
-  rowFields:  { flexDirection: 'row', gap: Spacing['3'] },
-  catHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  fieldLabel: { fontSize: 10, letterSpacing: 0.8, marginBottom: Spacing['1'] },
+  input: { height: 46, borderRadius: Radius.lg, paddingHorizontal: Spacing['4'], fontSize: 15 },
+  rowFields: { flexDirection: 'row', gap: Spacing['3'] },
+  catHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   createCatBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 10, paddingVertical: 4,

@@ -3,12 +3,10 @@ import { StyleSheet } from 'react-native';
 import { Stack, SplashScreen, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import * as Notifications from 'expo-notifications';
 import { useCachedFonts } from '@hooks/useCachedFonts';
 import { useAuthStore } from '@store/authStore';
 import { useThemeStore } from '@store/themeStore';
 import { useNotificationStore } from '@store/notificationStore';
-import { setupNotificationChannel, requestNotificationPermission } from '@features/notifications/services/notificationService';
 import { SplashOverlay } from '@components/SplashOverlay';
 import { ToastContainer } from '@components/Toast';
 import { DarkTheme, LightTheme } from '@constants/themes';
@@ -27,23 +25,31 @@ export default function RootLayout() {
 
   const [showSplash, setShowSplash] = useState(true);
 
-  // Setup notification channel + permissions on first load
+  // Setup notifications lazily. notificationService.ts guards its own
+  // import('expo-notifications') behind an IS_EXPO_GO check, so the
+  // DevicePushTokenAutoRegistration.fx.js side-effect never runs in Expo Go.
   useEffect(() => {
+    let sub: { remove: () => void } | null = null;
+
     (async () => {
-      await setupNotificationChannel();
-      const granted = await requestNotificationPermission();
-      setPermission(granted);
+      try {
+        const {
+          setupNotificationChannel,
+          requestNotificationPermission,
+          startListening,
+        } = await import('@features/notifications/services/notificationService');
+
+        await setupNotificationChannel();
+        const granted = await requestNotificationPermission();
+        setPermission(granted);
+
+        sub = await startListening((title, body) => {
+          addNotification({ type: 'reminder', title, body });
+        });
+      } catch (_) {}
     })();
 
-    // Listen for notifications received while app is foregrounded
-    const sub = Notifications.addNotificationReceivedListener((notification) => {
-      addNotification({
-        type:  'reminder',
-        title: notification.request.content.title ?? 'Reminder',
-        body:  notification.request.content.body  ?? '',
-      });
-    });
-    return () => sub.remove();
+    return () => sub?.remove();
   }, []);
 
   useEffect(() => {

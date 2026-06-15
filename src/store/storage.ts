@@ -14,6 +14,7 @@ export async function clearAllPersistedData(): Promise<void> {
     'wc-ledger',
     'wc-loans',
     'wc-theme',
+    'wc-notifications',
   ];
   await AsyncStorage.multiRemove(keys);
 }

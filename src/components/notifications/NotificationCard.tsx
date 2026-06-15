@@ -1,20 +1,20 @@
 import { View, StyleSheet, Pressable, Platform } from 'react-native';
+import type { ComponentProps } from 'react';
 import Animated, { FadeInDown, FadeOutLeft } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
 import { format, isToday, isYesterday, formatDistanceToNowStrict } from 'date-fns';
 import type { AppNotification, NotificationType } from '@store/notificationStore';
-import type { ComponentProps } from 'react';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 const TYPE_META: Record<NotificationType, { icon: IoniconName; color: string }> = {
-  budget_exceeded: { icon: 'alert-circle',        color: '#EF4444' },
-  budget_warning:  { icon: 'warning',              color: '#F59E0B' },
-  payment_due:     { icon: 'calendar',             color: '#3B82F6' },
-  reminder:        { icon: 'alarm',                color: '#8B5CF6' },
-  system:          { icon: 'information-circle',   color: '#64748B' },
+  budget_exceeded: { icon: 'alert-circle',      color: '#EF4444' },
+  budget_warning:  { icon: 'warning',            color: '#F59E0B' },
+  payment_due:     { icon: 'calendar',           color: '#3B82F6' },
+  reminder:        { icon: 'alarm',              color: '#8B5CF6' },
+  system:          { icon: 'information-circle', color: '#64748B' },
 };
 
 function relativeTime(iso: string): string {
@@ -33,7 +33,8 @@ interface Props {
 
 export function NotificationCard({ notification, index, onPress, onDelete }: Props) {
   const { colors, isDark } = useTheme();
-  const meta = TYPE_META[notification.type];
+  const meta   = TYPE_META[notification.type];
+  const isRead = notification.isRead;
   const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
 
   return (
@@ -44,19 +45,27 @@ export function NotificationCard({ notification, index, onPress, onDelete }: Pro
         s.card,
         {
           backgroundColor: cardBg,
-          borderColor:     isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
-          opacity:         notification.isRead ? 0.7 : 1,
+          borderColor:     isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
         },
-        Platform.select({
-          ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: isDark ? 0 : 0.06, shadowRadius: 8 },
-          android: { elevation: isDark ? 0 : 2 },
+        !isRead && Platform.select({
+          ios:     { shadowColor: meta.color, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 10 },
+          android: { elevation: 3 },
+        }),
+        isRead && Platform.select({
+          ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4 },
+          android: { elevation: 1 },
         }),
       ]}
     >
-      <Pressable onPress={onPress} style={s.pressable}>
-        {/* Icon */}
-        <View style={[s.iconCircle, { backgroundColor: meta.color + '18' }]}>
-          <Ionicons name={meta.icon} size={22} color={meta.color} />
+      {/* Unread left accent bar */}
+      {!isRead && (
+        <View style={[s.accentBar, { backgroundColor: meta.color }]} />
+      )}
+
+      <Pressable onPress={onPress} style={[s.pressable, !isRead && { paddingLeft: 16 }]}>
+        {/* Icon circle */}
+        <View style={[s.iconCircle, { backgroundColor: meta.color + (isRead ? '12' : '1E') }]}>
+          <Ionicons name={meta.icon} size={22} color={meta.color} style={isRead ? { opacity: 0.7 } : undefined} />
         </View>
 
         {/* Content */}
@@ -64,28 +73,37 @@ export function NotificationCard({ notification, index, onPress, onDelete }: Pro
           <View style={s.titleRow}>
             <AppText
               variant="labelMD"
-              color={colors.text.primary}
-              style={[s.title, !notification.isRead && { fontWeight: '700' }]}
+              color={isRead ? colors.text.secondary : colors.text.primary}
+              style={[s.titleText, !isRead && { fontWeight: '700' }]}
               numberOfLines={1}
             >
               {notification.title}
             </AppText>
-            {!notification.isRead && (
+            {!isRead && (
               <View style={[s.unreadDot, { backgroundColor: meta.color }]} />
             )}
           </View>
-          <AppText variant="bodyMD" color={colors.text.secondary} numberOfLines={2} style={s.body}>
+
+          <AppText
+            variant="bodyMD"
+            color={isRead ? colors.text.tertiary : colors.text.secondary}
+            numberOfLines={2}
+            style={s.bodyText}
+          >
             {notification.body}
           </AppText>
+
           <AppText variant="caption" color={colors.text.tertiary} style={s.time}>
             {relativeTime(notification.createdAt)}
           </AppText>
         </View>
       </Pressable>
 
-      {/* Delete */}
-      <Pressable onPress={onDelete} style={s.deleteBtn} hitSlop={8}>
-        <Ionicons name="trash-outline" size={16} color={colors.text.tertiary} />
+      {/* Delete button */}
+      <Pressable onPress={onDelete} style={s.deleteBtn} hitSlop={10}>
+        <View style={[s.deleteCircle, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}>
+          <Ionicons name="trash-outline" size={15} color={colors.text.tertiary} />
+        </View>
       </Pressable>
     </Animated.View>
   );
@@ -101,17 +119,23 @@ const s = StyleSheet.create({
     marginVertical:   4,
     overflow:       'hidden',
   },
-  pressable:  { flex: 1, flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 },
+  accentBar: {
+    position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
+  },
+  pressable:  { flex: 1, flexDirection: 'row', alignItems: 'center', padding: 14, paddingLeft: 14, gap: 13 },
   iconCircle: {
-    width: 46, height: 46, borderRadius: 15,
-    alignItems: 'center', justifyContent: 'center',
-    flexShrink: 0,
+    width: 48, height: 48, borderRadius: 16,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   content:   { flex: 1, gap: 3 },
   titleRow:  { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  title:     { flex: 1, fontSize: 14, letterSpacing: -0.1 },
+  titleText: { flex: 1, fontSize: 14, letterSpacing: -0.1 },
   unreadDot: { width: 7, height: 7, borderRadius: 3.5, flexShrink: 0 },
-  body:      { fontSize: 13, lineHeight: 18 },
-  time:      { fontSize: 11 },
-  deleteBtn: { paddingHorizontal: 14, paddingVertical: 18 },
+  bodyText:  { fontSize: 13, lineHeight: 18 },
+  time:      { fontSize: 11, marginTop: 1 },
+  deleteBtn: { paddingHorizontal: 12, paddingVertical: 18 },
+  deleteCircle: {
+    width: 30, height: 30, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center',
+  },
 });
