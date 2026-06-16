@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  View, StyleSheet, Pressable, TextInput, Modal,
-  Platform, ScrollView,
+  View, StyleSheet, Pressable, TextInput, Modal, Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
+import { KeyboardAvoidingSheet } from '@components/KeyboardAvoidingSheet';
 import type { ReminderFormState } from '@features/notifications/hooks/useNotificationsScreen';
 import { DEFAULT_REMINDER_FORM } from '@features/notifications/hooks/useNotificationsScreen';
 import type { RepeatInterval } from '@store/notificationStore';
@@ -304,7 +303,6 @@ interface FormErrors { title?: string; weekdays?: string; }
 
 export function AddReminderSheet({ visible, onClose, onSave }: Props) {
   const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
 
   const [form,      setForm]      = useState<ReminderFormState>(DEFAULT_REMINDER_FORM);
   const [timeState, setTimeState] = useState<TimeState>(parse24h(DEFAULT_REMINDER_FORM.time));
@@ -328,7 +326,6 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
   const inputBg = isDark ? 'rgba(255,255,255,0.07)' : '#F3F4F8';
   const bdColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.09)';
   const divider = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
-  const safeBot = Math.max(insets.bottom, 20);
 
   function validate(): boolean {
     const errs: FormErrors = {};
@@ -402,11 +399,24 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
             </Pressable>
           </View>
 
-          {/* Scrollable body */}
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={s.body}
-            keyboardShouldPersistTaps="handled"
+          {/* Body + footer — keyboard-aware via KeyboardAvoidingSheet */}
+          <KeyboardAvoidingSheet
+            dividerColor={divider}
+            footer={
+              <Pressable
+                onPress={handleSave}
+                style={({ pressed }) => [s.saveBtn, { opacity: pressed ? 0.82 : 1 }]}
+              >
+                <LinearGradient
+                  colors={[ACCENT, '#A78BFA']}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={s.saveGrad}
+                >
+                  <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                  <AppText style={s.saveTxt}>Save Reminder</AppText>
+                </LinearGradient>
+              </Pressable>
+            }
           >
             {/* ── Title ─────────────────────────────────────────────── */}
             <View style={s.field}>
@@ -551,25 +561,7 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
               </View>
             )}
 
-            <View style={{ height: 8 }} />
-          </ScrollView>
-
-          {/* Footer */}
-          <View style={[s.footer, { borderTopColor: divider, paddingBottom: safeBot }]}>
-            <Pressable
-              onPress={handleSave}
-              style={({ pressed }) => [s.saveBtn, { opacity: pressed ? 0.82 : 1 }]}
-            >
-              <LinearGradient
-                colors={[ACCENT, '#A78BFA']}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={s.saveGrad}
-              >
-                <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                <AppText style={s.saveTxt}>Save Reminder</AppText>
-              </LinearGradient>
-            </Pressable>
-          </View>
+          </KeyboardAvoidingSheet>
         </Animated.View>
       </View>
     </Modal>
@@ -598,8 +590,6 @@ const s = StyleSheet.create({
   hdrSub:  { fontSize: 12, marginTop: 1 },
   closeBtn:{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
 
-  body: { paddingHorizontal: 20, paddingTop: 4, gap: 20 },
-
   field:       { gap: 9 },
   fieldLblRow: { flexDirection: 'row', alignItems: 'baseline' },
   fieldLbl:    { fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
@@ -627,7 +617,6 @@ const s = StyleSheet.create({
 
   calBox: { borderRadius: 18, borderWidth: 1.5, padding: 16 },
 
-  footer:   { borderTopWidth: 1, padding: 16 },
   saveBtn:  { borderRadius: 16, overflow: 'hidden' },
   saveGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 54 },
   saveTxt:  { color: '#fff', fontSize: 16, fontWeight: '800' },

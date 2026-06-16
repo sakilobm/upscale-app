@@ -8,10 +8,10 @@
 
 import React, { useState } from 'react';
 import {
-  View, StyleSheet, Modal, TextInput, KeyboardAvoidingView,
+  View, StyleSheet, Modal, TextInput,
   Platform, Pressable, ScrollView,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KeyboardAvoidingSheet } from '@components/KeyboardAvoidingSheet';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
@@ -22,6 +22,7 @@ import { usePlannedPaymentForm } from '@features/budget/hooks/usePlannedPaymentF
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Radius } from '@constants/index';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   visible: boolean;
@@ -64,18 +65,8 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.35)' }]} />
         </Pressable>
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={s.outer}
-          pointerEvents="box-none"
-        >
-          <Animated.View
-            style={[
-              s.sheet,
-              sheetStyle,
-              { backgroundColor: cardBg, paddingBottom: Math.max(insets.bottom, Spacing['5']) },
-            ]}
-          >
+        <View style={s.outer} pointerEvents="box-none">
+          <Animated.View style={[s.sheet, sheetStyle, { backgroundColor: cardBg }]}>
             <View style={[s.handle, { backgroundColor: colors.text.tertiary + '40' }]} />
 
             <View style={s.header}>
@@ -85,85 +76,89 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
               </Pressable>
             </View>
 
-            <AppText variant="labelSM" color={colors.text.tertiary} style={[s.fieldLabel, { marginBottom: -Spacing['1'] }]}>TITLE</AppText>
-            <TextInput
-              style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
-              placeholder="e.g. Rent, Netflix, Insurance"
-              placeholderTextColor={colors.text.tertiary}
-              value={title} onChangeText={setTitle}
-            />
-
-            <View style={s.rowFields}>
-              <View style={{ flex: 1 }}>
-                <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>AMOUNT ({symbol})</AppText>
-                <TextInput
-                  style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
-                  placeholder="0.00" placeholderTextColor={colors.text.tertiary}
-                  value={amount} onChangeText={setAmount} keyboardType="decimal-pad"
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>DUE DATE</AppText>
-                <TextInput
-                  style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
-                  placeholder="YYYY-MM-DD" placeholderTextColor={colors.text.tertiary}
-                  value={dueDate} onChangeText={setDueDate}
-                />
-              </View>
-            </View>
-
-            <View style={s.catHeader}>
-              <AppText variant="labelSM" color={colors.text.tertiary} style={[s.fieldLabel, , { marginBottom: -Spacing['1'] }]}>CATEGORY</AppText>
-              <Pressable
-                onPress={() => setCreateVisible(true)}
-                style={[s.createCatBtn, { backgroundColor: colors.brand.primary + '15', borderColor: colors.brand.primary + '45' }]}
-              >
-                <Ionicons name="add" size={13} color={colors.brand.primary} />
-                <AppText variant="caption" style={{ color: colors.brand.primary, fontWeight: '600' }}>New</AppText>
-              </Pressable>
-            </View>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catRow}>
-              {cats.map((cat) => {
-                const active = cat.id === category;
-                return (
-                  <Pressable
-                    key={cat.id}
-                    onPress={() => setCategory(cat.id)}
-                    style={[
-                      s.catChip,
-                      {
-                        backgroundColor: active ? cat.color + '1A' : inputBg,
-                        borderColor: active ? cat.color + '55' : 'transparent',
-                        borderWidth: 1.5,
-                      },
-                    ]}
-                  >
-                    <View style={[s.catIconBox, { backgroundColor: cat.color + '22' }]}>
-                      <Ionicons name={cat.icon as any} size={14} color={cat.color} />
-                    </View>
-                    <AppText
-                      variant="caption"
-                      style={{ color: active ? cat.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
-                    >
-                      {cat.label}
-                    </AppText>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            <Pressable
-              onPress={handleSubmit}
-              style={({ pressed }) => [s.submitBtn, { backgroundColor: colors.brand.primary, opacity: pressed ? 0.8 : 1 }]}
+            <KeyboardAvoidingSheet
+              footer={
+                <Pressable
+                  onPress={handleSubmit}
+                  style={({ pressed }) => [s.submitBtn, { backgroundColor: colors.brand.primary, opacity: pressed ? 0.8 : 1 }]}
+                >
+                  <Ionicons name="checkmark-circle" size={18} color={isDark ? '#000' : '#FFFFFF'} />
+                  <AppText variant="labelLG" style={{ color: isDark ? '#000' : '#FFFFFF', fontWeight: '700' }}>
+                    Add Payment
+                  </AppText>
+                </Pressable>
+              }
             >
-              <Ionicons name="checkmark-circle" size={18} color={isDark ? '#000' : '#FFFFFF'} />
-              <AppText variant="labelLG" style={{ color: isDark ? '#000' : '#FFFFFF', fontWeight: '700' }}>
-                Add Payment
-              </AppText>
-            </Pressable>
+              <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>TITLE</AppText>
+              <TextInput
+                style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
+                placeholder="e.g. Rent, Netflix, Insurance"
+                placeholderTextColor={colors.text.tertiary}
+                value={title} onChangeText={setTitle}
+              />
+
+              <View style={s.rowFields}>
+                <View style={{ flex: 1 }}>
+                  <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>AMOUNT ({symbol})</AppText>
+                  <TextInput
+                    style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
+                    placeholder="0.00" placeholderTextColor={colors.text.tertiary}
+                    value={amount} onChangeText={setAmount} keyboardType="decimal-pad"
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>DUE DATE</AppText>
+                  <TextInput
+                    style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
+                    placeholder="YYYY-MM-DD" placeholderTextColor={colors.text.tertiary}
+                    value={dueDate} onChangeText={setDueDate}
+                  />
+                </View>
+              </View>
+
+              <View style={s.catHeader}>
+                <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>CATEGORY</AppText>
+                <Pressable
+                  onPress={() => setCreateVisible(true)}
+                  style={[s.createCatBtn, { backgroundColor: colors.brand.primary + '15', borderColor: colors.brand.primary + '45' }]}
+                >
+                  <Ionicons name="add" size={13} color={colors.brand.primary} />
+                  <AppText variant="caption" style={{ color: colors.brand.primary, fontWeight: '600' }}>New</AppText>
+                </Pressable>
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catRow}>
+                {cats.map((cat) => {
+                  const active = cat.id === category;
+                  return (
+                    <Pressable
+                      key={cat.id}
+                      onPress={() => setCategory(cat.id)}
+                      style={[
+                        s.catChip,
+                        {
+                          backgroundColor: active ? cat.color + '1A' : inputBg,
+                          borderColor: active ? cat.color + '55' : 'transparent',
+                          borderWidth: 1.5,
+                        },
+                      ]}
+                    >
+                      <View style={[s.catIconBox, { backgroundColor: cat.color + '22' }]}>
+                        <Ionicons name={cat.icon as any} size={14} color={cat.color} />
+                      </View>
+                      <AppText
+                        variant="caption"
+                        style={{ color: active ? cat.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
+                      >
+                        {cat.label}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </KeyboardAvoidingSheet>
           </Animated.View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       <CategoryFormSheet

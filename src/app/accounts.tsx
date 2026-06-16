@@ -23,6 +23,8 @@ import { AccountFormSheet } from '@components/accounts/AccountFormSheet';
 import { ConfirmModal } from '@components/ConfirmModal';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
+import { CURRENCY_SYMBOLS } from '@store/types';
 import { Radius } from '@constants/Dimensions';
 
 export default function AccountsScreen() {
@@ -31,6 +33,7 @@ export default function AccountsScreen() {
     accounts, selectedAccount, totalBalance, accColor, selectedIdx,
     scrollRef, bgStyle, formSheet, deleteConfirm, handlers,
   } = useAccountsScreen();
+  const { symbol } = useFormatCurrency();
 
   return (
     <View style={[s.root, { backgroundColor: isDark ? '#0B0F1C' : '#F6F6FA' }]}>
@@ -59,7 +62,7 @@ export default function AccountsScreen() {
             TOTAL NET WORTH
           </AppText>
           <AppText style={[s.heroBalance, { color: isDark ? '#FFFFFF' : colors.text.primary }]}>
-            ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {symbol}{totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </AppText>
         </Animated.View>
 
@@ -97,7 +100,7 @@ export default function AccountsScreen() {
         {selectedAccount && (
           <ScrollView key={selectedAccount.id} showsVerticalScrollIndicator={false} contentContainerStyle={s.details}>
             <View style={s.statsRow}>
-              <AccountStatCard label="Balance"  value={`$${selectedAccount.balance.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon="cash-outline"   color={accColor} />
+              <AccountStatCard label="Balance"  value={`${CURRENCY_SYMBOLS[selectedAccount.currency] ?? '$'}${selectedAccount.balance.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon="cash-outline"   color={accColor} />
               <AccountStatCard label="Type"     value={selectedAccount.type.charAt(0).toUpperCase() + selectedAccount.type.slice(1)}          icon="layers-outline" color={accColor} />
               <AccountStatCard label="Currency" value={selectedAccount.currency}                                                               icon="globe-outline"  color={accColor} />
             </View>
@@ -142,7 +145,7 @@ export default function AccountsScreen() {
                       <AppText variant="caption" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : colors.text.tertiary }}>{acc.type}</AppText>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
-                      <AppText variant="labelMD" style={{ color: acc.color, fontWeight: '700' }}>${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 0 })}</AppText>
+                      <AppText variant="labelMD" style={{ color: acc.color, fontWeight: '700' }}>{CURRENCY_SYMBOLS[acc.currency] ?? '$'}{acc.balance.toLocaleString('en-US', { minimumFractionDigits: 0 })}</AppText>
                       {acc.isDefault && <AppText variant="caption" style={{ color: acc.color + 'AA', fontSize: 10 }}>default</AppText>}
                     </View>
                   </Pressable>

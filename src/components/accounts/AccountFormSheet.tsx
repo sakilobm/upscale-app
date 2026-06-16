@@ -52,6 +52,8 @@ const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: 'cash',       label: 'Cash'       },
 ];
 
+import { useAuthStore } from '@store/authStore';
+
 interface Props {
   visible:        boolean;
   editingAccount: Account | null;
@@ -65,6 +67,8 @@ export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: P
   const slideY  = useSharedValue(440);
   const [form, setForm] = useState<AccountFormState>(DEFAULT_ACCOUNT_FORM);
 
+  const userCurrency = useAuthStore((s) => s.user?.currency) ?? 'USD';
+
   useEffect(() => {
     if (visible) {
       setForm(editingAccount ? {
@@ -75,7 +79,10 @@ export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: P
         balance:   String(editingAccount.balance),
         currency:  editingAccount.currency as CurrencyCode,
         isDefault: editingAccount.isDefault,
-      } : DEFAULT_ACCOUNT_FORM);
+      } : {
+        ...DEFAULT_ACCOUNT_FORM,
+        currency: userCurrency,
+      });
       slideY.value = withTiming(0, { duration: 380, easing: Easing.out(Easing.cubic) });
     } else {
       slideY.value = withTiming(440, { duration: 260, easing: Easing.in(Easing.cubic) });

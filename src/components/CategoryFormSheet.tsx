@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   Pressable,
   TextInput,
@@ -9,7 +8,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KeyboardAvoidingSheet } from '@components/KeyboardAvoidingSheet';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -51,7 +50,6 @@ export function CategoryFormSheet({
   onSaved,
 }: CategoryFormSheetProps) {
   const { colors, isDark } = useTheme();
-  const insets             = useSafeAreaInsets();
   const addCategory        = useCategoryStore((s) => s.addCategory);
   const updateCategory     = useCategoryStore((s) => s.updateCategory);
 
@@ -102,7 +100,6 @@ export function CategoryFormSheet({
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-
         <Animated.View style={[styles.sheet, { backgroundColor: sheetBg }, sheetStyle]}>
           {/* Drag handle */}
           <View style={[styles.handle, { backgroundColor: colors.text.tertiary + '40' }]} />
@@ -129,11 +126,25 @@ export function CategoryFormSheet({
             </Pressable>
           </View>
 
-          {/* ── Scrollable body ──────────────────────────────────────── */}
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollBody}
-            keyboardShouldPersistTaps="handled"
+          {/* ── Scrollable body + footer ─────────────────────────────── */}
+          <KeyboardAvoidingSheet
+            dividerColor={borderC}
+            contentStyle={styles.scrollBody}
+            footerStyle={{ paddingHorizontal: Spacing['5'], paddingTop: Spacing['4'], borderTopWidth: 1, borderTopColor: borderC }}
+            footer={
+              <Pressable
+                onPress={handleSave}
+                style={({ pressed }) => [
+                  styles.saveBtn,
+                  { backgroundColor: color, opacity: pressed ? 0.85 : 1 },
+                ]}
+              >
+                <Ionicons name={isEdit ? 'checkmark-circle' : 'add-circle'} size={20} color="#FFF" />
+                <AppText style={styles.saveBtnText}>
+                  {isEdit ? 'Save Changes' : 'Create Category'}
+                </AppText>
+              </Pressable>
+            }
           >
             {/* Name + live preview */}
             <View style={styles.previewRow}>
@@ -256,33 +267,7 @@ export function CategoryFormSheet({
               </View>
             ))}
 
-            {/* Bottom padding so last section clears the footer */}
-            <View style={{ height: 8 }} />
-          </ScrollView>
-
-          {/* ── Fixed footer ─────────────────────────────────────────── */}
-          <View
-            style={[
-              styles.footer,
-              {
-                borderTopColor: borderC,
-                paddingBottom: Math.max(insets.bottom, 16),
-              },
-            ]}
-          >
-            <Pressable
-              onPress={handleSave}
-              style={({ pressed }) => [
-                styles.saveBtn,
-                { backgroundColor: color, opacity: pressed ? 0.85 : 1 },
-              ]}
-            >
-              <Ionicons name={isEdit ? 'checkmark-circle' : 'add-circle'} size={20} color="#FFF" />
-              <AppText style={styles.saveBtnText}>
-                {isEdit ? 'Save Changes' : 'Create Category'}
-              </AppText>
-            </Pressable>
-          </View>
+          </KeyboardAvoidingSheet>
         </Animated.View>
       </View>
     </Modal>
