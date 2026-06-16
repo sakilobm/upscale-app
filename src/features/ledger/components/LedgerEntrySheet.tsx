@@ -1,26 +1,24 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
   TextInput,
   Pressable,
-  KeyboardAvoidingView,
   Platform,
   Modal,
   TouchableWithoutFeedback,
-  Keyboard,
 } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
-  runOnJS,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
+import { DatePickerField } from '@components/DatePickerField';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Radius, Spacing } from '@constants/Dimensions';
@@ -88,12 +86,8 @@ export function LedgerEntrySheet({
     }
   }, [visible, mode]);
 
-  const sheetStyle   = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: backdropOp.value,
-  }));
+  const sheetStyle    = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOp.value }));
 
   const cardBg: [string, string] = isDark
     ? ['rgba(15, 21, 36, 0.98)', 'rgba(8, 12, 20, 1.0)']
@@ -129,10 +123,7 @@ export function LedgerEntrySheet({
       animationType="none"
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView
-        style={styles.root}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <View style={styles.root}>
         {/* Backdrop */}
         <TouchableWithoutFeedback onPress={onClose}>
           <Animated.View style={[styles.backdrop, backdropStyle]} />
@@ -221,16 +212,13 @@ export function LedgerEntrySheet({
                   ))}
                 </View>
 
-                <Field label="Due Date (optional)" icon="calendar-outline" colors={colors} isDark={isDark}>
-                  <TextInput
-                    style={[styles.input, { color: colors.text.primary }]}
-                    value={dueDate}
-                    onChangeText={setDueDate}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor={colors.text.tertiary}
-                    keyboardType="numbers-and-punctuation"
-                  />
-                </Field>
+                {/* Due Date — calendar picker */}
+                <DatePickerField
+                  label="Due Date (optional)"
+                  value={dueDate}
+                  onChange={setDueDate}
+                  placeholder="Pick a due date"
+                />
               </>
             )}
 
@@ -262,24 +250,18 @@ export function LedgerEntrySheet({
             onPress={handleSubmit}
             style={({ pressed }) => [
               styles.submitBtn,
-              {
-                backgroundColor: colors.brand.primary,
-                opacity:         pressed ? 0.82 : 1,
-              },
+              { backgroundColor: colors.brand.primary, opacity: pressed ? 0.82 : 1 },
             ]}
           >
             <AppText
               variant="labelLG"
-              style={{
-                color:      isDark ? colors.text.inverse : '#000',
-                fontWeight: '700',
-              }}
+              style={{ color: isDark ? colors.text.inverse : '#000', fontWeight: '700' }}
             >
               {mode === 'add' ? 'Save Entry' : 'Record Return'}
             </AppText>
           </Pressable>
         </Animated.View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
@@ -318,8 +300,8 @@ function Field({
 
 const styles = StyleSheet.create({
   root: {
-    flex:            1,
-    justifyContent:  'flex-end',
+    flex:           1,
+    justifyContent: 'flex-end',
   },
   backdrop: {
     ...StyleSheet.absoluteFill,
@@ -347,9 +329,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   titleRow: {
-    flexDirection:  'row',
-    justifyContent: 'space-between',
-    alignItems:     'center',
+    flexDirection:   'row',
+    justifyContent:  'space-between',
+    alignItems:      'center',
     paddingVertical: Spacing['4'],
   },
   form: {
@@ -363,13 +345,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   fieldBox: {
-    flexDirection: 'row',
-    alignItems:    'center',
-    gap:           Spacing['2'],
+    flexDirection:     'row',
+    alignItems:        'center',
+    gap:               Spacing['2'],
     paddingHorizontal: Spacing['3'],
-    height:        48,
-    borderRadius:  Radius.lg,
-    borderWidth:   1,
+    height:            48,
+    borderRadius:      Radius.lg,
+    borderWidth:       1,
   },
   input: {
     flex:     1,

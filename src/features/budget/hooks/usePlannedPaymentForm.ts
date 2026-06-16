@@ -31,7 +31,7 @@ export function usePlannedPaymentForm(
     const parsed = parseFloat(amount);
     if (!title.trim())                       { toast.error('Title is required');       return; }
     if (!parsed || parsed <= 0)              { toast.error('Enter a valid amount');    return; }
-    if (!dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) { toast.error('Date format: YYYY-MM-DD'); return; }
+    if (!dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) { toast.error('Please select a due date');   return; }
 
     onSubmit({ title: title.trim(), amount: parsed, dueDate, category });
     reset();

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file AddPaymentSheet.tsx
  * @architecture Presentation Layer — UI Component
  * @description Modal sheet for adding a new planned payment. Consumes usePlannedPaymentForm
@@ -12,8 +12,8 @@ import {
   Platform, Pressable, ScrollView,
 } from 'react-native';
 import { KeyboardAvoidingSheet } from '@components/KeyboardAvoidingSheet';
+import { DatePickerField } from '@components/DatePickerField';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
@@ -22,7 +22,6 @@ import { usePlannedPaymentForm } from '@features/budget/hooks/usePlannedPaymentF
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Radius } from '@constants/index';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   visible: boolean;
@@ -33,7 +32,6 @@ interface Props {
 export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
-  const insets = useSafeAreaInsets();
   const [createVisible, setCreateVisible] = useState(false);
 
   const {
@@ -97,24 +95,19 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
                 value={title} onChangeText={setTitle}
               />
 
-              <View style={s.rowFields}>
-                <View style={{ flex: 1 }}>
-                  <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>AMOUNT ({symbol})</AppText>
-                  <TextInput
-                    style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
-                    placeholder="0.00" placeholderTextColor={colors.text.tertiary}
-                    value={amount} onChangeText={setAmount} keyboardType="decimal-pad"
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>DUE DATE</AppText>
-                  <TextInput
-                    style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
-                    placeholder="YYYY-MM-DD" placeholderTextColor={colors.text.tertiary}
-                    value={dueDate} onChangeText={setDueDate}
-                  />
-                </View>
-              </View>
+              <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>AMOUNT ({symbol})</AppText>
+              <TextInput
+                style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
+                placeholder="0.00" placeholderTextColor={colors.text.tertiary}
+                value={amount} onChangeText={setAmount} keyboardType="decimal-pad"
+              />
+
+              <DatePickerField
+                label="DUE DATE"
+                value={dueDate}
+                onChange={setDueDate}
+                placeholder="Pick a due date"
+              />
 
               <View style={s.catHeader}>
                 <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>CATEGORY</AppText>
@@ -184,7 +177,6 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   fieldLabel: { fontSize: 10, letterSpacing: 0.8, marginBottom: Spacing['1'] },
   input: { height: 46, borderRadius: Radius.lg, paddingHorizontal: Spacing['4'], fontSize: 15 },
-  rowFields: { flexDirection: 'row', gap: Spacing['3'] },
   catHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   createCatBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
