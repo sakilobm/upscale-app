@@ -36,18 +36,18 @@ export default function AccountsScreen() {
   const { symbol } = useFormatCurrency();
 
   return (
-    <View style={[s.root, { backgroundColor: isDark ? '#0B0F1C' : '#F6F6FA' }]}>
+    <View style={[s.root, { backgroundColor: colors.background.primary }]}>
       <Animated.View style={[StyleSheet.absoluteFill, bgStyle]} />
 
       <SafeAreaView style={s.safeArea} edges={['top']}>
         {/* ── Header ── */}
         <View style={s.header}>
           <Pressable onPress={() => router.back()} style={({ pressed }) => [s.headerBtn, { opacity: pressed ? 0.6 : 1 }]}>
-            <Ionicons name="chevron-back" size={24} color={isDark ? '#FFF' : colors.text.primary} />
+            <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
           </Pressable>
           <View style={s.headerCenter}>
-            <AppText variant="headingMD" style={{ color: isDark ? '#FFF' : colors.text.primary, fontWeight: '800' }}>My Accounts</AppText>
-            <AppText variant="caption" style={{ color: isDark ? 'rgba(255,255,255,0.5)' : colors.text.tertiary }}>
+            <AppText variant="headingMD" style={{ color: colors.text.primary, fontWeight: '800' }}>My Accounts</AppText>
+            <AppText variant="caption" style={{ color: colors.text.secondary }}>
               {accounts.length} {accounts.length === 1 ? 'account' : 'accounts'}
             </AppText>
           </View>
@@ -58,10 +58,10 @@ export default function AccountsScreen() {
 
         {/* ── Net Worth ── */}
         <Animated.View entering={FadeIn.delay(100).duration(400)} style={s.hero}>
-          <AppText variant="caption" style={{ color: isDark ? 'rgba(255,255,255,0.5)' : colors.text.tertiary, letterSpacing: 1.5 }}>
+          <AppText variant="caption" style={{ color: colors.text.secondary, letterSpacing: 1.5 }}>
             TOTAL NET WORTH
           </AppText>
-          <AppText style={[s.heroBalance, { color: isDark ? '#FFFFFF' : colors.text.primary }]}>
+          <AppText style={[s.heroBalance, { color: colors.text.primary }]}>
             {symbol}{totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </AppText>
         </Animated.View>
@@ -111,7 +111,7 @@ export default function AccountsScreen() {
                 <AppText variant="labelMD" style={{ color: accColor, fontWeight: '600' }}>Edit</AppText>
               </Pressable>
               {!selectedAccount.isDefault ? (
-                <Pressable onPress={() => handlers.setDefault(selectedAccount)} style={({ pressed }) => [s.actionBtn, { backgroundColor: isDark ? '#FFFFFF0D' : '#0000000A', opacity: pressed ? 0.7 : 1 }]}>
+                <Pressable onPress={() => handlers.setDefault(selectedAccount)} style={({ pressed }) => [s.actionBtn, { backgroundColor: colors.glass.backgroundMid, opacity: pressed ? 0.7 : 1 }]}>
                   <Ionicons name="star-outline" size={16} color={colors.text.secondary} />
                   <AppText variant="labelMD" style={{ color: colors.text.secondary, fontWeight: '600' }}>Set Default</AppText>
                 </Pressable>
@@ -127,7 +127,7 @@ export default function AccountsScreen() {
               </Pressable>
             </View>
 
-            <AppText variant="labelMD" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : colors.text.tertiary, marginTop: 24, marginBottom: 12 }}>
+            <AppText variant="labelMD" style={{ color: colors.text.secondary, marginTop: 24, marginBottom: 12 }}>
               ALL ACCOUNTS
             </AppText>
             <View style={{ gap: 8 }}>
@@ -135,14 +135,14 @@ export default function AccountsScreen() {
                 const isSel = idx === selectedIdx;
                 return (
                   <Pressable key={acc.id} onPress={() => handlers.scrollToIdx(idx)}
-                    style={({ pressed }) => [s.accRow, { backgroundColor: isSel ? acc.color + '18' : (isDark ? '#FFFFFF08' : '#00000006'), borderColor: isSel ? acc.color + '40' : 'transparent', opacity: pressed ? 0.75 : 1 }]}
+                    style={({ pressed }) => [s.accRow, { backgroundColor: isSel ? acc.color + '18' : colors.glass.background, borderColor: isSel ? acc.color + '40' : 'transparent', opacity: pressed ? 0.75 : 1 }]}
                   >
                     <View style={[s.accRowIcon, { backgroundColor: acc.color + '22' }]}>
                       <Ionicons name={acc.icon as any} size={18} color={acc.color} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <AppText variant="labelMD" style={{ color: isDark ? '#FFF' : colors.text.primary, fontWeight: '600' }}>{acc.name}</AppText>
-                      <AppText variant="caption" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : colors.text.tertiary }}>{acc.type}</AppText>
+                      <AppText variant="labelMD" style={{ color: colors.text.primary, fontWeight: '600' }}>{acc.name}</AppText>
+                      <AppText variant="caption" style={{ color: colors.text.secondary }}>{acc.type}</AppText>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
                       <AppText variant="labelMD" style={{ color: acc.color, fontWeight: '700' }}>{CURRENCY_SYMBOLS[acc.currency] ?? '$'}{acc.balance.toLocaleString('en-US', { minimumFractionDigits: 0 })}</AppText>

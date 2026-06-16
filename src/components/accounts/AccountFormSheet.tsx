@@ -94,8 +94,8 @@ export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: P
   const set = <K extends keyof AccountFormState>(key: K, val: AccountFormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: val }));
 
-  const sheetBg = isDark ? colors.background.secondary : '#FFFFFF';
-  const inputBg = isDark ? colors.background.primary   : '#F5F5F8';
+  const sheetBg = colors.background.secondary;
+  const inputBg = colors.background.primary;
   const inputClr = colors.text.primary;
 
   return (
@@ -211,7 +211,7 @@ export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: P
                 <AppText variant="labelMD" color={colors.text.primary}>Set as Default</AppText>
                 <AppText variant="caption" color={colors.text.tertiary}>Used as primary account across the app</AppText>
               </View>
-              <View style={[s.toggle, { backgroundColor: form.isDefault ? form.color : (isDark ? '#333' : '#DDD') }]}>
+              <View style={[s.toggle, { backgroundColor: form.isDefault ? form.color : colors.glass.backgroundStrong }]}>
                 <View style={[s.toggleThumb, { transform: [{ translateX: form.isDefault ? 18 : 0 }] }]} />
               </View>
             </Pressable>

@@ -1,8 +1,7 @@
 ﻿/**
  * @file AddPaymentSheet.tsx
  * @architecture Presentation Layer — UI Component
- * @description Modal sheet for adding a new planned payment. Consumes usePlannedPaymentForm
- *   for all form state and validation; the parent (budget.tsx) only passes visible/close/submit.
+ * @description Modal sheet for adding a new planned payment.
  * @associatedFiles src/features/budget/hooks/usePlannedPaymentForm.ts, src/app/(tabs)/budget.tsx
  */
 
@@ -49,8 +48,9 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
   const handleShow = () => { scale.value = withSpring(1, { damping: 18, stiffness: 220 }); };
   const handleHide = () => { scale.value = withSpring(0.86, { damping: 18, stiffness: 220 }); };
 
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
-  const inputBg = isDark ? colors.background.primary : '#F5F5F7';
+  const cardBg    = isDark ? colors.background.secondary : '#FFFFFF';
+  const inputBg   = isDark ? colors.background.primary   : '#F2F3F5';
+  const dividerC  = isDark ? 'rgba(255,255,255,0.07)'    : 'rgba(0,0,0,0.07)';
 
   return (
     <>
@@ -60,96 +60,123 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
           <BlurView intensity={isDark ? 40 : 30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.35)' }]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.38)' }]} />
         </Pressable>
 
         <View style={s.outer} pointerEvents="box-none">
           <Animated.View style={[s.sheet, sheetStyle, { backgroundColor: cardBg }]}>
-            <View style={[s.handle, { backgroundColor: colors.text.tertiary + '40' }]} />
 
+            {/* ── Handle ─────────────────────────────── */}
+            <View style={[s.handle, { backgroundColor: colors.text.tertiary + '35' }]} />
+
+            {/* ── Header ─────────────────────────────── */}
             <View style={s.header}>
-              <AppText variant="headingSM" color={colors.text.primary}>Add Planned Payment</AppText>
-              <Pressable onPress={onClose} hitSlop={12}>
-                <Ionicons name="close" size={22} color={colors.text.tertiary} />
+              <View>
+                <AppText variant="headingMD" color={colors.text.primary}>Add Planned Payment</AppText>
+                <AppText variant="caption" color={colors.text.tertiary} style={{ marginTop: 2 }}>
+                  Set a recurring or one-time payment
+                </AppText>
+              </View>
+              <Pressable
+                onPress={onClose} hitSlop={12}
+                style={[s.closeBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
+              >
+                <Ionicons name="close" size={17} color={colors.text.secondary} />
               </Pressable>
             </View>
 
+            {/* ── Body + Footer via KeyboardAvoidingSheet ── */}
             <KeyboardAvoidingSheet
+              dividerColor={dividerC}
+              contentStyle={s.body}
               footer={
                 <Pressable
                   onPress={handleSubmit}
                   style={({ pressed }) => [s.submitBtn, { backgroundColor: colors.brand.primary, opacity: pressed ? 0.8 : 1 }]}
                 >
-                  <Ionicons name="checkmark-circle" size={18} color={isDark ? '#000' : '#FFFFFF'} />
-                  <AppText variant="labelLG" style={{ color: isDark ? '#000' : '#FFFFFF', fontWeight: '700' }}>
+                  <Ionicons name="checkmark-circle" size={20} color={isDark ? '#000' : '#fff'} />
+                  <AppText variant="labelLG" style={{ color: isDark ? '#000' : '#fff', fontWeight: '700' }}>
                     Add Payment
                   </AppText>
                 </Pressable>
               }
             >
-              <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>TITLE</AppText>
-              <TextInput
-                style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
-                placeholder="e.g. Rent, Netflix, Insurance"
-                placeholderTextColor={colors.text.tertiary}
-                value={title} onChangeText={setTitle}
-              />
-
-              <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>AMOUNT ({symbol})</AppText>
-              <TextInput
-                style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
-                placeholder="0.00" placeholderTextColor={colors.text.tertiary}
-                value={amount} onChangeText={setAmount} keyboardType="decimal-pad"
-              />
-
-              <DatePickerField
-                label="DUE DATE"
-                value={dueDate}
-                onChange={setDueDate}
-                placeholder="Pick a due date"
-              />
-
-              <View style={s.catHeader}>
-                <AppText variant="labelSM" color={colors.text.tertiary} style={s.fieldLabel}>CATEGORY</AppText>
-                <Pressable
-                  onPress={() => setCreateVisible(true)}
-                  style={[s.createCatBtn, { backgroundColor: colors.brand.primary + '15', borderColor: colors.brand.primary + '45' }]}
-                >
-                  <Ionicons name="add" size={13} color={colors.brand.primary} />
-                  <AppText variant="caption" style={{ color: colors.brand.primary, fontWeight: '600' }}>New</AppText>
-                </Pressable>
+              {/* Title */}
+              <View style={s.fieldGroup}>
+                <AppText style={[s.fieldLabel, { color: colors.text.tertiary }]}>TITLE</AppText>
+                <TextInput
+                  style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
+                  placeholder="e.g. Rent, Netflix, Insurance"
+                  placeholderTextColor={colors.text.tertiary}
+                  value={title} onChangeText={setTitle}
+                />
               </View>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catRow}>
-                {cats.map((cat) => {
-                  const active = cat.id === category;
-                  return (
-                    <Pressable
-                      key={cat.id}
-                      onPress={() => setCategory(cat.id)}
-                      style={[
-                        s.catChip,
-                        {
-                          backgroundColor: active ? cat.color + '1A' : inputBg,
-                          borderColor: active ? cat.color + '55' : 'transparent',
-                          borderWidth: 1.5,
-                        },
-                      ]}
-                    >
-                      <View style={[s.catIconBox, { backgroundColor: cat.color + '22' }]}>
-                        <Ionicons name={cat.icon as any} size={14} color={cat.color} />
-                      </View>
-                      <AppText
-                        variant="caption"
-                        style={{ color: active ? cat.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
+              {/* Amount */}
+              <View style={s.fieldGroup}>
+                <AppText style={[s.fieldLabel, { color: colors.text.tertiary }]}>AMOUNT ({symbol})</AppText>
+                <TextInput
+                  style={[s.input, { backgroundColor: inputBg, color: colors.text.primary }]}
+                  placeholder="0.00" placeholderTextColor={colors.text.tertiary}
+                  value={amount} onChangeText={setAmount} keyboardType="decimal-pad"
+                />
+              </View>
+
+              {/* Due Date */}
+              <View style={s.fieldGroup}>
+                <DatePickerField
+                  label="DUE DATE"
+                  value={dueDate}
+                  onChange={setDueDate}
+                  placeholder="Pick a due date"
+                />
+              </View>
+
+              {/* Category */}
+              <View style={s.fieldGroup}>
+                <View style={s.catHeader}>
+                  <AppText style={[s.fieldLabel, { color: colors.text.tertiary }]}>CATEGORY</AppText>
+                  <Pressable
+                    onPress={() => setCreateVisible(true)}
+                    style={[s.newCatBtn, { backgroundColor: colors.brand.primary + '18', borderColor: colors.brand.primary + '40' }]}
+                  >
+                    <Ionicons name="add" size={13} color={colors.brand.primary} />
+                    <AppText variant="caption" style={{ color: colors.brand.primary, fontWeight: '700', fontSize: 11 }}>New</AppText>
+                  </Pressable>
+                </View>
+
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catRow}>
+                  {cats.map((cat) => {
+                    const active = cat.id === category;
+                    return (
+                      <Pressable
+                        key={cat.id}
+                        onPress={() => setCategory(cat.id)}
+                        style={[
+                          s.catChip,
+                          {
+                            backgroundColor: active ? cat.color + '18' : inputBg,
+                            borderColor:     active ? cat.color + '55' : 'transparent',
+                            borderWidth: 1.5,
+                          },
+                        ]}
                       >
-                        {cat.label}
-                      </AppText>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
+                        <View style={[s.catIconBox, { backgroundColor: cat.color + '22' }]}>
+                          <Ionicons name={cat.icon as any} size={14} color={cat.color} />
+                        </View>
+                        <AppText
+                          variant="caption"
+                          style={{ color: active ? cat.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
+                        >
+                          {cat.label}
+                        </AppText>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
             </KeyboardAvoidingSheet>
+
           </Animated.View>
         </View>
       </Modal>
@@ -165,29 +192,62 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
 
 const s = StyleSheet.create({
   outer: { flex: 1, justifyContent: 'flex-end' },
+
   sheet: {
-    borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl,
-    paddingHorizontal: Spacing['5'], paddingTop: Spacing['3'], gap: Spacing['3'],
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    // Horizontal padding lives here — covers handle + header.
+    // KeyboardAvoidingSheet body uses paddingHorizontal: 0 (via s.body) to avoid double-indenting.
+    paddingHorizontal: 20,
+    paddingTop: 12,
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.12, shadowRadius: 20 },
-      android: { elevation: 20 },
+      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.14, shadowRadius: 24 },
+      android: { elevation: 24 },
     }),
   },
-  handle: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, marginBottom: Spacing['2'] },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  fieldLabel: { fontSize: 10, letterSpacing: 0.8, marginBottom: Spacing['1'] },
-  input: { height: 46, borderRadius: Radius.lg, paddingHorizontal: Spacing['4'], fontSize: 15 },
-  catHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  createCatBtn: {
+
+  handle: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, marginBottom: 16 },
+
+  header: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  closeBtn: {
+    width: 32, height: 32, borderRadius: 16,
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: 2,
+  },
+
+  // Body inside KeyboardAvoidingSheet — NO extra horizontal padding (sheet already provides it).
+  body: {
+    paddingHorizontal: 0,
+    paddingTop: 4,
+    paddingBottom: 8,
+    gap: 16,
+  },
+
+  fieldGroup: { gap: 7 },
+  fieldLabel: { fontSize: 10, letterSpacing: 0.9, fontWeight: '700' },
+
+  input: {
+    height: 48, borderRadius: Radius.lg,
+    paddingHorizontal: Spacing['4'], fontSize: 15,
+  },
+
+  catHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
+  newCatBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 4,
+    paddingHorizontal: 10, paddingVertical: 5,
     borderRadius: Radius.full, borderWidth: 1,
   },
-  catRow: { gap: Spacing['2'], paddingBottom: Spacing['2'], paddingRight: Spacing['2'] },
-  catChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: Radius.full },
+
+  catRow:    { gap: 8, paddingBottom: 4, paddingRight: 4 },
+  catChip:   { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderRadius: Radius.full },
   catIconBox: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+
   submitBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: Spacing['2'], height: 52, borderRadius: Radius.lg,
+    gap: 8, height: 54, borderRadius: Radius.xl,
   },
 });

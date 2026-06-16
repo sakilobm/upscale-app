@@ -50,7 +50,7 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
     handleKey, category, setCategory,
     accountId, setAccountId,
     note, setNote,
-    cats, accounts, amountDisplay, accentColor,
+    cats, accounts, amountDisplay,
     handleSave, reset,
   } = useQuickAddTransaction(onClose);
 
@@ -68,11 +68,12 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
 
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: slideY.value }] }));
 
-  const sheetBg = isDark ? '#131722' : '#FFFFFF';
-  const inputBg = isDark ? colors.background.primary : '#F3F4F6';
+  const sheetBg = colors.background.secondary;
+  const inputBg = colors.background.primary;
 
   const selectedAccountCurrency = accounts.find((a) => a.id === accountId)?.currency ?? currency;
   const currentSymbol = CURRENCY_SYMBOLS[selectedAccountCurrency] ?? '$';
+  const accentColor = type === 'expense' ? colors.status.expense : colors.status.income;
 
   return (
     <>
@@ -88,10 +89,10 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
               <View style={s.handle} />
 
               {/* Type toggle */}
-              <View style={[s.typeRow, { backgroundColor: isDark ? '#FFFFFF10' : '#00000009' }]}>
+              <View style={[s.typeRow, { backgroundColor: colors.glass.backgroundMid }]}>
                 {(['expense', 'income'] as const).map((t) => {
                   const active = type === t;
-                  const tColor = t === 'expense' ? '#EF4444' : '#10B981';
+                  const tColor = t === 'expense' ? colors.status.expense : colors.status.income;
                   return (
                     <Pressable
                       key={t}
@@ -137,7 +138,7 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
                       style={({ pressed }) => [
                         s.numKey,
                         {
-                          backgroundColor: isBackspace ? accentColor + '15' : (isDark ? '#FFFFFF0A' : '#F3F4F6'),
+                          backgroundColor: isBackspace ? accentColor + '15' : (isDark ? 'rgba(255,255,255,0.05)' : colors.background.primary),
                           opacity: pressed ? 0.6 : 1,
                         },
                       ]}
@@ -244,7 +245,7 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
                   {
                     backgroundColor: inputBg,
                     color: colors.text.primary,
-                    borderColor: isDark ? '#FFFFFF10' : '#00000010',
+                    borderColor: colors.glass.border,
                   },
                 ]}
                 value={note}

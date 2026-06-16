@@ -99,7 +99,7 @@ export function DatePickerField({
   };
 
   return (
-    <View>
+    <View style={{ gap: 7 }}>
       {label != null && (
         <AppText variant="labelSM" color={textTert} style={s.label}>{label}</AppText>
       )}
@@ -201,7 +201,7 @@ export function DatePickerField({
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  label: { fontSize: 10, letterSpacing: 0.8, marginBottom: 6 },
+  label: { fontSize: 10, letterSpacing: 0.9, fontWeight: '700' },
 
   field: {
     flexDirection:    'row',
@@ -216,7 +216,7 @@ const s = StyleSheet.create({
   clearBtn:  { padding: 2 },
 
   calendar: {
-    marginTop:    6,
+    marginTop:    0,
     borderRadius: Radius.lg,
     borderWidth:  1,
     padding:      Spacing['3'],
