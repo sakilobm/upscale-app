@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { AppText } from '@components/AppText';
 import { Radius } from '@constants/Dimensions';
+import { useTheme } from '@hooks/useTheme';
 import type { Account } from '@store/types';
 import { CARD_W, CARD_H } from '@features/accounts/hooks/useAccountsScreen';
 
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function AccountCard({ account, isActive }: Props) {
+  const { colors } = useTheme();
   const scale = useSharedValue(isActive ? 1 : 0.93);
 
   useEffect(() => {
@@ -52,30 +54,30 @@ export function AccountCard({ account, isActive }: Props) {
           <View style={s.content}>
             <View style={s.top}>
               <View style={s.iconCircle}>
-                <Ionicons name={account.icon as IoniconName} size={22} color="#FFF" />
+                <Ionicons name={account.icon as IoniconName} size={22} color={colors.white} />
               </View>
               <View style={s.typePill}>
-                <AppText style={s.typeText}>{account.type.toUpperCase()}</AppText>
+                <AppText style={[s.typeText, { color: colors.white + 'E6' }]}>{account.type.toUpperCase()}</AppText>
               </View>
             </View>
 
             <View style={{ gap: 4 }}>
-              <AppText style={s.balanceLabel}>BALANCE</AppText>
-              <AppText style={s.balanceValue}>
+              <AppText style={[s.balanceLabel, { color: colors.white + '99' }]}>BALANCE</AppText>
+              <AppText style={[s.balanceValue, { color: colors.white }]}>
                 {account.currency} {account.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </AppText>
-              <AppText style={s.accountName}>{account.name}</AppText>
+              <AppText style={[s.accountName, { color: colors.white + 'CC' }]}>{account.name}</AppText>
             </View>
 
             <View style={s.bottom}>
               {account.isDefault && (
                 <View style={s.defaultBadge}>
-                  <Ionicons name="checkmark-circle" size={12} color="rgba(255,255,255,0.9)" />
-                  <AppText style={s.defaultText}>DEFAULT</AppText>
+                  <Ionicons name="checkmark-circle" size={12} color={colors.white + 'E6'} />
+                  <AppText style={[s.defaultText, { color: colors.white + 'E6' }]}>DEFAULT</AppText>
                 </View>
               )}
               <View style={{ flex: 1 }} />
-              <AppText style={s.currencyCode}>{account.currency}</AppText>
+              <AppText style={[s.currencyCode, { color: colors.white + '99' }]}>{account.currency}</AppText>
             </View>
           </View>
         </View>
@@ -96,21 +98,21 @@ const s = StyleSheet.create({
     width: CARD_W, height: CARD_H,
     borderRadius: Radius.xl, overflow: 'hidden',
   },
-  blob1: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.14)', top: -60, right: -50 },
-  blob2: { position: 'absolute', width: 140, height: 140, borderRadius: 70,  backgroundColor: 'rgba(255,255,255,0.07)', bottom: -40, left: 40 },
-  blob3: { position: 'absolute', width: 80,  height: 80,  borderRadius: 40,  backgroundColor: 'rgba(255,255,255,0.06)', top: 20, left: -20 },
-  chip:      { position: 'absolute', top: 20, left: 20, width: 32, height: 24, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.3)', justifyContent: 'center', alignItems: 'center' },
-  chipInner: { width: 22, height: 16, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
+  blob1: { position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: '#FFFFFF24', top: -60, right: -50 },
+  blob2: { position: 'absolute', width: 140, height: 140, borderRadius: 70,  backgroundColor: '#FFFFFF12', bottom: -40, left: 40 },
+  blob3: { position: 'absolute', width: 80,  height: 80,  borderRadius: 40,  backgroundColor: '#FFFFFF0F', top: 20, left: -20 },
+  chip:      { position: 'absolute', top: 20, left: 20, width: 32, height: 24, borderRadius: 5, backgroundColor: '#FFFFFF4D', justifyContent: 'center', alignItems: 'center' },
+  chipInner: { width: 22, height: 16, borderRadius: 3, backgroundColor: '#FFFFFF80' },
   content: { flex: 1, padding: 20, paddingTop: 16, justifyContent: 'space-between' },
   top:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   bottom: { flexDirection: 'row', alignItems: 'center' },
-  iconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' },
-  typePill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.2)' },
-  typeText:     { fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.9)', letterSpacing: 1 },
-  balanceLabel: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.6)', letterSpacing: 1.5 },
-  balanceValue: { fontSize: 28, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
-  accountName:  { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.8)', letterSpacing: 0.2 },
-  defaultBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.18)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
-  defaultText:  { fontSize: 9, fontWeight: '800', color: 'rgba(255,255,255,0.9)', letterSpacing: 1 },
-  currencyCode: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.6)', letterSpacing: 1 },
+  iconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF38', alignItems: 'center', justifyContent: 'center' },
+  typePill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, backgroundColor: '#FFFFFF33' },
+  typeText:     { fontSize: 10, fontWeight: '700', letterSpacing: 1 },
+  balanceLabel: { fontSize: 10, fontWeight: '600', letterSpacing: 1.5 },
+  balanceValue: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  accountName:  { fontSize: 14, fontWeight: '600', letterSpacing: 0.2 },
+  defaultBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FFFFFF2E', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99 },
+  defaultText:  { fontSize: 9, fontWeight: '800', letterSpacing: 1 },
+  currencyCode: { fontSize: 13, fontWeight: '700', letterSpacing: 1 },
 });

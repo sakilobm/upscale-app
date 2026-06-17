@@ -18,7 +18,7 @@ import { AVATAR_PRESETS } from '@constants/avatars';
 export const ONBOARDING_TOTAL = 4; // 3 feature slides + 1 setup slide
 
 export interface OnboardingSlideData {
-  gradient: [string, string];
+  gradientKey: 'purpleViolet' | 'amberOrange' | 'greenTeal';
   icon:     string;
   badge:    string;
   title:    string;
@@ -27,21 +27,21 @@ export interface OnboardingSlideData {
 
 export const FEATURE_SLIDES: OnboardingSlideData[] = [
   {
-    gradient: ['#6C63FF', '#A78BFA'],
+    gradientKey: 'purpleViolet',
     icon:     'receipt-outline',
     badge:    'sparkles',
     title:    'Track Every Penny',
     subtitle: 'One tap to log income, expenses and transfers. See exactly where your money goes, in real time.',
   },
   {
-    gradient: ['#F59E0B', '#FB923C'],
+    gradientKey: 'amberOrange',
     icon:     'bar-chart-outline',
     badge:    'trending-up',
     title:    'Budget With Purpose',
     subtitle: 'Set monthly limits per category. Visual progress rings alert you before you overspend.',
   },
   {
-    gradient: ['#10B981', '#06B6D4'],
+    gradientKey: 'greenTeal',
     icon:     'people-outline',
     badge:    'heart',
     title:    'Know What You Owe',

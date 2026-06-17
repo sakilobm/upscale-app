@@ -50,7 +50,7 @@ export const GlassCard = memo(function GlassCard({
       : 'rgba(0, 0, 0, 0.06)';
 
     const shadowStyle: ViewStyle = {
-      shadowColor:  '#64748B',
+      shadowColor:  colors.text.secondary,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.10,
       shadowRadius: 14,
@@ -58,7 +58,7 @@ export const GlassCard = memo(function GlassCard({
     };
 
     const containerStyle: ViewStyle = {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: colors.surface.sheet,
       borderRadius,
       borderWidth: 1,
       borderColor,
@@ -70,7 +70,7 @@ export const GlassCard = memo(function GlassCard({
       <View style={[containerStyle, StyleSheet.flatten(style)]}>
         {/* Subtle top-to-bottom depth gradient */}
         <LinearGradient
-          colors={gradient ?? ['#FFFFFF', '#F8FAFC']}
+          colors={gradient ?? [colors.surface.sheet, colors.background.primary]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -100,15 +100,13 @@ export const GlassCard = memo(function GlassCard({
     borderRadius,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: borderGlow
-      ? 'rgba(108, 99, 255, 0.35)'
-      : 'rgba(255, 255, 255, 0.10)',
-    shadowColor:  '#000',
+    borderColor: borderGlow ? colors.brand.primary + '59' : colors.glass.border,
+    shadowColor:  colors.black,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.28,
     shadowRadius: 14,
     elevation:    6,
-    backgroundColor: 'rgba(13, 18, 32, 0.40)',
+    backgroundColor: colors.background.secondary + '66',
   };
 
   const darkContent = (
@@ -119,7 +117,7 @@ export const GlassCard = memo(function GlassCard({
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        colors={gradient ?? ['rgba(255,255,255,0.06)', 'rgba(255,255,255,0.015)']}
+        colors={gradient ?? [colors.glass.background, colors.glass.shine]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -130,7 +128,7 @@ export const GlassCard = memo(function GlassCard({
           styles.shine,
           {
             borderRadius,
-            backgroundColor: 'rgba(255,255,255,0.18)',
+            backgroundColor: colors.glass.borderStrong,
           },
         ]}
       />

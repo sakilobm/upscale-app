@@ -28,27 +28,29 @@ interface Props {
 
 export function FeatureSlide({ slide, animKey }: Props) {
   const { colors } = useTheme();
+  const gradient = colors.gradients[slide.gradientKey] as unknown as [string, string];
+  const accent = gradient[0];
 
   return (
     <View style={s.root}>
       {/* ── Icon hero ── */}
       <Animated.View key={`hero-${animKey}`} entering={FadeInDown.springify().damping(20).stiffness(140)} style={s.heroWrap}>
         {/* Dashed orbit ring */}
-        <View style={[s.outerRing, { borderColor: slide.gradient[0] + '38' }]} />
-        <View style={[s.innerRing, { borderColor: slide.gradient[0] + '20' }]} />
+        <View style={[s.outerRing, { borderColor: accent + '38' }]} />
+        <View style={[s.innerRing, { borderColor: accent + '20' }]} />
 
         {/* Gradient circle */}
         <LinearGradient
-          colors={slide.gradient}
+          colors={gradient}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={s.iconCircle}
+          style={[s.iconCircle, { shadowColor: colors.black }]}
         >
-          <Ionicons name={slide.icon as IoniconName} size={42} color="#fff" />
+          <Ionicons name={slide.icon as IoniconName} size={42} color={colors.white} />
         </LinearGradient>
 
         {/* Badge */}
-        <View style={[s.badge, { backgroundColor: slide.gradient[0] + '22', borderColor: slide.gradient[0] + '40' }]}>
-          <Ionicons name={slide.badge as IoniconName} size={15} color={slide.gradient[0]} />
+        <View style={[s.badge, { backgroundColor: accent + '22', borderColor: accent + '40' }]}>
+          <Ionicons name={slide.badge as IoniconName} size={15} color={accent} />
         </View>
       </Animated.View>
 
@@ -80,7 +82,7 @@ const s = StyleSheet.create({
     width: 100, height: 100, borderRadius: 50,
     alignItems: 'center', justifyContent: 'center',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.28, shadowRadius: 24 },
+      ios:     { shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.28, shadowRadius: 24 },
       android: { elevation: 16 },
     }),
   },

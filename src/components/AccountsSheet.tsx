@@ -109,6 +109,7 @@ function AccountRow({ account, cardBg, onEdit, onDelete }: AccountRowProps) {
           {
             backgroundColor: cardBg,
             borderColor:     colors.glass.border,
+            shadowColor:     colors.black,
           },
         ]}
       >
@@ -283,8 +284,8 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
   };
 
   const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
-  const inputBg = isDark ? colors.background.primary : '#F3F4F6';
+  const cardBg = colors.surface.sheet;
+  const inputBg = colors.surface.input;
 
   return (
     <>
@@ -303,7 +304,7 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
             tint={isDark ? 'dark' : 'light'}
             style={StyleSheet.absoluteFill}
           />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.42)' }]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay.medium }]} />
         </Pressable>
 
         {/* Sheet */}
@@ -314,6 +315,7 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
             {
               backgroundColor: colors.background.primary,
               paddingBottom:   Math.max(insets.bottom, Spacing['5']),
+              shadowColor:     colors.black,
             },
           ]}
         >
@@ -380,10 +382,10 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
                 { backgroundColor: colors.brand.primary, opacity: pressed ? 0.82 : 1 },
               ]}
             >
-              <Ionicons name="add-circle-outline" size={20} color={isDark ? '#000' : '#FFF'} />
+              <Ionicons name="add-circle-outline" size={20} color={colors.brand.onPrimary} />
               <AppText
                 variant="labelLG"
-                style={{ color: isDark ? '#000' : '#FFF', fontWeight: '700' }}
+                style={{ color: colors.brand.onPrimary, fontWeight: '700' }}
               >
                 Add Account
               </AppText>
@@ -423,18 +425,18 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
                 >
                   {/* Preview card */}
                   <View style={[styles.previewCard, { backgroundColor: color }]}>
-                    <View style={[styles.previewIconCircle, { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
-                      <Ionicons name={iconName} size={26} color="#FFF" />
+                    <View style={[styles.previewIconCircle, { backgroundColor: colors.glass.backgroundStrong }]}>
+                      <Ionicons name={iconName} size={26} color={colors.white} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <AppText style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11, letterSpacing: 0.5 }}>
+                      <AppText style={{ color: colors.white + 'BF', fontSize: 11, letterSpacing: 0.5 }}>
                         {ACCOUNT_TYPES.find((t) => t.type === accType)?.label?.toUpperCase() ?? 'ACCOUNT'}
                       </AppText>
-                      <AppText style={{ color: '#FFF', fontSize: 17, fontWeight: '800' }}>
+                      <AppText style={{ color: colors.white, fontSize: 17, fontWeight: '800' }}>
                         {name || 'Account Name'}
                       </AppText>
                     </View>
-                    <AppText style={{ color: '#FFF', fontSize: 18, fontWeight: '800' }}>
+                    <AppText style={{ color: colors.white, fontSize: 18, fontWeight: '800' }}>
                       {symbol}{parseFloat(balance || '0').toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </AppText>
                   </View>
@@ -514,7 +516,7 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
                               backgroundColor: c,
                               transform:        [{ scale: color === c ? 1.18 : 1 }],
                               borderWidth:      color === c ? 2.5 : 0,
-                              borderColor:      '#FFF',
+                              borderColor:      colors.white,
                               ...Platform.select({
                                 ios: {
                                   shadowColor:   c,
@@ -527,7 +529,7 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
                           ]}
                         >
                           {color === c && (
-                            <Ionicons name="checkmark" size={14} color="#FFF" />
+                            <Ionicons name="checkmark" size={14} color={colors.white} />
                           )}
                         </Pressable>
                       ))}
@@ -581,8 +583,8 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
                       { backgroundColor: color, opacity: pressed ? 0.82 : 1, marginTop: Spacing['2'] },
                     ]}
                   >
-                    <Ionicons name="checkmark-circle" size={20} color="#FFF" />
-                    <AppText variant="labelLG" style={{ color: '#FFF', fontWeight: '700' }}>
+                    <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+                    <AppText variant="labelLG" style={{ color: colors.white, fontWeight: '700' }}>
                       {editAccount ? 'Save Changes' : 'Create Account'}
                     </AppText>
                   </Pressable>
@@ -624,7 +626,6 @@ const styles = StyleSheet.create({
     overflow:             'hidden',
     ...Platform.select({
       ios: {
-        shadowColor:   '#000',
         shadowOffset:  { width: 0, height: -6 },
         shadowOpacity: 0.14,
         shadowRadius:  24,
@@ -683,7 +684,6 @@ const styles = StyleSheet.create({
     borderWidth:    1,
     ...Platform.select({
       ios: {
-        shadowColor:   '#000',
         shadowOffset:  { width: 0, height: 2 },
         shadowOpacity: 0.06,
         shadowRadius:  8,

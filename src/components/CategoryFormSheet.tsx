@@ -49,7 +49,7 @@ export function CategoryFormSheet({
   onClose,
   onSaved,
 }: CategoryFormSheetProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const addCategory        = useCategoryStore((s) => s.addCategory);
   const updateCategory     = useCategoryStore((s) => s.updateCategory);
 
@@ -92,15 +92,15 @@ export function CategoryFormSheet({
     onClose();
   };
 
-  const sheetBg = isDark ? '#0D1422' : '#FFFFFF';
-  const inputBg = isDark ? '#1A2235' : '#F3F4F6';
-  const borderC = isDark ? '#FFFFFF08' : '#00000008';
+  const sheetBg = colors.surface.sheet;
+  const inputBg = colors.surface.input;
+  const borderC = colors.glass.background;
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: colors.overlay.heavy }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <Animated.View style={[styles.sheet, { backgroundColor: sheetBg }, sheetStyle]}>
+        <Animated.View style={[styles.sheet, { backgroundColor: sheetBg, shadowColor: colors.black }, sheetStyle]}>
           {/* Drag handle */}
           <View style={[styles.handle, { backgroundColor: colors.text.tertiary + '40' }]} />
 
@@ -120,7 +120,7 @@ export function CategoryFormSheet({
             <Pressable
               onPress={onClose}
               hitSlop={12}
-              style={[styles.closeBtn, { backgroundColor: isDark ? '#FFFFFF10' : '#00000009' }]}
+              style={[styles.closeBtn, { backgroundColor: colors.glass.backgroundMid }]}
             >
               <Ionicons name="close" size={18} color={colors.text.secondary} />
             </Pressable>
@@ -139,8 +139,8 @@ export function CategoryFormSheet({
                   { backgroundColor: color, opacity: pressed ? 0.85 : 1 },
                 ]}
               >
-                <Ionicons name={isEdit ? 'checkmark-circle' : 'add-circle'} size={20} color="#FFF" />
-                <AppText style={styles.saveBtnText}>
+                <Ionicons name={isEdit ? 'checkmark-circle' : 'add-circle'} size={20} color={colors.white} />
+                <AppText style={[styles.saveBtnText, { color: colors.white }]}>
                   {isEdit ? 'Save Changes' : 'Create Category'}
                 </AppText>
               </Pressable>
@@ -181,10 +181,10 @@ export function CategoryFormSheet({
                     style={[
                       styles.colorDot,
                       { backgroundColor: c },
-                      color === c && styles.colorDotActive,
+                      color === c && [styles.colorDotActive, { borderColor: colors.white }],
                     ]}
                   >
-                    {color === c && <Ionicons name="checkmark" size={14} color="#FFF" />}
+                    {color === c && <Ionicons name="checkmark" size={14} color={colors.white} />}
                   </Pressable>
                 ))}
               </View>
@@ -193,13 +193,13 @@ export function CategoryFormSheet({
             {/* ── Applies to ─────────────────────────────────────── */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <View style={[styles.sectionDot, { backgroundColor: '#94A3B8' }]} />
+                <View style={[styles.sectionDot, { backgroundColor: colors.status.neutral }]} />
                 <AppText variant="labelSM" color={colors.text.tertiary} style={styles.sLabel}>APPLIES TO</AppText>
               </View>
               <View style={styles.applyRow}>
                 {(['expense', 'income', 'both'] as ApplicableTo[]).map((opt) => {
                   const active    = applicableTo === opt;
-                  const optColor  = opt === 'expense' ? '#EF4444' : opt === 'income' ? '#10B981' : colors.brand.primary;
+                  const optColor  = opt === 'expense' ? colors.status.expense : opt === 'income' ? colors.status.income : colors.brand.primary;
                   const optLabel  = opt === 'both' ? 'Both' : opt.charAt(0).toUpperCase() + opt.slice(1);
                   const optIc     = opt === 'expense' ? 'trending-down' : opt === 'income' ? 'trending-up' : 'swap-horizontal';
                   return (
@@ -277,14 +277,14 @@ export function CategoryFormSheet({
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
+  overlay: { flex: 1, justifyContent: 'flex-end' },
 
   sheet: {
     borderTopLeftRadius:  Radius['2xl'],
     borderTopRightRadius: Radius['2xl'],
     maxHeight: SH * 0.92,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.20, shadowRadius: 24 },
+      ios:     { shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.20, shadowRadius: 24 },
       android: { elevation: 32 },
     }),
   },
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
 
   colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing['3'] },
   colorDot:  { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  colorDotActive: { borderWidth: 3, borderColor: '#FFFFFF', transform: [{ scale: 1.1 }] },
+  colorDotActive: { borderWidth: 3, borderColor: 'transparent', transform: [{ scale: 1.1 }] },
 
   applyRow: { flexDirection: 'row', gap: Spacing['2'] },
   applyChip: {
@@ -340,5 +340,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: Spacing['2'], height: 52, borderRadius: Radius.xl,
   },
-  saveBtnText: { color: '#FFF', fontWeight: '700', fontSize: 15 },
+  saveBtnText: { fontWeight: '700', fontSize: 15 },
 });

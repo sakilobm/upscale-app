@@ -135,7 +135,7 @@ export const CustomButton = memo(function CustomButton({
         style={({ pressed }) => [
           containerStyle,
           styles.gradientShadow,
-          { opacity: pressed ? 0.88 : isDisabled ? 0.5 : 1 },
+          { opacity: pressed ? 0.88 : isDisabled ? 0.5 : 1, shadowColor: colors.brand.primary },
           style,
         ]}
       >
@@ -179,7 +179,6 @@ export const CustomButton = memo(function CustomButton({
 
 const styles = StyleSheet.create({
   gradientShadow: {
-    shadowColor: '#6C63FF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,

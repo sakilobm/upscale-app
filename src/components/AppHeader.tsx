@@ -52,7 +52,7 @@ export function AppHeader({
                   variant="labelSM"
                   style={[
                     styles.badgeText,
-                    { color: isDark ? colors.text.inverse : '#000' },
+                    { color: colors.brand.onPrimary },
                   ]}
                 >
                   {badge > 99 ? '99+' : badge}

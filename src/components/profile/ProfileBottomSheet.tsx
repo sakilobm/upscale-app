@@ -28,7 +28,7 @@ interface Props {
 }
 
 export function ProfileBottomSheet({ visible, onClose, title, children, snapHeight = 460 }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const ty         = useSharedValue(snapHeight + 100);
   const dimOpacity = useSharedValue(0);
 
@@ -45,12 +45,10 @@ export function ProfileBottomSheet({ visible, onClose, title, children, snapHeig
   const sheetStyle    = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value }] }));
   const backdropStyle = useAnimatedStyle(() => ({ opacity: dimOpacity.value }));
 
-  const bg = isDark ? colors.background.secondary : '#FFFFFF';
-
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-        <Animated.View style={[s.backdrop, backdropStyle]} pointerEvents={visible ? 'auto' : 'none'}>
+        <Animated.View style={[s.backdrop, { backgroundColor: colors.overlay.heavy }, backdropStyle]} pointerEvents={visible ? 'auto' : 'none'}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>
 
@@ -60,16 +58,17 @@ export function ProfileBottomSheet({ visible, onClose, title, children, snapHeig
             sheetStyle,
             {
               height:          snapHeight,
-              backgroundColor: bg,
-              borderColor:     isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+              backgroundColor: colors.surface.sheet,
+              borderColor:     colors.glass.backgroundMid,
+              shadowColor:     colors.black,
             },
           ]}
         >
-          <View style={[s.handle, { backgroundColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.10)' }]} />
+          <View style={[s.handle, { backgroundColor: colors.glass.borderStrong }]} />
           <View style={s.titleRow}>
             <AppText variant="headingSM" color={colors.text.primary}>{title}</AppText>
             <Pressable onPress={onClose} hitSlop={12}>
-              <View style={[s.closeBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
+              <View style={[s.closeBtn, { backgroundColor: colors.glass.backgroundMid }]}>
                 <Ionicons name="close" size={15} color={colors.text.secondary} />
               </View>
             </Pressable>
@@ -84,7 +83,7 @@ export function ProfileBottomSheet({ visible, onClose, title, children, snapHeig
 const s = StyleSheet.create({
   backdrop: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.52)',
+    backgroundColor: 'transparent',
   },
   panel: {
     position: 'absolute',
@@ -94,7 +93,7 @@ const s = StyleSheet.create({
     borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1,
     paddingTop: Spacing['3'],
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.15, shadowRadius: 20 },
+      ios:     { shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.15, shadowRadius: 20 },
       android: { elevation: 20 },
     }),
   },

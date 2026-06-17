@@ -19,9 +19,10 @@ export function SettleUpHero({ totalOwedToMe, totalIOwe }: SettleUpHeroProps) {
   const net       = totalOwedToMe - totalIOwe;
   const isPositive = net >= 0;
 
-  const cardBg: [string, string] = isDark
-    ? ['rgba(13, 18, 32, 0.82)', 'rgba(8, 12, 20, 0.90)']
-    : ['rgba(255, 255, 255, 0.88)', 'rgba(245, 247, 250, 0.94)'];
+  const cardBg: [string, string] = [
+    colors.background.secondary + (isDark ? 'D1' : 'E0'),
+    colors.background.primary + (isDark ? 'E6' : 'F0'),
+  ];
 
   const netColor = isPositive ? colors.status.income : colors.status.expense;
   const netLabel = isPositive
@@ -46,7 +47,7 @@ export function SettleUpHero({ totalOwedToMe, totalIOwe }: SettleUpHeroProps) {
           {
             borderRadius:  Radius['2xl'],
             borderWidth:   1,
-            borderColor:   isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)',
+            borderColor:   colors.glass.border,
           },
         ]}
         pointerEvents="none"
@@ -58,7 +59,7 @@ export function SettleUpHero({ totalOwedToMe, totalIOwe }: SettleUpHeroProps) {
           <View
             style={[
               styles.netIcon,
-              { backgroundColor: netColor + (isDark ? '25' : '18') },
+              { backgroundColor: netColor + '22' },
             ]}
           >
             <Ionicons

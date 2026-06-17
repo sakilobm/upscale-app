@@ -51,8 +51,8 @@ export default function AccountsScreen() {
               {accounts.length} {accounts.length === 1 ? 'account' : 'accounts'}
             </AppText>
           </View>
-          <Pressable onPress={handlers.add} style={({ pressed }) => [s.addBtn, { backgroundColor: accColor, opacity: pressed ? 0.8 : 1 }]}>
-            <Ionicons name="add" size={22} color="#FFF" />
+          <Pressable onPress={handlers.add} style={({ pressed }) => [s.addBtn, { backgroundColor: accColor, opacity: pressed ? 0.8 : 1, shadowColor: colors.black }]}>
+            <Ionicons name="add" size={22} color={colors.white} />
           </Pressable>
         </View>
 
@@ -73,7 +73,7 @@ export default function AccountsScreen() {
               <Ionicons name="wallet-outline" size={40} color={colors.text.tertiary} />
               <AppText variant="bodyMD" color={colors.text.tertiary} style={{ marginTop: 12 }}>No accounts yet</AppText>
               <Pressable onPress={handlers.add} style={[s.emptyAddBtn, { backgroundColor: colors.brand.primary }]}>
-                <AppText style={{ color: '#FFF', fontWeight: '700' }}>Add First Account</AppText>
+                <AppText style={{ color: colors.white, fontWeight: '700' }}>Add First Account</AppText>
               </Pressable>
             </View>
           </Animated.View>
@@ -184,7 +184,7 @@ const s = StyleSheet.create({
   addBtn: {
     width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
+      ios:     { shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
       android: { elevation: 6 },
     }),
   },

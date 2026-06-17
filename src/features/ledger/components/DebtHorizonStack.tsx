@@ -34,7 +34,7 @@ function LoanCard({
   loan:     Loan;
   onRecord: (id: string) => void;
 }) {
-  const { isDark } = useTheme();
+  const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
 
   const progress  = loanProgress(loan);
@@ -48,12 +48,12 @@ function LoanCard({
     : [loan.color + 'F5', loan.color + 'B0'];
 
   const dueBg = isLate
-    ? 'rgba(239,68,68,0.30)'
+    ? colors.status.expense + '4D'
     : isUrgent
-    ? 'rgba(245,158,11,0.30)'
-    : 'rgba(0,0,0,0.20)';
+    ? colors.status.warning + '4D'
+    : colors.black + '33';
 
-  const dueColor = isLate ? '#FCA5A5' : 'rgba(255,255,255,0.85)';
+  const dueColor = isLate ? colors.text.negative : colors.white + 'D9';
   const dueIcon  = isLate ? 'alert-circle' as const : 'calendar-outline' as const;
   const dueText  = isLate
     ? `${Math.abs(days)}d overdue`
@@ -78,25 +78,25 @@ function LoanCard({
           {/* Header */}
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <AppText style={styles.typeLabel}>
+              <AppText style={[styles.typeLabel, { color: colors.white + 'B3' }]}>
                 {loan.type === 'BORROWED' ? '↓ BORROWED' : '↑ LENT OUT'}
               </AppText>
-              <AppText style={styles.loanName}>{loan.name}</AppText>
-              <AppText style={styles.counterparty}>{loan.counterparty}</AppText>
+              <AppText style={[styles.loanName, { color: colors.white }]}>{loan.name}</AppText>
+              <AppText style={[styles.counterparty, { color: colors.white + '9E' }]}>{loan.counterparty}</AppText>
             </View>
             <View style={styles.emiBadge}>
-              <AppText style={styles.emiLabel}>EMI</AppText>
-              <AppText style={styles.emiAmount}>
+              <AppText style={[styles.emiLabel, { color: colors.white + '99' }]}>EMI</AppText>
+              <AppText style={[styles.emiAmount, { color: colors.white }]}>
                 {symbol}{loan.emiAmount.toLocaleString()}
               </AppText>
             </View>
           </View>
 
           {/* Balance */}
-          <AppText style={styles.balance}>
+          <AppText style={[styles.balance, { color: colors.white }]}>
             {symbol}{remaining.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </AppText>
-          <AppText style={styles.balanceSub}>
+          <AppText style={[styles.balanceSub, { color: colors.white + '94' }]}>
             remaining of {symbol}{loan.principalAmount.toLocaleString()}
           </AppText>
 
@@ -104,12 +104,12 @@ function LoanCard({
           <View style={styles.progressRow}>
             <ProgressBar
               progress={progress}
-              gradient={['rgba(255,255,255,0.90)', 'rgba(255,255,255,0.55)']}
+              gradient={[colors.white + 'E6', colors.white + '8C']}
               height={4}
               style={{ flex: 1 }}
-              trackColor="rgba(255,255,255,0.20)"
+              trackColor={colors.white + '33'}
             />
-            <AppText style={styles.progressLabel}>
+            <AppText style={[styles.progressLabel, { color: colors.white + '9E' }]}>
               {loan.completedPayments}/{loan.totalPayments} paid
             </AppText>
           </View>
@@ -127,8 +127,8 @@ function LoanCard({
               }}
               style={styles.markPaidBtn}
             >
-              <Ionicons name="checkmark" size={13} color="#FFFFFF" />
-              <AppText style={styles.markPaidText}>Mark Paid</AppText>
+              <Ionicons name="checkmark" size={13} color={colors.white} />
+              <AppText style={[styles.markPaidText, { color: colors.white }]}>Mark Paid</AppText>
             </Pressable>
           </View>
         </View>
@@ -285,7 +285,6 @@ const styles = StyleSheet.create({
   // Header text
   typeLabel: {
     fontSize:      10,
-    color:         'rgba(255,255,255,0.70)',
     letterSpacing: 1,
     fontWeight:    '700',
     marginBottom:  2,
@@ -293,11 +292,9 @@ const styles = StyleSheet.create({
   loanName: {
     fontSize:   16,
     fontWeight: '800',
-    color:      '#FFFFFF',
   },
   counterparty: {
     fontSize: 12,
-    color:    'rgba(255,255,255,0.62)',
   },
 
   // EMI badge
@@ -310,25 +307,21 @@ const styles = StyleSheet.create({
   },
   emiLabel: {
     fontSize:      10,
-    color:         'rgba(255,255,255,0.60)',
     letterSpacing: 0.5,
   },
   emiAmount: {
     fontSize:   14,
     fontWeight: '700',
-    color:      '#FFFFFF',
   },
 
   // Balance
   balance: {
     fontSize:   22,
     fontWeight: '800',
-    color:      '#FFFFFF',
     lineHeight: 26,
   },
   balanceSub: {
     fontSize:     11,
-    color:        'rgba(255,255,255,0.58)',
     marginBottom: 2,
   },
 
@@ -340,7 +333,6 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize:  10,
-    color:     'rgba(255,255,255,0.62)',
     flexShrink: 0,
   },
 
@@ -369,7 +361,6 @@ const styles = StyleSheet.create({
   markPaidText: {
     fontSize:   12,
     fontWeight: '700',
-    color:      '#FFFFFF',
   },
 
   // Dots

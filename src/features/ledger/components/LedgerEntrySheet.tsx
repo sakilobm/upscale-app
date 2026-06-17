@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -89,9 +89,10 @@ export function LedgerEntrySheet({
   const sheetStyle    = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOp.value }));
 
-  const cardBg: [string, string] = isDark
-    ? ['rgba(15, 21, 36, 0.98)', 'rgba(8, 12, 20, 1.0)']
-    : ['rgba(255, 255, 255, 1.0)', 'rgba(245, 247, 250, 1.0)'];
+  const cardBg: [string, string] = [
+    colors.background.secondary,
+    colors.background.primary,
+  ];
 
   const handleSubmit = () => {
     const parsed = parseFloat(amount);
@@ -126,7 +127,7 @@ export function LedgerEntrySheet({
       <View style={styles.root}>
         {/* Backdrop */}
         <TouchableWithoutFeedback onPress={onClose}>
-          <Animated.View style={[styles.backdrop, backdropStyle]} />
+          <Animated.View style={[styles.backdrop, backdropStyle, { backgroundColor: colors.overlay.heavy }]} />
         </TouchableWithoutFeedback>
 
         {/* Sheet */}
@@ -255,7 +256,7 @@ export function LedgerEntrySheet({
           >
             <AppText
               variant="labelLG"
-              style={{ color: isDark ? colors.text.inverse : '#000', fontWeight: '700' }}
+              style={{ color: colors.brand.onPrimary, fontWeight: '700' }}
             >
               {mode === 'add' ? 'Save Entry' : 'Record Return'}
             </AppText>
@@ -286,7 +287,7 @@ function Field({
         style={[
           styles.fieldBox,
           {
-            backgroundColor: isDark ? colors.glass.background : colors.background.tertiary,
+            backgroundColor: colors.surface.input,
             borderColor:     colors.glass.border,
           },
         ]}
@@ -305,7 +306,6 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   sheet: {
     borderTopLeftRadius:  Radius['2xl'],

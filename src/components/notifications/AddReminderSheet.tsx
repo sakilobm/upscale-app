@@ -14,8 +14,6 @@ import { DEFAULT_REMINDER_FORM } from '@features/notifications/hooks/useNotifica
 import type { RepeatInterval } from '@store/notificationStore';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const ACCENT = '#8B5CF6';
 const DAY_ABBREVS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -56,27 +54,26 @@ function formatDisplayTime(time: string): string {
 
 // ─── TimeStepper ─────────────────────────────────────────────────────────────
 
-function TimeStepper({ label, display, onInc, onDec, isDark }: {
+function TimeStepper({ label, display, onInc, onDec }: {
   label: string; display: string;
   onInc: () => void; onDec: () => void;
-  isDark: boolean;
 }) {
-  const textColor = isDark ? '#F1F5F9' : '#111827';
-  const dimColor  = isDark ? 'rgba(148,163,184,0.55)' : 'rgba(0,0,0,0.32)';
+  const { colors } = useTheme();
+  const accentColor = colors.status.savings;
   return (
     <View style={ts.wrap}>
       <Pressable onPress={onInc} hitSlop={16}
         style={({ pressed }) => [ts.btn, { opacity: pressed ? 0.4 : 1 }]}>
-        <Ionicons name="chevron-up" size={22} color={ACCENT} />
+        <Ionicons name="chevron-up" size={22} color={accentColor} />
       </Pressable>
-      <View style={[ts.display, { backgroundColor: ACCENT + '18', borderColor: ACCENT + '55' }]}>
-        <AppText style={[ts.value, { color: textColor }]}>{display}</AppText>
+      <View style={[ts.display, { backgroundColor: accentColor + '18', borderColor: accentColor + '55' }]}>
+        <AppText style={[ts.value, { color: colors.text.primary }]}>{display}</AppText>
       </View>
       <Pressable onPress={onDec} hitSlop={16}
         style={({ pressed }) => [ts.btn, { opacity: pressed ? 0.4 : 1 }]}>
-        <Ionicons name="chevron-down" size={22} color={ACCENT} />
+        <Ionicons name="chevron-down" size={22} color={accentColor} />
       </Pressable>
-      <AppText style={[ts.lbl, { color: dimColor }]}>{label}</AppText>
+      <AppText style={[ts.lbl, { color: colors.text.secondary }]}>{label}</AppText>
     </View>
   );
 }
@@ -91,22 +88,24 @@ const ts = StyleSheet.create({
 
 // ─── AmPmToggle ──────────────────────────────────────────────────────────────
 
-function AmPmToggle({ value, onChange, isDark }: {
-  value: 'AM' | 'PM'; onChange: (v: 'AM' | 'PM') => void; isDark: boolean;
+function AmPmToggle({ value, onChange }: {
+  value: 'AM' | 'PM'; onChange: (v: 'AM' | 'PM') => void;
 }) {
+  const { colors } = useTheme();
+  const accentColor = colors.status.savings;
   return (
     <View style={[amp.track, {
-      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-      borderColor:     isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)',
+      backgroundColor: colors.glass.background,
+      borderColor:     colors.glass.border,
     }]}>
       {(['AM', 'PM'] as const).map((v) => {
         const active = value === v;
         return (
           <Pressable key={v}
             onPress={() => { Haptics.selectionAsync(); onChange(v); }}
-            style={[amp.btn, active && { backgroundColor: ACCENT }]}>
+            style={[amp.btn, active && { backgroundColor: accentColor }]}>
             <AppText style={[amp.txt, {
-              color: active ? '#fff' : (isDark ? 'rgba(148,163,184,0.65)' : 'rgba(0,0,0,0.38)'),
+              color: active ? colors.white : colors.text.secondary,
             }]}>{v}</AppText>
           </Pressable>
         );
@@ -123,10 +122,12 @@ const amp = StyleSheet.create({
 
 // ─── WeekdaySelector ─────────────────────────────────────────────────────────
 
-function WeekdaySelector({ selected, onChange, hasError, isDark }: {
+function WeekdaySelector({ selected, onChange, hasError }: {
   selected: number[]; onChange: (d: number[]) => void;
-  hasError: boolean; isDark: boolean;
+  hasError: boolean;
 }) {
+  const { colors } = useTheme();
+  const accentColor = colors.status.savings;
   function toggle(day: number) {
     Haptics.selectionAsync();
     onChange(selected.includes(day)
@@ -141,17 +142,15 @@ function WeekdaySelector({ selected, onChange, hasError, isDark }: {
           return (
             <Pressable key={i} onPress={() => toggle(i)}
               style={[wd.pill, {
-                backgroundColor: active
-                  ? ACCENT
-                  : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                backgroundColor: active ? accentColor : colors.glass.background,
                 borderColor: active
-                  ? ACCENT
+                  ? accentColor
                   : hasError
-                    ? '#EF444440'
-                    : (isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'),
+                    ? colors.status.expense + '40'
+                    : colors.glass.border,
               }]}>
               <AppText style={[wd.txt, {
-                color: active ? '#fff' : (isDark ? 'rgba(148,163,184,0.7)' : 'rgba(0,0,0,0.42)'),
+                color:      active ? colors.white : colors.text.secondary,
                 fontWeight: active ? '800' : '600',
               }]}>{abbr}</AppText>
             </Pressable>
@@ -160,8 +159,8 @@ function WeekdaySelector({ selected, onChange, hasError, isDark }: {
       </View>
       {hasError && (
         <View style={s.errRow}>
-          <Ionicons name="alert-circle" size={13} color="#EF4444" />
-          <AppText style={s.errTxt}>Select at least one day</AppText>
+          <Ionicons name="alert-circle" size={13} color={colors.status.expense} />
+          <AppText style={[s.errTxt, { color: colors.status.expense }]}>Select at least one day</AppText>
         </View>
       )}
     </View>
@@ -176,8 +175,8 @@ const wd = StyleSheet.create({
 
 // ─── MiniCalendar ─────────────────────────────────────────────────────────────
 
-function MiniCalendar({ selected, onSelect, isDark }: {
-  selected: string; onSelect: (d: string) => void; isDark: boolean;
+function MiniCalendar({ selected, onSelect }: {
+  selected: string; onSelect: (d: string) => void;
 }) {
   const [viewDate, setViewDate] = useState(() => {
     if (selected) {
@@ -218,10 +217,12 @@ function MiniCalendar({ selected, onSelect, isDark }: {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   }
 
-  const textPrimary = isDark ? '#F1F5F9'               : '#111827';
-  const textDim     = isDark ? 'rgba(148,163,184,0.35)' : 'rgba(0,0,0,0.22)';
-  const hdrColor    = isDark ? 'rgba(148,163,184,0.55)' : 'rgba(0,0,0,0.35)';
-  const todayBg     = ACCENT + (isDark ? '28' : '18');
+  const { colors } = useTheme();
+  const accentColor = colors.status.savings;
+  const textPrimary = colors.text.primary;
+  const textDim     = colors.text.tertiary;
+  const hdrColor    = colors.text.secondary;
+  const todayBg     = accentColor + '20';
 
   return (
     <View style={{ gap: 2 }}>
@@ -229,17 +230,17 @@ function MiniCalendar({ selected, onSelect, isDark }: {
         <Pressable onPress={() => setViewDate(new Date(year, month - 1, 1))} hitSlop={12}
           style={({ pressed }) => [cl.navBtn, {
             opacity: pressed ? 0.5 : 1,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+            backgroundColor: colors.glass.backgroundMid,
           }]}>
-          <Ionicons name="chevron-back" size={16} color={ACCENT} />
+          <Ionicons name="chevron-back" size={16} color={accentColor} />
         </Pressable>
         <AppText style={[cl.monthLbl, { color: textPrimary }]}>{MONTH_NAMES[month]} {year}</AppText>
         <Pressable onPress={() => setViewDate(new Date(year, month + 1, 1))} hitSlop={12}
           style={({ pressed }) => [cl.navBtn, {
             opacity: pressed ? 0.5 : 1,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+            backgroundColor: colors.glass.backgroundMid,
           }]}>
-          <Ionicons name="chevron-forward" size={16} color={ACCENT} />
+          <Ionicons name="chevron-forward" size={16} color={accentColor} />
         </Pressable>
       </View>
 
@@ -264,13 +265,13 @@ function MiniCalendar({ selected, onSelect, isDark }: {
                 style={[
                   cl.cell,
                   isToday && !isSel && { backgroundColor: todayBg, borderRadius: 10 },
-                  isSel             && { backgroundColor: ACCENT,  borderRadius: 10 },
+                  isSel             && { backgroundColor: accentColor,  borderRadius: 10 },
                 ]}>
                 <AppText style={[
                   cl.dayNum,
                   { color: isPast ? textDim : textPrimary },
-                  isToday && !isSel && { color: ACCENT, fontWeight: '700' },
-                  isSel             && { color: '#fff',  fontWeight: '800' },
+                  isToday && !isSel && { color: accentColor, fontWeight: '700' },
+                  isSel             && { color: colors.white, fontWeight: '800' },
                 ]}>{day}</AppText>
               </Pressable>
             );
@@ -302,7 +303,8 @@ interface Props {
 interface FormErrors { title?: string; weekdays?: string; }
 
 export function AddReminderSheet({ visible, onClose, onSave }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
+  const accentColor = colors.status.savings;
 
   const [form,      setForm]      = useState<ReminderFormState>(DEFAULT_REMINDER_FORM);
   const [timeState, setTimeState] = useState<TimeState>(parse24h(DEFAULT_REMINDER_FORM.time));
@@ -323,9 +325,9 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
     }
   }, [visible]);
 
-  const inputBg = isDark ? 'rgba(255,255,255,0.07)' : '#F3F4F8';
-  const bdColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.09)';
-  const divider = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+  const inputBg = colors.surface.input;
+  const bdColor = colors.glass.border;
+  const divider = colors.glass.background;
 
   function validate(): boolean {
     const errs: FormErrors = {};
@@ -359,28 +361,26 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
           exiting={FadeOut.duration(180)}
           style={StyleSheet.absoluteFill}
         >
-          <Pressable style={[StyleSheet.absoluteFill, s.backdrop]} onPress={onClose} />
+          <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay.heavy }]} onPress={onClose} />
         </Animated.View>
 
         {/* Sheet */}
         <Animated.View
           entering={SlideInDown.duration(320)}
           exiting={SlideOutDown.duration(240)}
-          style={[s.sheet, { backgroundColor: isDark ? colors.background.secondary : '#FFFFFF' }]}
+          style={[s.sheet, { backgroundColor: colors.surface.sheet, shadowColor: colors.black }]}
         >
           {/* Drag handle */}
-          <View style={[s.handle, {
-            backgroundColor: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.12)',
-          }]} />
+          <View style={[s.handle, { backgroundColor: colors.glass.backgroundStrong }]} />
 
           {/* Header */}
           <View style={s.header}>
             <LinearGradient
-              colors={[ACCENT, '#A78BFA']}
+              colors={colors.gradients.purpleViolet as any}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={s.hdrIcon}
             >
-              <Ionicons name="alarm" size={18} color="#fff" />
+              <Ionicons name="alarm" size={18} color={colors.white} />
             </LinearGradient>
             <View style={{ flex: 1 }}>
               <AppText variant="headingSM" color={colors.text.primary}>Add Reminder</AppText>
@@ -393,7 +393,7 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
             <Pressable onPress={onClose} hitSlop={12}
               style={({ pressed }) => [s.closeBtn, {
                 opacity: pressed ? 0.5 : 1,
-                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                backgroundColor: colors.glass.backgroundMid,
               }]}>
               <Ionicons name="close" size={16} color={colors.text.secondary} />
             </Pressable>
@@ -408,12 +408,12 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
                 style={({ pressed }) => [s.saveBtn, { opacity: pressed ? 0.82 : 1 }]}
               >
                 <LinearGradient
-                  colors={[ACCENT, '#A78BFA']}
+                  colors={colors.gradients.purpleViolet as any}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   style={s.saveGrad}
                 >
-                  <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                  <AppText style={s.saveTxt}>Save Reminder</AppText>
+                  <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+                  <AppText style={[s.saveTxt, { color: colors.white }]}>Save Reminder</AppText>
                 </LinearGradient>
               </Pressable>
             }
@@ -422,13 +422,13 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
             <View style={s.field}>
               <View style={s.fieldLblRow}>
                 <AppText style={[s.fieldLbl, { color: colors.text.secondary }]}>Title</AppText>
-                <AppText style={{ color: '#EF4444', fontSize: 13 }}> *</AppText>
+                <AppText style={{ color: colors.status.expense, fontSize: 13 }}> *</AppText>
               </View>
               <View style={[s.inputBox, {
                 backgroundColor: inputBg,
                 borderColor: errors.title
-                  ? '#EF4444'
-                  : form.title ? ACCENT + '90' : bdColor,
+                  ? colors.status.expense
+                  : form.title ? accentColor + '90' : bdColor,
               }]}>
                 <TextInput
                   style={[s.input, { color: colors.text.primary }]}
@@ -444,8 +444,8 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
               </View>
               {errors.title && (
                 <View style={s.errRow}>
-                  <Ionicons name="alert-circle" size={13} color="#EF4444" />
-                  <AppText style={s.errTxt}>{errors.title}</AppText>
+                  <Ionicons name="alert-circle" size={13} color={colors.status.expense} />
+                  <AppText style={[s.errTxt, { color: colors.status.expense }]}>{errors.title}</AppText>
                 </View>
               )}
             </View>
@@ -475,15 +475,13 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
                 <TimeStepper
                   label="HR"
                   display={String(timeState.hour).padStart(2, '0')}
-                  isDark={isDark}
                   onInc={incHour}
                   onDec={decHour}
                 />
-                <AppText style={[s.colon, { color: isDark ? '#F1F5F9' : '#111827' }]}>:</AppText>
+                <AppText style={[s.colon, { color: colors.text.primary }]}>:</AppText>
                 <TimeStepper
                   label="MIN"
                   display={String(timeState.minute).padStart(2, '0')}
-                  isDark={isDark}
                   onInc={incMin}
                   onDec={decMin}
                 />
@@ -491,7 +489,6 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
                   <AmPmToggle
                     value={timeState.ampm}
                     onChange={(ampm) => setTimeState((t) => ({ ...t, ampm }))}
-                    isDark={isDark}
                   />
                 </View>
               </View>
@@ -512,13 +509,13 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
                         if (errors.weekdays) setErrors((e) => ({ ...e, weekdays: undefined }));
                       }}
                       style={[s.repeatChip, {
-                        backgroundColor: active ? ACCENT + '18' : inputBg,
-                        borderColor:     active ? ACCENT         : bdColor,
+                        backgroundColor: active ? accentColor + '18' : inputBg,
+                        borderColor:     active ? accentColor         : bdColor,
                       }]}
                     >
-                      <Ionicons name={icon as any} size={14} color={active ? ACCENT : colors.text.tertiary} />
+                      <Ionicons name={icon as any} size={14} color={active ? accentColor : colors.text.tertiary} />
                       <AppText style={[s.repeatLbl, {
-                        color:      active ? ACCENT : colors.text.secondary,
+                        color:      active ? accentColor : colors.text.secondary,
                         fontWeight: active ? '700'  : '600',
                       }]}>{label}</AppText>
                     </Pressable>
@@ -539,7 +536,6 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
                       setErrors((e) => ({ ...e, weekdays: undefined }));
                   }}
                   hasError={!!errors.weekdays}
-                  isDark={isDark}
                 />
               </View>
             )}
@@ -549,13 +545,12 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
               <View style={s.field}>
                 <AppText style={[s.fieldLbl, { color: colors.text.secondary }]}>Date</AppText>
                 <View style={[s.calBox, {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+                  backgroundColor: colors.glass.background,
                   borderColor: bdColor,
                 }]}>
                   <MiniCalendar
                     selected={form.date}
                     onSelect={(date) => setForm((f) => ({ ...f, date }))}
-                    isDark={isDark}
                   />
                 </View>
               </View>
@@ -572,13 +567,13 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
 
 const s = StyleSheet.create({
   root:    { flex: 1, justifyContent: 'flex-end' },
-  backdrop:{ backgroundColor: 'rgba(0,0,0,0.55)' },
+  backdrop:{ backgroundColor: 'transparent' },
 
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
     maxHeight: '92%',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.18, shadowRadius: 24 },
+      ios:     { shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.18, shadowRadius: 24 },
       android: { elevation: 24 },
     }),
   },
@@ -598,7 +593,7 @@ const s = StyleSheet.create({
   input:    { fontSize: 15, fontWeight: '500', paddingVertical: 0 },
 
   errRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
-  errTxt: { color: '#EF4444', fontSize: 12, fontWeight: '500' },
+  errTxt: { fontSize: 12, fontWeight: '500' },
 
   timeBox: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -619,5 +614,5 @@ const s = StyleSheet.create({
 
   saveBtn:  { borderRadius: 16, overflow: 'hidden' },
   saveGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 54 },
-  saveTxt:  { color: '#fff', fontSize: 16, fontWeight: '800' },
+  saveTxt:  { fontSize: 16, fontWeight: '800' },
 });

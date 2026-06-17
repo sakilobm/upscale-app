@@ -76,8 +76,8 @@ export default function LedgerScreen() {
         {/* Swipe hint */}
         {activeTab !== 'loans' && activeEntries.length > 0 && (
           <View style={[s.swipeHint, {
-            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-            borderColor:     isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)',
+            backgroundColor: colors.glass.background,
+            borderColor:     colors.glass.border,
           }]}>
             <Ionicons name="arrow-back-outline" size={13} color={colors.text.tertiary} />
             <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '500', fontSize: 11 }}>

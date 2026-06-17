@@ -74,8 +74,6 @@ export function LedgerInfoSheet({ entry, onClose, onPartialReturn, onSettle }: P
     entry.status === 'SETTLED' ? colors.status.income :
     entry.status === 'OVERDUE' ? colors.status.expense : colors.status.info;
 
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
-
   const stats = [
     { label: 'Total',     value: entry.totalAmount,     color: colors.text.primary       },
     { label: 'Returned',  value: entry.amountReturned,  color: colors.status.income       },
@@ -86,14 +84,18 @@ export function LedgerInfoSheet({ entry, onClose, onPartialReturn, onSettle }: P
     <Modal visible={visible} transparent statusBarTranslucent animationType="none" onRequestClose={onClose}>
       {/* Backdrop */}
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-        <Animated.View style={[StyleSheet.absoluteFill, s.backdrop, backdropStyle]} />
+        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay.heavy }, backdropStyle]} />
       </Pressable>
 
       {/* Sheet */}
       <Animated.View
         style={[
           s.sheet,
-          { backgroundColor: cardBg, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+          {
+            backgroundColor: colors.surface.sheet,
+            borderColor:     colors.glass.backgroundMid,
+            shadowColor:     colors.black,
+          },
           sheetStyle,
         ]}
       >
@@ -136,13 +138,13 @@ export function LedgerInfoSheet({ entry, onClose, onPartialReturn, onSettle }: P
         </View>
 
         {/* Stats card */}
-        <View style={[s.statsCard, { backgroundColor: isDark ? colors.background.primary : colors.background.tertiary, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}>
+        <View style={[s.statsCard, { backgroundColor: colors.background.tertiary, borderColor: colors.glass.background }]}>
           {stats.map((stat, i) => (
             <View
               key={stat.label}
               style={[
                 s.statCell,
-                i < 2 && { borderRightWidth: 1, borderRightColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
+                i < 2 && { borderRightWidth: 1, borderRightColor: colors.glass.background },
               ]}
             >
               <AppText style={[s.statValue, { color: stat.color }]}>
@@ -157,7 +159,7 @@ export function LedgerInfoSheet({ entry, onClose, onPartialReturn, onSettle }: P
 
         {/* Progress bar */}
         {progressPct > 0 && progressPct < 1 && (
-          <View style={[s.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
+          <View style={[s.progressTrack, { backgroundColor: colors.glass.background }]}>
             <View style={[s.progressFill, { width: `${progressPct * 100}%` as any, backgroundColor: entry.personColor }]} />
           </View>
         )}
@@ -193,8 +195,8 @@ export function LedgerInfoSheet({ entry, onClose, onPartialReturn, onSettle }: P
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   style={StyleSheet.absoluteFill}
                 />
-                <Ionicons name="return-down-back-outline" size={16} color="#fff" />
-                <AppText style={s.actionPrimaryText}>Record Partial Return</AppText>
+                <Ionicons name="return-down-back-outline" size={16} color={colors.white} />
+                <AppText style={[s.actionPrimaryText, { color: colors.white }]}>Record Partial Return</AppText>
               </Pressable>
             )}
             <Pressable
@@ -214,7 +216,7 @@ export function LedgerInfoSheet({ entry, onClose, onPartialReturn, onSettle }: P
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  backdrop: { backgroundColor: 'rgba(0,0,0,0.6)' },
+  backdrop: { backgroundColor: 'transparent' },
 
   sheet: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
@@ -225,7 +227,7 @@ const s = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 40 : 28,
     gap: Spacing['4'],
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.14, shadowRadius: 20 },
+      ios:     { shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.14, shadowRadius: 20 },
       android: { elevation: 20 },
     }),
   },
@@ -258,6 +260,6 @@ const s = StyleSheet.create({
   actions:   { gap: Spacing['3'], marginTop: Spacing['1'] },
   actionBtn: { height: 52, borderRadius: Radius.xl, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   actionPrimary:     {},
-  actionPrimaryText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  actionPrimaryText: { fontWeight: '700', fontSize: 15 },
   actionSecondaryText: { fontWeight: '600', fontSize: 15 },
 });

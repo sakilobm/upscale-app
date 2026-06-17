@@ -16,32 +16,30 @@ import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
 import { Spacing, Radius } from '@constants/index';
 
-const ACCENT = '#F59E0B';
-
-const FEATURES = [
-  { icon: 'pie-chart-outline'     as const, color: '#F59E0B', text: 'Set spending limits per category'   },
-  { icon: 'bar-chart-outline'     as const, color: '#6366F1', text: 'Visual progress bars for each limit' },
-  { icon: 'notifications-outline' as const, color: '#EF4444', text: 'Alerts before you overspend'         },
-] as const;
+const FEATURES: { icon: 'pie-chart-outline' | 'bar-chart-outline' | 'notifications-outline'; colorKey: 'warning' | 'savings' | 'expense'; text: string }[] = [
+  { icon: 'pie-chart-outline',     colorKey: 'warning', text: 'Set spending limits per category'   },
+  { icon: 'bar-chart-outline',     colorKey: 'savings', text: 'Visual progress bars for each limit' },
+  { icon: 'notifications-outline', colorKey: 'expense', text: 'Alerts before you overspend'         },
+];
 
 export function BudgetEmptyState() {
-  const { colors, isDark } = useTheme();
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
+  const { colors } = useTheme();
+  const accentHex = colors.status.warning;
 
   return (
     <View style={s.root}>
       {/* ── Hero ─── */}
       <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140)} style={s.heroWrap}>
-        <View style={[s.outerRing, { borderColor: ACCENT + '28' }]} />
+        <View style={[s.outerRing, { borderColor: accentHex + '28' }]} />
         <LinearGradient
-          colors={['#F59E0B', '#D97706']}
+          colors={[accentHex, accentHex] as [string, string]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={s.iconCircle}
+          style={[s.iconCircle, { shadowColor: colors.black }]}
         >
-          <Ionicons name="wallet-outline" size={36} color="#fff" />
+          <Ionicons name="wallet-outline" size={36} color={colors.white} />
         </LinearGradient>
-        <View style={[s.badge, { backgroundColor: ACCENT + '20' }]}>
-          <Ionicons name="add" size={16} color={ACCENT} />
+        <View style={[s.badge, { backgroundColor: accentHex + '20' }]}>
+          <Ionicons name="add" size={16} color={accentHex} />
         </View>
       </Animated.View>
 
@@ -57,25 +55,28 @@ export function BudgetEmptyState() {
 
       {/* ── Feature rows ─── */}
       <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(160)} style={s.featuresCol}>
-        {FEATURES.map(({ icon, color, text }) => (
-          <View key={text} style={[s.featureRow, { backgroundColor: cardBg, borderColor: ACCENT + '20' }]}>
-            <View style={[s.featureIcon, { backgroundColor: color + '15' }]}>
-              <Ionicons name={icon} size={16} color={color} />
+        {FEATURES.map(({ icon, colorKey, text }) => {
+          const featureColor = colors.status[colorKey];
+          return (
+            <View key={text} style={[s.featureRow, { backgroundColor: colors.surface.sheet, borderColor: accentHex + '20', shadowColor: colors.black }]}>
+              <View style={[s.featureIcon, { backgroundColor: featureColor + '15' }]}>
+                <Ionicons name={icon} size={16} color={featureColor} />
+              </View>
+              <AppText variant="bodySM" color={colors.text.secondary} style={{ flex: 1 }}>{text}</AppText>
             </View>
-            <AppText variant="bodySM" color={colors.text.secondary} style={{ flex: 1 }}>{text}</AppText>
-          </View>
-        ))}
+          );
+        })}
       </Animated.View>
 
       {/* ── Hint ─── */}
       <Animated.View
         entering={FadeInDown.springify().damping(20).stiffness(140).delay(240)}
-        style={[s.hint, { backgroundColor: ACCENT + '0C', borderColor: ACCENT + '25' }]}
+        style={[s.hint, { backgroundColor: accentHex + '0C', borderColor: accentHex + '25' }]}
       >
-        <Ionicons name="bulb-outline" size={14} color={ACCENT} />
+        <Ionicons name="bulb-outline" size={14} color={accentHex} />
         <AppText variant="caption" color={colors.text.secondary} style={{ flex: 1 }}>
           Tap{' '}
-          <AppText variant="caption" style={{ color: ACCENT, fontWeight: '700' }}>+ Payment</AppText>
+          <AppText variant="caption" style={{ color: accentHex, fontWeight: '700' }}>+ Payment</AppText>
           {' '}below to schedule your first payment
         </AppText>
       </Animated.View>
@@ -91,7 +92,7 @@ const s = StyleSheet.create({
     width: 82, height: 82, borderRadius: 41,
     alignItems: 'center', justifyContent: 'center',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
+      ios:     { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
       android: { elevation: 12 },
     }),
   },
@@ -103,7 +104,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
     padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      ios:     { shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
       android: { elevation: 1 },
     }),
   },

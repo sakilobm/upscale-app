@@ -47,11 +47,11 @@ export function useHomeScreen() {
   }, []);
 
   const quickActions = useMemo<QuickAction[]>(() => [
-    { icon: 'trending-down', label: 'Expense',  color: '#EF4444',            action: () => openAdd('expense') },
-    { icon: 'trending-up',   label: 'Income',   color: '#10B981',            action: () => openAdd('income') },
-    { icon: 'shuffle',       label: 'Split',    color: colors.brand.primary, action: () => toast.info('Split expenses — coming soon') },
-    { icon: 'receipt',       label: 'Activity', color: '#F59E0B',            action: () => router.push('/(tabs)/transactions') },
-  ], [openAdd, colors.brand.primary]);
+    { icon: 'trending-down', label: 'Expense',  color: colors.status.expense, action: () => openAdd('expense') },
+    { icon: 'trending-up',   label: 'Income',   color: colors.status.income,  action: () => openAdd('income') },
+    { icon: 'shuffle',       label: 'Split',    color: colors.brand.primary,  action: () => toast.info('Split expenses — coming soon') },
+    { icon: 'receipt',       label: 'Activity', color: colors.status.warning, action: () => router.push('/(tabs)/transactions') },
+  ], [openAdd, colors]);
 
   const firstName = user?.fullName?.split(' ')[0] ?? 'Sakil';
   const initials  = user?.fullName

@@ -78,15 +78,15 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
   return (
     <>
       <Modal transparent visible={visible} animationType="fade" statusBarTranslucent onRequestClose={onClose}>
-        <View style={s.overlay}>
+        <View style={[s.overlay, { backgroundColor: colors.overlay.medium }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ width: '100%' }}
           >
-            <Animated.View style={[s.sheet, { backgroundColor: sheetBg, paddingBottom: insets.bottom + 8, marginBottom: Platform.OS === 'android' ? kbH : 0 }, sheetStyle]}>
+            <Animated.View style={[s.sheet, { backgroundColor: sheetBg, shadowColor: colors.black, paddingBottom: insets.bottom + 8, marginBottom: Platform.OS === 'android' ? kbH : 0 }, sheetStyle]}>
 
-              <View style={s.handle} />
+              <View style={[s.handle, { backgroundColor: colors.text.tertiary + '40' }]} />
 
               {/* Type toggle */}
               <View style={[s.typeRow, { backgroundColor: colors.glass.backgroundMid }]}>
@@ -138,7 +138,7 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
                       style={({ pressed }) => [
                         s.numKey,
                         {
-                          backgroundColor: isBackspace ? accentColor + '15' : (isDark ? 'rgba(255,255,255,0.05)' : colors.background.primary),
+                          backgroundColor: isBackspace ? accentColor + '15' : (isDark ? colors.glass.background : colors.background.primary),
                           opacity: pressed ? 0.6 : 1,
                         },
                       ]}
@@ -260,8 +260,8 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
                 onPress={handleSave}
                 style={({ pressed }) => [s.addBtn, { backgroundColor: accentColor, opacity: pressed ? 0.85 : 1 }]}
               >
-                <Ionicons name="checkmark-circle" size={20} color="#FFF" />
-                <AppText style={s.addBtnText}>Add {type === 'expense' ? 'Expense' : 'Income'}</AppText>
+                <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+                <AppText style={[s.addBtnText, { color: colors.white }]}>Add {type === 'expense' ? 'Expense' : 'Income'}</AppText>
               </Pressable>
             </Animated.View>
           </KeyboardAvoidingView>
@@ -278,16 +278,16 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
 }
 
 const s = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
+  overlay: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
     paddingTop: 8, paddingHorizontal: 16,
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 20, shadowOffset: { width: 0, height: -6 } },
+      ios: { shadowOpacity: 0.25, shadowRadius: 20, shadowOffset: { width: 0, height: -6 } },
       android: { elevation: 20 },
     }),
   },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(128,128,128,0.3)', alignSelf: 'center', marginBottom: 12 },
+  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 12 },
   typeRow: { flexDirection: 'row', borderRadius: Radius.xl, padding: 4, marginBottom: 16, gap: 4 },
   typeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: Radius.lg },
   amountSection: { alignItems: 'center', paddingVertical: 8, marginBottom: 12 },
@@ -305,5 +305,5 @@ const s = StyleSheet.create({
   accountIcon: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   noteInput: { height: 44, borderRadius: Radius.lg, paddingHorizontal: 14, fontSize: 14, borderWidth: 1, marginBottom: 12, marginTop: 4 },
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 54, borderRadius: Radius.lg, marginTop: 4 },
-  addBtnText: { color: '#FFF', fontWeight: '700', fontSize: 16 },
+  addBtnText: { fontWeight: '700', fontSize: 16 },
 });

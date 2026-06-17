@@ -23,48 +23,51 @@ interface Props {
   onChange: (key: keyof SecPrefs, value: boolean) => void;
 }
 
-const ITEMS: { key: keyof SecPrefs; label: string; sub: string; icon: IoniconName; color: string }[] = [
-  { key: 'biometric',   label: 'Face ID / Touch ID', sub: 'Use biometrics to unlock app',        icon: 'finger-print',   color: '#6C63FF' },
-  { key: 'autoLock',    label: 'Auto-Lock',           sub: 'Lock after 5 min of inactivity',      icon: 'lock-closed',    color: '#EF4444' },
-  { key: 'hideBalance', label: 'Hide Balance',        sub: 'Blur amounts on home screen',         icon: 'eye-off',        color: '#F59E0B' },
+const ITEMS: { key: keyof SecPrefs; label: string; sub: string; icon: IoniconName; colorKey: 'savings' | 'expense' | 'warning' }[] = [
+  { key: 'biometric',   label: 'Face ID / Touch ID', sub: 'Use biometrics to unlock app',        icon: 'finger-print',   colorKey: 'savings' },
+  { key: 'autoLock',    label: 'Auto-Lock',           sub: 'Lock after 5 min of inactivity',      icon: 'lock-closed',    colorKey: 'expense' },
+  { key: 'hideBalance', label: 'Hide Balance',        sub: 'Blur amounts on home screen',         icon: 'eye-off',        colorKey: 'warning' },
 ];
 
 export function SecuritySheet({ prefs, onChange }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View style={{ marginTop: Spacing['3'] }}>
-      {ITEMS.map((item, idx) => (
-        <View
-          key={item.key}
-          style={[
-            s.row,
-            idx < ITEMS.length - 1 && {
-              borderBottomWidth: StyleSheet.hairlineWidth,
-              borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-            },
-          ]}
-        >
-          <View style={[s.icon, { backgroundColor: item.color + '18' }]}>
-            <Ionicons name={item.icon} size={16} color={item.color} />
+      {ITEMS.map((item, idx) => {
+        const itemColor = colors.status[item.colorKey];
+        return (
+          <View
+            key={item.key}
+            style={[
+              s.row,
+              idx < ITEMS.length - 1 && {
+                borderBottomWidth: StyleSheet.hairlineWidth,
+                borderBottomColor: colors.glass.background,
+              },
+            ]}
+          >
+            <View style={[s.icon, { backgroundColor: itemColor + '18' }]}>
+              <Ionicons name={item.icon} size={16} color={itemColor} />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <AppText variant="labelLG" color={colors.text.primary}>{item.label}</AppText>
+              <AppText variant="caption" color={colors.text.tertiary}>{item.sub}</AppText>
+            </View>
+            <Switch
+              value={prefs[item.key]}
+              onValueChange={(v) => onChange(item.key, v)}
+              trackColor={{ false: colors.glass.backgroundMid, true: itemColor }}
+              thumbColor={colors.white}
+              ios_backgroundColor={colors.glass.backgroundMid}
+            />
           </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <AppText variant="labelLG" color={colors.text.primary}>{item.label}</AppText>
-            <AppText variant="caption" color={colors.text.tertiary}>{item.sub}</AppText>
-          </View>
-          <Switch
-            value={prefs[item.key]}
-            onValueChange={(v) => onChange(item.key, v)}
-            trackColor={{ false: colors.glass.backgroundMid, true: item.color }}
-            thumbColor={colors.white}
-            ios_backgroundColor={colors.glass.backgroundMid}
-          />
-        </View>
-      ))}
+        );
+      })}
 
       <Pressable
         onPress={() => toast.info('PIN setup coming in the next update')}
-        style={[s.pinBtn, { borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)' }]}
+        style={[s.pinBtn, { borderColor: colors.glass.border }]}
       >
         <Ionicons name="keypad-outline" size={16} color={colors.text.secondary} />
         <AppText variant="labelMD" color={colors.text.secondary}>Change PIN</AppText>

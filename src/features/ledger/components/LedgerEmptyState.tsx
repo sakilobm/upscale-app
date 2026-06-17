@@ -29,7 +29,7 @@ import type { LedgerTab } from '../types';
 
 const CONFIG: Record<LedgerTab, {
   icon:     React.ComponentProps<typeof Ionicons>['name'];
-  grad:     [string, string];
+  gradKey:  'indigoViolet' | 'income' | 'amberYellow';
   title:    string;
   subtitle: string;
   hint:     string;
@@ -37,7 +37,7 @@ const CONFIG: Record<LedgerTab, {
 }> = {
   owed_to_me: {
     icon:     'people-outline',
-    grad:     ['#6366F1', '#8B5CF6'],
+    gradKey:  'indigoViolet',
     title:    'No one owes you',
     subtitle: 'Record hand-to-hand money you lent to friends or family.',
     hint:     'Tap + to add an entry',
@@ -49,7 +49,7 @@ const CONFIG: Record<LedgerTab, {
   },
   i_owe: {
     icon:     'happy-outline',
-    grad:     ['#10B981', '#34D399'],
+    gradKey:  'income',
     title:    "You're debt-free!",
     subtitle: "No outstanding debts. You don't owe anyone right now.",
     hint:     'Tap + if you borrow money',
@@ -61,7 +61,7 @@ const CONFIG: Record<LedgerTab, {
   },
   loans: {
     icon:     'business-outline',
-    grad:     ['#F59E0B', '#FBBF24'],
+    gradKey:  'amberYellow',
     title:    'No loans tracked',
     subtitle: 'Track mortgages, car loans, or money you have lent out.',
     hint:     'Tap + to add a loan',
@@ -82,23 +82,23 @@ interface Props {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function LedgerEmptyState({ variant }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const cfg    = CONFIG[variant];
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
-  const accent = cfg.grad[0];
+  const grad   = colors.gradients[cfg.gradKey] as unknown as [string, string];
+  const accent = grad[0];
 
   return (
     <View style={s.root}>
       {/* Hero icon */}
       <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140)} style={s.heroWrap}>
         <View style={[s.outerRing, { borderColor: accent + '25' }]} />
-        <View style={[s.iconCircle, { overflow: 'hidden' }]}>
+        <View style={[s.iconCircle, { overflow: 'hidden', shadowColor: colors.black }]}>
           <LinearGradient
-            colors={cfg.grad}
+            colors={grad}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          <Ionicons name={cfg.icon} size={36} color="#fff" />
+          <Ionicons name={cfg.icon} size={36} color={colors.white} />
         </View>
         <View style={[s.badge, { backgroundColor: accent + '18' }]}>
           <Ionicons name="add" size={14} color={accent} />
@@ -118,7 +118,7 @@ export function LedgerEmptyState({ variant }: Props) {
       {/* Feature rows */}
       <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(160)} style={s.featuresCol}>
         {cfg.features.map(({ icon, text }) => (
-          <View key={text} style={[s.featureRow, { backgroundColor: cardBg, borderColor: accent + '20' }]}>
+          <View key={text} style={[s.featureRow, { backgroundColor: colors.surface.sheet, borderColor: accent + '20' }]}>
             <View style={[s.featureIcon, { backgroundColor: accent + '15' }]}>
               <Ionicons name={icon} size={15} color={accent} />
             </View>
@@ -154,7 +154,7 @@ const s = StyleSheet.create({
   iconCircle: {
     width: 82, height: 82, borderRadius: 41, alignItems: 'center', justifyContent: 'center',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16 },
+      ios:     { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16 },
       android: { elevation: 10 },
     }),
   },
@@ -168,7 +168,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
     padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      ios:     { shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
       android: { elevation: 1 },
     }),
   },

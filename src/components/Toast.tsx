@@ -19,11 +19,11 @@ import type { ToastItem, ToastType } from '@store/toastStore';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const TYPE_CONFIG: Record<ToastType, { icon: IoniconName; color: string }> = {
-  success: { icon: 'checkmark-circle',  color: '#10B981' },
-  error:   { icon: 'close-circle',      color: '#EF4444' },
-  warning: { icon: 'warning',           color: '#F59E0B' },
-  info:    { icon: 'information-circle',color: '#6C63FF' },
+const TYPE_CONFIG: Record<ToastType, { icon: IoniconName; getColor: (colors: any) => string }> = {
+  success: { icon: 'checkmark-circle',  getColor: (c) => c.status.income },
+  error:   { icon: 'close-circle',      getColor: (c) => c.status.expense },
+  warning: { icon: 'warning',           getColor: (c) => c.status.warning },
+  info:    { icon: 'information-circle',getColor: (c) => c.status.savings },
 };
 
 // ─── Single toast chip ────────────────────────────────────────────────────────
@@ -34,8 +34,9 @@ interface ChipProps {
 }
 
 const ToastChip = memo(function ToastChip({ item, onDismiss }: ChipProps) {
-  const { colors, isDark } = useTheme();
-  const { icon, color } = TYPE_CONFIG[item.type];
+  const { colors } = useTheme();
+  const { icon, getColor } = TYPE_CONFIG[item.type];
+  const color = getColor(colors);
 
   const ty      = useSharedValue(90);
   const opacity = useSharedValue(0);
@@ -65,8 +66,8 @@ const ToastChip = memo(function ToastChip({ item, onDismiss }: ChipProps) {
     transform: [{ translateY: ty.value }, { scale: scale.value }],
   }));
 
-  const bg     = isDark ? 'rgba(15,21,36,0.96)' : '#FFFFFF';
-  const border = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)';
+  const bg     = colors.surface.sheet + 'F5';
+  const border = colors.glass.background;
 
   return (
     <Animated.View style={animStyle}>

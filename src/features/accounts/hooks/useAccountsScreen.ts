@@ -65,7 +65,7 @@ export function useAccountsScreen() {
   const scrollRef = useRef<ScrollView>(null);
 
   const bgStyle = useAnimatedStyle(() => {
-    if (accounts.length === 0) return { backgroundColor: isDark ? '#0F1524' : '#F0F0F8' };
+    if (accounts.length === 0) return { backgroundColor: isDark ? colors.background.card : colors.background.tertiary };
     if (accounts.length === 1) return { backgroundColor: isDark ? accounts[0].color + '22' : accounts[0].color + '14' };
     const inputRange   = accounts.map((_, i) => i * PAGE_W);
     const outputColors = isDark

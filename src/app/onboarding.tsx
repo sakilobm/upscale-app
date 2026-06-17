@@ -32,7 +32,7 @@ const { width: SW } = Dimensions.get('window');
 const SLIDE_W       = SW;
 
 export default function OnboardingScreen() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const {
     step, isSetupStep, name, currency, setName, setCurrency,
     avatarId, setAvatarId, handlers,
@@ -46,19 +46,20 @@ export default function OnboardingScreen() {
   const containerStyle = useAnimatedStyle(() => ({ transform: [{ translateX: translateX.value }] }));
 
   // ── Active slide gradient accent colour ──
-  const activeGradient = FEATURE_SLIDES[Math.min(step, FEATURE_SLIDES.length - 1)]?.gradient ?? ['#6C63FF', '#A78BFA'];
+  const slideKey       = FEATURE_SLIDES[Math.min(step, FEATURE_SLIDES.length - 1)]?.gradientKey ?? 'purpleViolet';
+  const activeGradient = colors.gradients[slideKey] as any;
   const accentColor    = activeGradient[0];
 
-  const btnBg        = isDark ? colors.background.secondary : '#FFFFFF';
-  const btnBorder    = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)';
+  const btnBg        = colors.surface.sheet;
+  const btnBorder    = colors.glass.border;
   const isFirstStep  = step === 0;
 
   return (
-    <View style={[s.root, { backgroundColor: isDark ? '#09090F' : '#F8F8FF' }]}>
+    <View style={[s.root, { backgroundColor: colors.background.primary }]}>
       {/* ── Ambient background glow ── */}
       <Animated.View
         entering={FadeIn.duration(600)}
-        style={[s.glow, { backgroundColor: accentColor + (isDark ? '18' : '10') }]}
+        style={[s.glow, { backgroundColor: accentColor + '14' }]}
         pointerEvents="none"
       />
 
@@ -66,8 +67,8 @@ export default function OnboardingScreen() {
         {/* ── Top bar: logo + skip ── */}
         <Animated.View entering={FadeInDown.springify().damping(22).stiffness(140)} style={s.topBar}>
           <View style={s.logoRow}>
-            <LinearGradient colors={['#6C63FF', '#A78BFA']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.logoMark}>
-              <Ionicons name="wallet" size={16} color="#fff" />
+            <LinearGradient colors={colors.gradients.purpleViolet as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[s.logoMark, { shadowColor: colors.brand.accent }]}>
+              <Ionicons name="wallet" size={16} color={colors.white} />
             </LinearGradient>
             <AppText style={[s.brandName, { color: colors.text.primary }]}>WhereCash</AppText>
           </View>
@@ -153,13 +154,13 @@ export default function OnboardingScreen() {
                 {Platform.OS === 'ios' && (
                   <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
                 )}
-                <AppText style={s.ctaLabel}>
+                <AppText style={[s.ctaLabel, { color: colors.white }]}>
                   {isSetupStep ? 'Get Started' : 'Next'}
                 </AppText>
                 <Ionicons
                   name={isSetupStep ? 'rocket-outline' : 'arrow-forward'}
                   size={18}
-                  color="#fff"
+                  color={colors.white}
                 />
               </LinearGradient>
             </Pressable>
@@ -208,7 +209,7 @@ const s = StyleSheet.create({
     width: 34, height: 34, borderRadius: 10,
     alignItems: 'center', justifyContent: 'center',
     ...Platform.select({
-      ios:     { shadowColor: '#6C63FF', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
+      ios:     { shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
       android: { elevation: 6 },
     }),
   },
@@ -234,7 +235,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     height: 54, gap: 10, borderRadius: 17,
   },
-  ctaLabel: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+  ctaLabel: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
 
   termsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
 });

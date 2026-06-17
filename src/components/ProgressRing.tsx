@@ -18,7 +18,7 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 // ─── Color by utilization ─────────────────────────────────────────────────────
 function utilizationColor(pct: number, colors: any): string {
   if (pct >= 0.85) return colors.status.expense;     // crimson
-  if (pct >= 0.50) return '#F59E0B';                 // amber
+  if (pct >= 0.50) return colors.status.warning;     // amber
   return colors.status.income;                        // emerald
 }
 
@@ -111,8 +111,8 @@ export function ProgressRing({
             <View style={[
               styles.iconWrapper,
               {
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(255, 255, 255, 0.70)',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.08)',
+                backgroundColor: isDark ? colors.glass.backgroundMid : colors.white + 'B3',
+                borderColor: isDark ? colors.glass.borderStrong : colors.glass.backgroundStrong,
                 width: size * 0.32,
                 height: size * 0.32,
                 borderRadius: (size * 0.32) / 2,

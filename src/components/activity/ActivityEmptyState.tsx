@@ -15,15 +15,14 @@ import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
 import { Spacing, Radius } from '@constants/index';
 
-const FEATURES = [
-  { icon: 'trending-down-outline' as const, color: '#EF4444', text: 'Log expenses by category' },
-  { icon: 'trending-up-outline'   as const, color: '#10B981', text: 'Record income sources'    },
-  { icon: 'analytics-outline'     as const, color: '#6366F1', text: 'See monthly breakdowns'   },
-] as const;
+const FEATURES: { icon: 'trending-down-outline' | 'trending-up-outline' | 'analytics-outline'; colorKey: 'expense' | 'income' | 'savings'; text: string }[] = [
+  { icon: 'trending-down-outline', colorKey: 'expense', text: 'Log expenses by category' },
+  { icon: 'trending-up-outline',   colorKey: 'income',  text: 'Record income sources'    },
+  { icon: 'analytics-outline',     colorKey: 'savings', text: 'See monthly breakdowns'   },
+];
 
 export function ActivityEmptyState() {
-  const { colors, isDark } = useTheme();
-  const cardBg    = isDark ? colors.background.secondary : '#FFFFFF';
+  const { colors } = useTheme();
   const accentHex = colors.brand.primary;
 
   return (
@@ -34,12 +33,12 @@ export function ActivityEmptyState() {
         <LinearGradient
           colors={[accentHex, colors.brand.accent] as [string, string]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={s.iconCircle}
+          style={[s.iconCircle, { shadowColor: colors.black }]}
         >
-          <Ionicons name="receipt-outline" size={36} color="#fff" />
+          <Ionicons name="receipt-outline" size={36} color={colors.white} />
         </LinearGradient>
-        <View style={[s.badge, { backgroundColor: '#10B98120' }]}>
-          <Ionicons name="add" size={16} color="#10B981" />
+        <View style={[s.badge, { backgroundColor: colors.status.income + '20' }]}>
+          <Ionicons name="add" size={16} color={colors.status.income} />
         </View>
       </Animated.View>
 
@@ -53,14 +52,17 @@ export function ActivityEmptyState() {
 
       {/* ── Feature rows ─── */}
       <Animated.View entering={FadeInDown.springify().damping(20).stiffness(140).delay(160)} style={s.featuresCol}>
-        {FEATURES.map(({ icon, color, text }) => (
-          <View key={text} style={[s.featureRow, { backgroundColor: cardBg, borderColor: accentHex + '20' }]}>
-            <View style={[s.featureIcon, { backgroundColor: color + '15' }]}>
-              <Ionicons name={icon} size={16} color={color} />
+        {FEATURES.map(({ icon, colorKey, text }) => {
+          const featureColor = colors.status[colorKey];
+          return (
+          <View key={text} style={[s.featureRow, { backgroundColor: colors.surface.sheet, borderColor: accentHex + '20', shadowColor: colors.black }]}>
+            <View style={[s.featureIcon, { backgroundColor: featureColor + '15' }]}>
+              <Ionicons name={icon} size={16} color={featureColor} />
             </View>
             <AppText variant="bodySM" color={colors.text.secondary} style={{ flex: 1 }}>{text}</AppText>
           </View>
-        ))}
+          );
+        })}
       </Animated.View>
 
       {/* ── Hint ─── */}
@@ -91,7 +93,7 @@ const s = StyleSheet.create({
     width: 82, height: 82, borderRadius: 41,
     alignItems: 'center', justifyContent: 'center',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
+      ios:     { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
       android: { elevation: 12 },
     }),
   },
@@ -103,7 +105,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
     padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      ios:     { shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
       android: { elevation: 1 },
     }),
   },

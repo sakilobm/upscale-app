@@ -31,11 +31,13 @@ export default function TransactionsScreen() {
     filters, setFilters, selectedAccount, summary, monthLabel, handleTransactionPress,
   } = useActivityScreen();
 
-  const balanceColor  = selectedAccount?.color ?? colors.brand.primary;
-  const balanceIcon   = (selectedAccount?.icon ?? 'wallet-outline') as any;
-  const cardBg        = isDark ? colors.background.secondary : '#FFFFFF';
-  const cardBorder    = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
-  const dividerColor  = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+  const rawBalanceColor = selectedAccount?.color ?? colors.brand.primary;
+  const isBrightColor = !isDark && rawBalanceColor === colors.brand.primary;
+  const balanceColor = isBrightColor ? colors.text.brand : rawBalanceColor;
+  const balanceIcon = (selectedAccount?.icon ?? 'wallet-outline') as any;
+  const cardBg = isDark ? colors.background.secondary : colors.background.card;
+  const cardBorder = isDark ? colors.glass.border : colors.glass.borderStrong;
+  const dividerColor = isDark ? colors.glass.background : colors.glass.background;
 
   if (isLoading && !groups) return <LoadingScreen message="Loading transactions..." />;
 
@@ -45,7 +47,7 @@ export default function TransactionsScreen() {
         <ActivityHero summary={summary} monthLabel={monthLabel} />
 
         <View style={s.searchOuter}>
-          <View style={[s.searchBox, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+          <View style={[s.searchBox, { backgroundColor: cardBg, borderColor: cardBorder, shadowColor: colors.black }]}>
             <Ionicons name="search-outline" size={18} color={colors.text.tertiary} />
             <TextInput
               style={[s.searchInput, { ...Typography.bodyMD, lineHeight: undefined, color: colors.text.primary }]}
@@ -63,7 +65,7 @@ export default function TransactionsScreen() {
 
         <AccountBar />
         <FilterBar activeType={filters.type} onTypeChange={(type) => setFilters({ type })} />
-        <View style={[s.dividerLine, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }]} />
+        <View style={[s.dividerLine, { backgroundColor: colors.glass.background }]} />
       </View>
 
       {isEmpty ? (
@@ -88,7 +90,7 @@ export default function TransactionsScreen() {
                 </View>
               </View>
 
-              <View style={[s.groupCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+              <View style={[s.groupCard, { backgroundColor: cardBg, borderColor: cardBorder, shadowColor: colors.black }]}>
                 {group.transactions.map((tx, idx) => (
                   <View key={tx.id}>
                     <SwipeableTransactionRow
@@ -111,7 +113,7 @@ export default function TransactionsScreen() {
 }
 
 const s = StyleSheet.create({
-  safe:    { flex: 1 },
+  safe: { flex: 1 },
   topArea: { gap: Spacing['4'], paddingBottom: Spacing['2'] },
 
   searchOuter: { paddingHorizontal: Spacing['5'] },
@@ -119,7 +121,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: Spacing['2'],
     paddingHorizontal: Spacing['4'], height: 46, borderRadius: Radius.lg, borderWidth: 1,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      ios: { shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
       android: { elevation: 1 },
     }),
   },
@@ -127,14 +129,14 @@ const s = StyleSheet.create({
 
   dividerLine: { height: StyleSheet.hairlineWidth, marginHorizontal: Spacing['5'] },
 
-  list:    { paddingHorizontal: Spacing['5'], paddingTop: Spacing['2'], gap: Spacing['4'] },
+  list: { paddingHorizontal: Spacing['5'], paddingTop: Spacing['2'], gap: Spacing['4'] },
   section: { gap: Spacing['2'] },
   dateHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing['1'] },
   balancePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: Radius.full },
   groupCard: {
     borderRadius: Radius.xl, borderWidth: 1, overflow: 'hidden',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10 },
+      ios: { shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10 },
       android: { elevation: 2 },
     }),
   },

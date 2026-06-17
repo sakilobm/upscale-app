@@ -22,33 +22,14 @@ interface Props {
   onLogExpense: () => void;
 }
 
-const SETUP_STEPS = [
-  {
-    icon:     'wallet-outline'    as const,
-    color:    '#6366F1',
-    title:    'Add your first account',
-    subtitle: 'Link a bank, cash wallet, or savings account',
-    action:   'accounts' as const,
-  },
-  {
-    icon:     'receipt-outline'   as const,
-    color:    '#10B981',
-    title:    'Log an expense or income',
-    subtitle: 'Track where your money comes and goes',
-    action:   'transaction' as const,
-  },
-  {
-    icon:     'bar-chart-outline' as const,
-    color:    '#F59E0B',
-    title:    'Set a monthly budget',
-    subtitle: 'Limit spending per category and hit your goals',
-    action:   'budget' as const,
-  },
-] as const;
+const SETUP_STEPS: { icon: 'wallet-outline' | 'receipt-outline' | 'bar-chart-outline'; colorKey: 'savings' | 'income' | 'warning'; title: string; subtitle: string; action: 'accounts' | 'transaction' | 'budget' }[] = [
+  { icon: 'wallet-outline',    colorKey: 'savings', title: 'Add your first account',    subtitle: 'Link a bank, cash wallet, or savings account',         action: 'accounts'    },
+  { icon: 'receipt-outline',   colorKey: 'income',  title: 'Log an expense or income',  subtitle: 'Track where your money comes and goes',                 action: 'transaction' },
+  { icon: 'bar-chart-outline', colorKey: 'warning', title: 'Set a monthly budget',       subtitle: 'Limit spending per category and hit your goals',        action: 'budget'      },
+];
 
 export function HomeSetupPrompt({ onLogExpense }: Props) {
-  const { colors, isDark } = useTheme();
-  const cardBg    = isDark ? colors.background.secondary : '#FFFFFF';
+  const { colors } = useTheme();
   const accentHex = colors.brand.primary;
 
   const handleStep = (action: 'accounts' | 'transaction' | 'budget') => {
@@ -66,9 +47,9 @@ export function HomeSetupPrompt({ onLogExpense }: Props) {
         <LinearGradient
           colors={[accentHex, colors.brand.accent] as [string, string]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={s.iconCircle}
+          style={[s.iconCircle, { shadowColor: colors.black }]}
         >
-          <Ionicons name="rocket-outline" size={36} color="#fff" />
+          <Ionicons name="rocket-outline" size={36} color={colors.white} />
         </LinearGradient>
         <View style={[s.badge, { backgroundColor: accentHex + '20' }]}>
           <Ionicons name="sparkles" size={13} color={accentHex} />
@@ -87,7 +68,9 @@ export function HomeSetupPrompt({ onLogExpense }: Props) {
 
       {/* ── Steps ─── */}
       <View style={s.stepsCol}>
-        {SETUP_STEPS.map((step, i) => (
+        {SETUP_STEPS.map((step, i) => {
+          const stepColor = colors.status[step.colorKey];
+          return (
           <Animated.View
             key={step.title}
             entering={FadeInDown.springify().damping(20).stiffness(140).delay(160 + i * 70)}
@@ -96,11 +79,11 @@ export function HomeSetupPrompt({ onLogExpense }: Props) {
               onPress={() => handleStep(step.action)}
               style={({ pressed }) => [
                 s.stepRow,
-                { backgroundColor: cardBg, borderColor: step.color + '22', opacity: pressed ? 0.82 : 1 },
+                { backgroundColor: colors.surface.sheet, borderColor: stepColor + '22', shadowColor: colors.black, opacity: pressed ? 0.82 : 1 },
               ]}
             >
-              <View style={[s.stepIcon, { backgroundColor: step.color + '15' }]}>
-                <Ionicons name={step.icon} size={16} color={step.color} />
+              <View style={[s.stepIcon, { backgroundColor: stepColor + '15' }]}>
+                <Ionicons name={step.icon} size={16} color={stepColor} />
               </View>
               <View style={{ flex: 1 }}>
                 <AppText variant="labelMD" color={colors.text.primary}>{step.title}</AppText>
@@ -111,7 +94,8 @@ export function HomeSetupPrompt({ onLogExpense }: Props) {
               <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
             </Pressable>
           </Animated.View>
-        ))}
+          );
+        })}
       </View>
 
       {/* ── Hint ─── */}
@@ -136,7 +120,7 @@ const s = StyleSheet.create({
     width: 82, height: 82, borderRadius: 41,
     alignItems: 'center', justifyContent: 'center',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
+      ios:     { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
       android: { elevation: 12 },
     }),
   },
@@ -148,7 +132,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
     padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      ios:     { shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
       android: { elevation: 1 },
     }),
   },

@@ -3,11 +3,13 @@ import * as Haptics from 'expo-haptics';
 import { useAccountStore } from '@store/accountStore';
 import { useTransactionStore } from '@store/transactionStore';
 import { useCategoryStore } from '@store/categoryStore';
+import { useTheme } from '@hooks/useTheme';
 import { toast } from '@store/toastStore';
 import { applyNumpad } from '../utils/numpad';
 import type { Transaction } from '@store/types';
 
 export function useQuickAddTransaction(onSuccess: () => void) {
+  const { colors } = useTheme();
   const accounts     = useAccountStore((s) => s.accounts);
   const updateAccount = useAccountStore((s) => s.updateAccount);
   const addTransaction = useTransactionStore((s) => s.addTransaction);
@@ -84,7 +86,7 @@ export function useQuickAddTransaction(onSuccess: () => void) {
     maximumFractionDigits: 2,
   });
 
-  const accentColor = type === 'expense' ? '#EF4444' : '#10B981';
+  const accentColor = type === 'expense' ? colors.status.expense : colors.status.income;
 
   return {
     type,

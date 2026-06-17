@@ -30,42 +30,44 @@ const TABS: { id: NotificationTab; label: string; active: IoniconName; inactive:
   { id: 'reminders', label: 'Reminders', active: 'alarm', inactive: 'alarm-outline' },
 ];
 
-const SETTINGS_ROWS = [
-  {
-    key:   'budgetExceeded'   as const,
-    label: 'Budget Exceeded',
-    sub:   'When spending goes over limit',
-    icon:  'alert-circle'    as IoniconName,
-    color: '#EF4444',
-  },
-  {
-    key:   'budgetWarning'    as const,
-    label: 'Budget Warning',
-    sub:   'At 80% of your budget',
-    icon:  'warning'          as IoniconName,
-    color: '#F59E0B',
-  },
-  {
-    key:   'paymentDue'       as const,
-    label: 'Payment Due',
-    sub:   'Upcoming planned payments',
-    icon:  'calendar'         as IoniconName,
-    color: '#3B82F6',
-  },
-  {
-    key:   'remindersEnabled' as const,
-    label: 'Reminders',
-    sub:   'Scheduled personal reminders',
-    icon:  'alarm'            as IoniconName,
-    color: '#8B5CF6',
-  },
-];
+
 
 export default function NotificationsScreen() {
   const { colors, isDark } = useTheme();
   const screen = useNotificationsScreen();
-  const bg   = isDark ? colors.background.primary : '#F0F0F8';
-  const card = isDark ? colors.background.secondary : '#FFFFFF';
+  const bg   = isDark ? colors.background.primary : colors.background.tertiary;
+  const card = isDark ? colors.background.secondary : colors.background.card;
+
+  const SETTINGS_ROWS = [
+    {
+      key:   'budgetExceeded'   as const,
+      label: 'Budget Exceeded',
+      sub:   'When spending goes over limit',
+      icon:  'alert-circle'    as IoniconName,
+      color: colors.status.expense,
+    },
+    {
+      key:   'budgetWarning'    as const,
+      label: 'Budget Warning',
+      sub:   'At 80% of your budget',
+      icon:  'warning'          as IoniconName,
+      color: colors.status.warning,
+    },
+    {
+      key:   'paymentDue'       as const,
+      label: 'Payment Due',
+      sub:   'Upcoming planned payments',
+      icon:  'calendar'         as IoniconName,
+      color: colors.status.info,
+    },
+    {
+      key:   'remindersEnabled' as const,
+      label: 'Reminders',
+      sub:   'Scheduled personal reminders',
+      icon:  'alarm'            as IoniconName,
+      color: colors.brand.secondary,
+    },
+  ];
 
   // Sliding animated tab pill
   const [barW, setBarW] = useState(320);
@@ -85,7 +87,7 @@ export default function NotificationsScreen() {
       <Animated.View entering={FadeInDown.springify().damping(22)} style={s.header}>
         <Pressable
           onPress={() => router.back()}
-          style={[s.backBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
+          style={[s.backBtn, { backgroundColor: colors.glass.backgroundMid }]}
         >
           <Ionicons name="arrow-back" size={20} color={colors.text.primary} />
         </Pressable>
@@ -117,7 +119,7 @@ export default function NotificationsScreen() {
       {/* ── Sliding tab bar ── */}
       <Animated.View
         entering={FadeInDown.springify().damping(22).delay(40)}
-        style={[s.tabBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)' }]}
+        style={[s.tabBar, { backgroundColor: colors.glass.backgroundMid }]}
         onLayout={(e) => setBarW(e.nativeEvent.layout.width)}
       >
         {/* Animated sliding pill */}
@@ -129,7 +131,7 @@ export default function NotificationsScreen() {
               width: (barW - 8) / 2,
               backgroundColor: card,
               ...Platform.select({
-                ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.10, shadowRadius: 6 },
+                ios:     { shadowColor: colors.black, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.10, shadowRadius: 6 },
                 android: { elevation: 4 },
               }),
             },
@@ -155,8 +157,8 @@ export default function NotificationsScreen() {
                 {label}
               </AppText>
               {id === 'inbox' && screen.unreadCount > 0 && (
-                <View style={s.badge}>
-                  <AppText style={s.badgeText}>
+                <View style={[s.badge, { backgroundColor: colors.status.expense }]}>
+                  <AppText style={[s.badgeText, { color: colors.white }]}>
                     {screen.unreadCount > 9 ? '9+' : screen.unreadCount}
                   </AppText>
                 </View>
@@ -177,12 +179,12 @@ export default function NotificationsScreen() {
             {/* Alert preferences card */}
             <Animated.View
               entering={FadeInDown.springify().damping(22).delay(80)}
-              style={[s.settingsCard, { backgroundColor: card }]}
+              style={[s.settingsCard, { backgroundColor: card, shadowColor: colors.black }]}
             >
               {/* Card header */}
               <View style={s.settingsCardHeader}>
-                <View style={[s.settingsHeaderIcon, { backgroundColor: '#6C63FF18' }]}>
-                  <Ionicons name="options-outline" size={16} color="#6C63FF" />
+                <View style={[s.settingsHeaderIcon, { backgroundColor: colors.brand.primary + '18' }]}>
+                  <Ionicons name="options-outline" size={16} color={colors.brand.primary} />
                 </View>
                 <AppText
                   variant="labelMD"
@@ -201,7 +203,7 @@ export default function NotificationsScreen() {
                     s.settingRow,
                     idx > 0 && {
                       borderTopWidth: StyleSheet.hairlineWidth,
-                      borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                      borderTopColor: colors.glass.border,
                     },
                   ]}
                 >
@@ -220,11 +222,11 @@ export default function NotificationsScreen() {
                     value={screen.settings[key]}
                     onValueChange={() => screen.handlers.toggleSetting(key)}
                     trackColor={{
-                      false: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+                      false: colors.glass.backgroundStrong,
                       true:  color + '55',
                     }}
-                    thumbColor={screen.settings[key] ? color : (isDark ? '#666' : '#CCC')}
-                    ios_backgroundColor={isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}
+                    thumbColor={screen.settings[key] ? color : colors.text.tertiary}
+                    ios_backgroundColor={colors.glass.backgroundStrong}
                     style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
                   />
                 </View>
@@ -238,7 +240,7 @@ export default function NotificationsScreen() {
                   {screen.notifications.length} notification{screen.notifications.length !== 1 ? 's' : ''}
                 </AppText>
                 <Pressable onPress={screen.handlers.clearAll} hitSlop={8}>
-                  <AppText variant="caption" style={{ color: '#EF4444', fontWeight: '700' }}>
+                  <AppText variant="caption" style={{ color: colors.status.expense, fontWeight: '700' }}>
                     Clear All
                   </AppText>
                 </Pressable>
@@ -248,8 +250,8 @@ export default function NotificationsScreen() {
             {/* Notification list / empty state */}
             {screen.notifications.length === 0 ? (
               <Animated.View entering={FadeInDown.springify().damping(22).delay(160)} style={s.emptyWrap}>
-                <LinearGradient colors={['#6C63FF22', '#A78BFA22']} style={s.emptyIcon}>
-                  <Ionicons name="notifications-off-outline" size={40} color="#8B5CF6" />
+                <LinearGradient colors={[colors.brand.accent + '1C', colors.brand.accent + '06']} style={s.emptyIcon}>
+                  <Ionicons name="notifications-off-outline" size={40} color={colors.brand.accent} />
                 </LinearGradient>
                 <AppText variant="headingSM" color={colors.text.secondary} align="center" style={{ fontWeight: '800' }}>
                   All caught up!
@@ -280,15 +282,15 @@ export default function NotificationsScreen() {
             {!screen.hasPermission && (
               <Animated.View
                 entering={FadeInDown.springify().damping(22).delay(60)}
-                style={[s.permBanner, { borderColor: '#F59E0B50' }]}
+                style={[s.permBanner, { borderColor: colors.status.warning + '50' }]}
               >
                 <LinearGradient
-                  colors={['#F59E0B1A', '#FB923C0D']}
+                  colors={[colors.status.warning + '1A', colors.brand.accentWarm + '0D']}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   style={StyleSheet.absoluteFill}
                 />
-                <View style={[s.permIcon, { backgroundColor: '#F59E0B20' }]}>
-                  <Ionicons name="warning-outline" size={18} color="#F59E0B" />
+                <View style={[s.permIcon, { backgroundColor: colors.status.warning + '20' }]}>
+                  <Ionicons name="warning-outline" size={18} color={colors.status.warning} />
                 </View>
                 <AppText variant="bodyMD" color={colors.text.secondary} style={{ flex: 1, lineHeight: 20 }}>
                   Enable notifications to receive scheduled reminders
@@ -298,8 +300,8 @@ export default function NotificationsScreen() {
 
             {screen.reminders.length === 0 ? (
               <Animated.View entering={FadeInDown.springify().damping(22).delay(100)} style={s.emptyWrap}>
-                <LinearGradient colors={['#8B5CF622', '#A78BFA22']} style={s.emptyIcon}>
-                  <Ionicons name="alarm-outline" size={40} color="#8B5CF6" />
+                <LinearGradient colors={[colors.brand.accent + '1C', colors.brand.accent + '06']} style={s.emptyIcon}>
+                  <Ionicons name="alarm-outline" size={40} color={colors.brand.accent} />
                 </LinearGradient>
                 <AppText variant="headingSM" color={colors.text.secondary} align="center" style={{ fontWeight: '800' }}>
                   No reminders yet
@@ -333,12 +335,12 @@ export default function NotificationsScreen() {
             style={({ pressed }) => [s.fabBtn, { opacity: pressed ? 0.85 : 1 }]}
           >
             <LinearGradient
-              colors={['#7C3AED', '#A78BFA']}
+              colors={colors.gradients.purpleViolet as any}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={s.fabGrad}
             >
-              <Ionicons name="add" size={22} color="#fff" />
-              <AppText style={s.fabLabel}>Add Reminder</AppText>
+              <Ionicons name="add" size={22} color={colors.white} />
+              <AppText style={[s.fabLabel, { color: colors.white }]}>Add Reminder</AppText>
             </LinearGradient>
           </Pressable>
         </Animated.View>
@@ -390,18 +392,17 @@ const s = StyleSheet.create({
   },
   badge: {
     minWidth: 18, height: 18, borderRadius: 9,
-    backgroundColor: '#EF4444',
     alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 4,
   },
-  badgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
+  badgeText: { fontSize: 10, fontWeight: '800' },
 
   // Settings card
   settingsCard: {
     marginHorizontal: 16, borderRadius: 20,
     overflow: 'hidden', marginBottom: 10,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.07, shadowRadius: 16 },
+      ios:     { shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.07, shadowRadius: 16 },
       android: { elevation: 3 },
     }),
   },
@@ -457,5 +458,5 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 8, height: 58,
   },
-  fabLabel: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+  fabLabel: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
 });

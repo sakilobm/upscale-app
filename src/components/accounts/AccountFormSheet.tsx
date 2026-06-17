@@ -62,7 +62,7 @@ interface Props {
 }
 
 export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const insets  = useSafeAreaInsets();
   const slideY  = useSharedValue(440);
   const [form, setForm] = useState<AccountFormState>(DEFAULT_ACCOUNT_FORM);
@@ -101,10 +101,10 @@ export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: P
   return (
     <Modal transparent visible={visible} animationType="none" statusBarTranslucent onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.overlay}>
-        <Pressable style={s.backdrop} onPress={onClose} />
+        <Pressable style={[s.backdrop, { backgroundColor: colors.overlay.heavy }]} onPress={onClose} />
 
-        <Animated.View style={[s.sheet, sheetStyle, { backgroundColor: sheetBg, paddingBottom: insets.bottom + 16 }]}>
-          <View style={s.handle} />
+        <Animated.View style={[s.sheet, sheetStyle, { backgroundColor: sheetBg, paddingBottom: insets.bottom + 16, shadowColor: colors.black }]}>
+          <View style={[s.handle, { backgroundColor: colors.glass.backgroundStrong }]} />
 
           <View style={s.header}>
             <Pressable onPress={onClose} style={s.closeBtn}>
@@ -120,21 +120,21 @@ export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: P
             {/* Live preview card */}
             <View style={[s.previewWrap, { shadowColor: form.color }]}>
               <LinearGradient colors={[form.color, form.color + 'BB']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.previewCard}>
-                <View style={[s.previewBlob1, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
-                <View style={[s.previewBlob2, { backgroundColor: 'rgba(255,255,255,0.06)' }]} />
+                <View style={[s.previewBlob1, { backgroundColor: colors.glass.backgroundStrong }]} />
+                <View style={[s.previewBlob2, { backgroundColor: colors.glass.background }]} />
                 <View style={s.previewContent}>
                   <View style={s.previewTop}>
-                    <View style={[s.iconCircle, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                      <Ionicons name={form.icon} size={18} color="#FFF" />
+                    <View style={[s.iconCircle, { backgroundColor: colors.glass.backgroundStrong }]}>
+                      <Ionicons name={form.icon} size={18} color={colors.white} />
                     </View>
-                    <View style={s.typePill}>
-                      <AppText style={s.typeText}>{form.type.toUpperCase()}</AppText>
+                    <View style={[s.typePill, { backgroundColor: colors.glass.backgroundStrong }]}>
+                      <AppText style={[s.typeText, { color: colors.white }]}>{form.type.toUpperCase()}</AppText>
                     </View>
                   </View>
-                  <AppText style={[s.balanceValue, { fontSize: 22 }]}>
+                  <AppText style={[s.balanceValue, { fontSize: 22, color: colors.white }]}>
                     {form.currency || 'USD'} {parseFloat(form.balance || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </AppText>
-                  <AppText style={s.accountName}>{form.name || 'Account Name'}</AppText>
+                  <AppText style={[s.accountName, { color: colors.white + 'CC' }]}>{form.name || 'Account Name'}</AppText>
                 </View>
               </LinearGradient>
             </View>
@@ -156,7 +156,7 @@ export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: P
                   <Pressable key={code} onPress={() => set('currency', code)}
                     style={[s.chip, { backgroundColor: active ? form.color : inputBg, borderColor: active ? form.color : 'transparent', borderWidth: 1.5 }]}
                   >
-                    <AppText variant="labelSM" style={{ color: active ? '#FFF' : colors.text.secondary, fontWeight: active ? '700' : '500' }}>{code}</AppText>
+                    <AppText variant="labelSM" style={{ color: active ? colors.white : colors.text.secondary, fontWeight: active ? '700' : '500' }}>{code}</AppText>
                   </Pressable>
                 );
               })}
@@ -171,7 +171,7 @@ export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: P
                   <Pressable key={value} onPress={() => set('type', value)}
                     style={[s.chip, { backgroundColor: active ? form.color : inputBg, borderColor: active ? form.color : 'transparent', borderWidth: 1.5 }]}
                   >
-                    <AppText variant="labelSM" style={{ color: active ? '#FFF' : colors.text.secondary, fontWeight: active ? '700' : '500' }}>{label}</AppText>
+                    <AppText variant="labelSM" style={{ color: active ? colors.white : colors.text.secondary, fontWeight: active ? '700' : '500' }}>{label}</AppText>
                   </Pressable>
                 );
               })}
@@ -184,7 +184,7 @@ export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: P
                 const active = form.color === c;
                 return (
                   <Pressable key={c} onPress={() => set('color', c)}
-                    style={[s.colorDot, { backgroundColor: c }, active && { transform: [{ scale: 1.2 }], borderWidth: 3, borderColor: '#FFF', shadowColor: c, shadowOpacity: 0.7, shadowRadius: 8, shadowOffset: { width: 0, height: 0 }, elevation: 6 }]}
+                    style={[s.colorDot, { backgroundColor: c }, active && { transform: [{ scale: 1.2 }], borderWidth: 3, borderColor: colors.white, shadowColor: c, shadowOpacity: 0.7, shadowRadius: 8, shadowOffset: { width: 0, height: 0 }, elevation: 6 }]}
                   />
                 );
               })}
@@ -212,14 +212,14 @@ export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: P
                 <AppText variant="caption" color={colors.text.tertiary}>Used as primary account across the app</AppText>
               </View>
               <View style={[s.toggle, { backgroundColor: form.isDefault ? form.color : colors.glass.backgroundStrong }]}>
-                <View style={[s.toggleThumb, { transform: [{ translateX: form.isDefault ? 18 : 0 }] }]} />
+                <View style={[s.toggleThumb, { backgroundColor: colors.white, transform: [{ translateX: form.isDefault ? 18 : 0 }] }]} />
               </View>
             </Pressable>
 
             {/* Save */}
             <Pressable onPress={() => onSave(form)} style={[s.saveBtn, { backgroundColor: form.color }]}>
-              <Ionicons name="checkmark-circle" size={20} color="#FFF" />
-              <AppText style={{ color: '#FFF', fontWeight: '700', fontSize: 16 }}>
+              <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+              <AppText style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>
                 {editingAccount ? 'Save Changes' : 'Create Account'}
               </AppText>
             </Pressable>
@@ -232,15 +232,15 @@ export function AccountFormSheet({ visible, editingAccount, onClose, onSave }: P
 
 const s = StyleSheet.create({
   overlay:  { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.55)' },
+  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: SH * 0.92,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: -6 } },
+      ios:     { shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: -6 } },
       android: { elevation: 20 },
     }),
   },
-  handle:   { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(128,128,128,0.3)', alignSelf: 'center', marginTop: 10, marginBottom: 4 },
+  handle:   { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 4 },
   header:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12 },
   closeBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   scroll:   { paddingHorizontal: 20, paddingBottom: 16, gap: 4 },
@@ -258,10 +258,10 @@ const s = StyleSheet.create({
   previewContent: { flex: 1, padding: 16, justifyContent: 'space-between' },
   previewTop:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   iconCircle: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  typePill:   { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.2)' },
-  typeText:    { fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.9)', letterSpacing: 1 },
-  balanceValue: { fontSize: 28, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
-  accountName:  { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.8)' },
+  typePill:   { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99 },
+  typeText:    { fontSize: 10, fontWeight: '700', letterSpacing: 1 },
+  balanceValue: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  accountName:  { fontSize: 14, fontWeight: '600' },
 
   fieldLabel: { marginTop: 16, marginBottom: 6 },
   input: { height: 48, borderRadius: Radius.lg, paddingHorizontal: 14, fontSize: 15 },
@@ -275,7 +275,7 @@ const s = StyleSheet.create({
 
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 4 },
   toggle:    { width: 46, height: 28, borderRadius: 14, padding: 3, justifyContent: 'center' },
-  toggleThumb: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFF' },
+  toggleThumb: { width: 22, height: 22, borderRadius: 11 },
 
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 54, borderRadius: Radius.lg, marginTop: 20 },
 });

@@ -36,9 +36,8 @@ interface Props {
 }
 
 export function ReminderCard({ reminder, index, onToggle, onDelete }: Props) {
-  const { colors, isDark } = useTheme();
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
-  const accent  = '#8B5CF6';
+  const { colors } = useTheme();
+  const accent = colors.brand.secondary;
 
   return (
     <Animated.View
@@ -47,8 +46,8 @@ export function ReminderCard({ reminder, index, onToggle, onDelete }: Props) {
       style={[
         s.card,
         {
-          backgroundColor: cardBg,
-          borderColor:     isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+          backgroundColor: colors.surface.sheet,
+          borderColor:     colors.glass.background,
           opacity:         reminder.isActive ? 1 : 0.52,
         },
         reminder.isActive
@@ -57,7 +56,7 @@ export function ReminderCard({ reminder, index, onToggle, onDelete }: Props) {
               android: { elevation: 3 },
             })
           : Platform.select({
-              ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4 },
+              ios:     { shadowColor: colors.black, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4 },
               android: { elevation: 1 },
             }),
       ]}
@@ -75,7 +74,7 @@ export function ReminderCard({ reminder, index, onToggle, onDelete }: Props) {
         <View
           style={[
             s.statusDot,
-            { backgroundColor: reminder.isActive ? '#22C55E' : (isDark ? '#555' : '#D1D5DB') },
+            { backgroundColor: reminder.isActive ? colors.status.income : colors.text.tertiary },
           ]}
         />
       </View>
@@ -107,7 +106,7 @@ export function ReminderCard({ reminder, index, onToggle, onDelete }: Props) {
           </View>
 
           {/* Repeat badge */}
-          <View style={[s.repeatBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)' }]}>
+          <View style={[s.repeatBadge, { backgroundColor: colors.glass.background }]}>
             <Ionicons name={REPEAT_ICON[reminder.repeat] as any} size={10} color={colors.text.tertiary} />
             <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '500' }}>
               {REPEAT_LABEL[reminder.repeat]}
@@ -122,15 +121,15 @@ export function ReminderCard({ reminder, index, onToggle, onDelete }: Props) {
           value={reminder.isActive}
           onValueChange={onToggle}
           trackColor={{
-            false: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+            false: colors.glass.backgroundStrong,
             true:  accent + '55',
           }}
-          thumbColor={reminder.isActive ? accent : (isDark ? '#666' : '#CCC')}
-          ios_backgroundColor={isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}
+          thumbColor={reminder.isActive ? accent : colors.text.tertiary}
+          ios_backgroundColor={colors.glass.backgroundStrong}
           style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
         />
         <Pressable onPress={onDelete} hitSlop={10}>
-          <View style={[s.deleteCircle, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}>
+          <View style={[s.deleteCircle, { backgroundColor: colors.glass.background }]}>
             <Ionicons name="trash-outline" size={14} color={colors.text.tertiary} />
           </View>
         </Pressable>

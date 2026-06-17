@@ -52,7 +52,7 @@ export function SegmentedControl({
         styles.container,
         {
           width:           screenWidth,
-          backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+          backgroundColor: colors.glass.background,
           borderColor:     colors.glass.border,
         },
       ]}
@@ -64,9 +64,9 @@ export function SegmentedControl({
           indicatorStyle,
           {
             width:           segWidth - 6,
-            backgroundColor: isDark ? colors.brand.primary + '28' : '#FFFFFF',
-            borderColor:     isDark ? colors.brand.primary + '50' : 'rgba(0,0,0,0.08)',
-            shadowColor:     isDark ? colors.brand.primary : '#000',
+            backgroundColor: isDark ? colors.brand.primary + '28' : colors.surface.sheet,
+            borderColor:     isDark ? colors.brand.primary + '50' : colors.glass.border,
+            shadowColor:     isDark ? colors.brand.primary : colors.black,
             shadowOpacity:   isDark ? 0.3 : 0.1,
           },
         ]}
@@ -79,7 +79,7 @@ export function SegmentedControl({
             key={seg.key}
             onPress={() => onChange(seg.key)}
             style={[styles.segment, { width: segWidth }]}
-            android_ripple={{ color: 'transparent' }}
+            android_ripple={{ color: colors.transparent }}
           >
             <AppText
               variant="labelMD"

@@ -22,6 +22,7 @@ export const AccountChip = memo(function AccountChip({
         {
           borderColor: isActive ? colors.glass.borderStrong : colors.glass.border,
           backgroundColor: colors.background.card,
+          shadowColor: colors.black,
           opacity: pressed ? 0.85 : 1,
         },
       ]}
@@ -68,7 +69,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     minWidth: 160,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,

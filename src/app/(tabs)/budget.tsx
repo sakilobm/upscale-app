@@ -49,15 +49,15 @@ export default function BudgetScreen() {
   let iconColor = colors.brand.primary;
   let badgeBg   = colors.brand.primary + '18';
   if (isOver)         { iconName = 'alert-circle'; iconColor = colors.status.expense; badgeBg = colors.status.expense + '20'; }
-  else if (isWarning) { iconName = 'trending-up';  iconColor = '#F59E0B';            badgeBg = '#F59E0B20'; }
+  else if (isWarning) { iconName = 'trending-up';  iconColor = colors.status.warning;            badgeBg = colors.status.warning + '20'; }
 
   const dynamicBorderColor = isOver
     ? colors.status.expense + '50'
-    : isWarning ? '#F59E0B60' : colors.brand.primary + '30';
+    : isWarning ? colors.status.warning + '60' : colors.brand.primary + '30';
 
   const overviewGradient: [string, string] = isOver
     ? [colors.status.expense, colors.status.expense]
-    : isWarning ? ['#F59E0B', '#D97706'] : [colors.brand.primary, colors.brand.accent];
+    : isWarning ? [colors.status.warning, colors.status.warning] : [colors.brand.primary, colors.brand.accent];
 
   const progressShared = useSharedValue(0);
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function BudgetScreen() {
                 </View>
                 <AppText
                   variant="headingMD"
-                  color={isOver ? colors.status.expense : isWarning ? '#F59E0B' : colors.status.income}
+                  color={isOver ? colors.status.expense : isWarning ? colors.status.warning : colors.status.income}
                 >
                   {summary.percentUsed.toFixed(0)}%
                 </AppText>

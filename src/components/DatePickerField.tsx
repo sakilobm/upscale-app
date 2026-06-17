@@ -52,8 +52,8 @@ export function DatePickerField({
   const [open, setOpen] = useState(false);
 
   const accent      = colors.brand.primary;
-  const fieldBg     = isDark ? 'rgba(255,255,255,0.07)' : colors.background.tertiary;
-  const borderC     = isDark ? 'rgba(255,255,255,0.1)'  : 'rgba(0,0,0,0.09)';
+  const fieldBg     = isDark ? colors.glass.background : colors.background.tertiary;
+  const borderC     = colors.glass.border;
   const textPrimary = colors.text.primary;
   const textTert    = colors.text.tertiary;
   const hdrColor    = isDark ? 'rgba(148,163,184,0.55)' : 'rgba(0,0,0,0.32)';
@@ -183,7 +183,7 @@ export function DatePickerField({
                       s.dayNum,
                       { color: isPast ? textDim : textPrimary },
                       isToday && !isSel && { color: accent, fontWeight: '700' },
-                      isSel             && { color: '#fff',  fontWeight: '800' },
+                      isSel             && { color: colors.white, fontWeight: '800' },
                     ]}>
                       {day}
                     </AppText>

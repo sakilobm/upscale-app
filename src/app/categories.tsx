@@ -51,7 +51,7 @@ export default function CategoriesScreen() {
         <Animated.View entering={FadeInDown.springify().damping(18).stiffness(120)}>
           <View style={s.sectionRow}>
             <AppText variant="labelMD" color={colors.text.secondary}>Built-in</AppText>
-            <View style={[s.countPill, { backgroundColor: isDark ? '#FFFFFF10' : '#00000008' }]}>
+            <View style={[s.countPill, { backgroundColor: colors.glass.background }]}>
               <AppText variant="caption" color={colors.text.tertiary}>{builtIn.length}</AppText>
             </View>
           </View>
@@ -76,7 +76,7 @@ export default function CategoriesScreen() {
           {custom.length === 0 ? (
             <Pressable
               onPress={formSheet.openCreate}
-              style={[s.emptyBox, { backgroundColor: isDark ? '#FFFFFF06' : '#F8F9FF', borderColor: colors.brand.primary + '35' }]}
+              style={[s.emptyBox, { backgroundColor: colors.glass.background, borderColor: colors.brand.primary + '35' }]}
             >
               <View style={[s.emptyIcon, { backgroundColor: colors.brand.primary + '18' }]}>
                 <Ionicons name="add" size={26} color={colors.brand.primary} />

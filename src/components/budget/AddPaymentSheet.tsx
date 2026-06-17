@@ -48,9 +48,9 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
   const handleShow = () => { scale.value = withSpring(1, { damping: 18, stiffness: 220 }); };
   const handleHide = () => { scale.value = withSpring(0.86, { damping: 18, stiffness: 220 }); };
 
-  const cardBg    = isDark ? colors.background.secondary : '#FFFFFF';
-  const inputBg   = isDark ? colors.background.primary   : '#F2F3F5';
-  const dividerC  = isDark ? 'rgba(255,255,255,0.07)'    : 'rgba(0,0,0,0.07)';
+  const cardBg = colors.surface.sheet;
+  const inputBg = colors.surface.input;
+  const dividerC = colors.glass.background;
 
   return (
     <>
@@ -60,11 +60,11 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
           <BlurView intensity={isDark ? 40 : 30} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.38)' }]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay.medium }]} />
         </Pressable>
 
         <View style={s.outer} pointerEvents="box-none">
-          <Animated.View style={[s.sheet, sheetStyle, { backgroundColor: cardBg }]}>
+          <Animated.View style={[s.sheet, sheetStyle, { backgroundColor: cardBg, shadowColor: colors.black }]}>
 
             {/* ── Handle ─────────────────────────────── */}
             <View style={[s.handle, { backgroundColor: colors.text.tertiary + '35' }]} />
@@ -79,7 +79,7 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
               </View>
               <Pressable
                 onPress={onClose} hitSlop={12}
-                style={[s.closeBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}
+                style={[s.closeBtn, { backgroundColor: colors.glass.backgroundMid }]}
               >
                 <Ionicons name="close" size={17} color={colors.text.secondary} />
               </Pressable>
@@ -94,8 +94,8 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
                   onPress={handleSubmit}
                   style={({ pressed }) => [s.submitBtn, { backgroundColor: colors.brand.primary, opacity: pressed ? 0.8 : 1 }]}
                 >
-                  <Ionicons name="checkmark-circle" size={20} color={isDark ? '#000' : '#fff'} />
-                  <AppText variant="labelLG" style={{ color: isDark ? '#000' : '#fff', fontWeight: '700' }}>
+                  <Ionicons name="checkmark-circle" size={20} color={colors.brand.onPrimary} />
+                  <AppText variant="labelLG" style={{ color: colors.brand.onPrimary, fontWeight: '700' }}>
                     Add Payment
                   </AppText>
                 </Pressable>
@@ -156,7 +156,7 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
                           s.catChip,
                           {
                             backgroundColor: active ? cat.color + '18' : inputBg,
-                            borderColor:     active ? cat.color + '55' : 'transparent',
+                            borderColor: active ? cat.color + '55' : 'transparent',
                             borderWidth: 1.5,
                           },
                         ]}
@@ -200,7 +200,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.14, shadowRadius: 24 },
+      ios: { shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.14, shadowRadius: 24 },
       android: { elevation: 24 },
     }),
   },
@@ -242,8 +242,8 @@ const s = StyleSheet.create({
     borderRadius: Radius.full, borderWidth: 1,
   },
 
-  catRow:    { gap: 8, paddingBottom: 4, paddingRight: 4 },
-  catChip:   { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderRadius: Radius.full },
+  catRow: { gap: 8, paddingBottom: 4, paddingRight: 4 },
+  catChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderRadius: Radius.full },
   catIconBox: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 
   submitBtn: {

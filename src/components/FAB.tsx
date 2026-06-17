@@ -46,8 +46,8 @@ export function FAB({ icon, label, onPress, bottom }: FABProps) {
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}
         />
-        <Ionicons name={icon} size={20} color="#FFFFFF" />
-        <AppText style={styles.label}>{label}</AppText>
+        <Ionicons name={icon} size={20} color={colors.white} />
+        <AppText style={[styles.label, { color: colors.white }]}>{label}</AppText>
       </Pressable>
     </Animated.View>
   );
@@ -72,7 +72,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
   },
   label: {
-    color:         '#FFFFFF',
     fontWeight:    '700',
     fontSize:      15,
     letterSpacing: 0.1,

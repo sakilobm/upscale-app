@@ -28,8 +28,8 @@ interface Props {
 }
 
 export function SwipeableTransactionRow({ tx, onDelete, onPress }: Props) {
-  const { colors, isDark } = useTheme();
-  const cardBg     = isDark ? colors.background.secondary : '#FFFFFF';
+  const { colors } = useTheme();
+  const cardBg = colors.surface.sheet;
   const translateX = useSharedValue(0);
   const rowOpacity = useSharedValue(1);
   const swipedRef  = useRef(false);
@@ -69,7 +69,7 @@ export function SwipeableTransactionRow({ tx, onDelete, onPress }: Props) {
   return (
     <View style={s.wrapper}>
       <Pressable onPress={dismiss} style={[s.deleteAction, { backgroundColor: colors.status.expense }]}>
-        <Ionicons name="trash-outline" size={17} color="#fff" />
+        <Ionicons name="trash-outline" size={17} color={colors.white} />
       </Pressable>
 
       <GestureDetector gesture={panGesture}>

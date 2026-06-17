@@ -23,9 +23,9 @@ interface Props {
 }
 
 export function AccountStatCard({ label, value, icon, color }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   return (
-    <View style={[s.card, { backgroundColor: isDark ? colors.background.secondary : '#FFFFFF' }]}>
+    <View style={[s.card, { backgroundColor: colors.surface.sheet, shadowColor: colors.black }]}>
       <View style={[s.iconWrap, { backgroundColor: color + '18' }]}>
         <Ionicons name={icon} size={18} color={color} />
       </View>
@@ -39,7 +39,7 @@ const s = StyleSheet.create({
   card: {
     flex: 1, borderRadius: Radius.lg, padding: 12, alignItems: 'flex-start',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
+      ios:     { shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
       android: { elevation: 2 },
     }),
   },

@@ -69,9 +69,9 @@ export function ConfirmModal({
   }));
   const backdropStyle = useAnimatedStyle(() => ({ opacity: dimOpacity.value }));
 
-  const accentColor  = danger ? '#EF4444' : colors.brand.primary;
+  const accentColor  = danger ? colors.status.expense : colors.brand.primary;
   const iconName: IoniconName = icon ?? (danger ? 'warning' : 'information-circle');
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
+  const cardBg = colors.surface.sheet;
 
   if (!visible) return null;
 
@@ -85,7 +85,7 @@ export function ConfirmModal({
             tint={isDark ? 'dark' : 'light'}
             style={StyleSheet.absoluteFill}
           />
-          <View style={[StyleSheet.absoluteFill, styles.dimLayer]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay.medium }]} />
           <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
         </Animated.View>
 
@@ -96,12 +96,13 @@ export function ConfirmModal({
             cardStyle,
             {
               backgroundColor: cardBg,
-              borderColor:     isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+              borderColor:     colors.glass.background,
+              shadowColor:     colors.black,
             },
           ]}
         >
           {/* Icon circle */}
-          <View style={[styles.iconCircle, { backgroundColor: accentColor + (isDark ? '22' : '12') }]}>
+          <View style={[styles.iconCircle, { backgroundColor: accentColor + '22' }]}>
             <Ionicons name={iconName} size={28} color={accentColor} />
           </View>
 
@@ -136,8 +137,8 @@ export function ConfirmModal({
                 styles.btn,
                 styles.cancelBtn,
                 {
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-                  borderColor:     isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)',
+                  backgroundColor: colors.glass.background,
+                  borderColor:     colors.glass.backgroundMid,
                   opacity: pressed ? 0.7 : 1,
                 },
               ]}
@@ -176,7 +177,7 @@ export function ConfirmModal({
                 variant="labelLG"
                 numberOfLines={1}
                 adjustsFontSizeToFit
-                style={{ color: '#FFFFFF', fontWeight: '700', lineHeight: undefined }}
+                style={{ color: colors.white, fontWeight: '700', lineHeight: undefined }}
               >
                 {confirmLabel}
               </AppText>
@@ -195,9 +196,7 @@ const styles = StyleSheet.create({
     alignItems:      'center',
     paddingHorizontal: 32,
   },
-  dimLayer: {
-    backgroundColor: 'rgba(0,0,0,0.38)',
-  },
+  dimLayer: {},
   card: {
     width:          '100%',
     maxWidth:       360,
@@ -209,7 +208,6 @@ const styles = StyleSheet.create({
     zIndex:         1,
     ...Platform.select({
       ios: {
-        shadowColor:   '#000',
         shadowOffset:  { width: 0, height: 20 },
         shadowOpacity: 0.22,
         shadowRadius:  32,

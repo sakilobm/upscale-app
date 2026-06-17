@@ -37,20 +37,21 @@ const LightCard = memo(function LightCard({
   isLoading,
   currency,
 }: BalanceCardProps) {
+  const { colors } = useTheme();
   const sym = CURRENCY_SYMBOLS[currency] ?? '$';
   return (
-    <View style={[styles.container, lightStyles.container]}>
+    <View style={[styles.container, lightStyles.container, { shadowColor: colors.brand.primary, borderColor: colors.balanceCard.containerBorder }]}>
       {/* Background neon gradient base */}
       <LinearGradient
-        colors={['#C4F135', '#D9FF5A', '#E3FF8C']}
+        colors={colors.balanceCard.gradient as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[StyleSheet.absoluteFill, { borderRadius: Radius['2xl'] }]}
       />
 
       {/* Decorative large shapes placed behind the blur to appear as liquid refractive elements */}
-      <Text style={styles.decorAsterisk} allowFontScaling={false}>✳</Text>
-      <Text style={styles.decorAsteriskSm} allowFontScaling={false}>✳</Text>
+      <Text style={[styles.decorAsterisk, { color: colors.black + '26' }]} allowFontScaling={false}>✳</Text>
+      <Text style={[styles.decorAsteriskSm, { color: colors.black + '1C' }]} allowFontScaling={false}>✳</Text>
 
       {/* Glassmorphic frosted blur layer */}
       <BlurView
@@ -60,33 +61,33 @@ const LightCard = memo(function LightCard({
       />
 
       {/* Liquid glow orbs to refract light */}
-      <View style={lightStyles.glowTopRight} />
-      <View style={lightStyles.glowBottomLeft} />
-      <View style={[lightStyles.border, { borderRadius: Radius['2xl'] }]} />
+      <View style={[lightStyles.glowTopRight, { backgroundColor: colors.balanceCard.glowTopRight }]} />
+      <View style={[lightStyles.glowBottomLeft, { backgroundColor: colors.balanceCard.glowBottomLeft }]} />
+      <View style={[lightStyles.border, { borderRadius: Radius['2xl'], borderColor: colors.balanceCard.innerBorder }]} />
 
       <View style={styles.content}>
         {/* Top row: card name + currency */}
         <View style={styles.cardTopRow}>
           <View style={styles.cardNameRow}>
-            <View style={styles.toggleTrack}>
-              <View style={styles.toggleThumb} />
+            <View style={[styles.toggleTrack, { backgroundColor: colors.black }]}>
+              <View style={[styles.toggleThumb, { backgroundColor: colors.white }]} />
             </View>
             <AppText
               variant="labelMD"
-              color="#0A0A0A"
+              color={colors.balanceCard.titleColor}
               style={styles.cardName}
             >
               MoneyCard
             </AppText>
           </View>
           <View style={styles.currencyChip}>
-            <AppText variant="labelSM" color="#0A0A0A">{currency}</AppText>
+            <AppText variant="labelSM" color={colors.balanceCard.valueColor}>{currency}</AppText>
           </View>
         </View>
 
         {/* Card number strip */}
-        <View style={styles.cardNumberStrip}>
-          <AppText variant="labelMD" color="#FFFFFF" style={styles.cardDots}>
+        <View style={[styles.cardNumberStrip, { backgroundColor: colors.black + 'D1' }]}>
+          <AppText variant="labelMD" color={colors.white} style={styles.cardDots}>
             ●●●●  ●●●●  ●●●●  4829
           </AppText>
         </View>
@@ -94,22 +95,22 @@ const LightCard = memo(function LightCard({
         {/* Bottom row: balance + expiry */}
         <View style={styles.cardBottomRow}>
           <View>
-            <AppText variant="labelSM" color="rgba(0,0,0,0.55)" style={styles.balanceLabel}>
+            <AppText variant="labelSM" color={colors.balanceCard.labelColor} style={styles.balanceLabel}>
               Your Balance
             </AppText>
             {isLoading ? (
-              <ActivityIndicator size="small" color="#0A0A0A" style={styles.loader} />
+              <ActivityIndicator size="small" color={colors.balanceCard.balanceColor} style={styles.loader} />
             ) : (
               <AppText
                 variant="numericLG"
-                color="#0A0A0A"
+                color={colors.balanceCard.balanceColor}
                 style={styles.balanceAmount}
               >
                 {sym}{formatBalance(totalBalance)}
               </AppText>
             )}
           </View>
-          <AppText variant="labelMD" color="rgba(0,0,0,0.6)">
+          <AppText variant="labelMD" color={colors.balanceCard.valueColor}>
             09/26
           </AppText>
         </View>
@@ -124,12 +125,13 @@ const DarkCard = memo(function DarkCard({
   isLoading,
   currency,
 }: BalanceCardProps) {
+  const { colors } = useTheme();
   const sym = CURRENCY_SYMBOLS[currency] ?? '$';
   return (
-    <View style={[styles.container, darkStyles.container]}>
+    <View style={[styles.container, darkStyles.container, { shadowColor: colors.brand.primary, borderColor: colors.balanceCard.containerBorder }]}>
       {/* Background gradient base */}
       <LinearGradient
-        colors={['#18103A', '#0A051C', '#040712']}
+        colors={colors.balanceCard.gradient as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[StyleSheet.absoluteFill, { borderRadius: Radius['2xl'] }]}
@@ -139,44 +141,44 @@ const DarkCard = memo(function DarkCard({
         tint="dark"
         style={[StyleSheet.absoluteFill, { borderRadius: Radius['2xl'] }]}
       />
-      <View style={darkStyles.glowTopRight} />
-      <View style={darkStyles.glowBottomLeft} />
-      <View style={[darkStyles.border, { borderRadius: Radius['2xl'] }]} />
+      <View style={[darkStyles.glowTopRight, { backgroundColor: colors.balanceCard.glowTopRight }]} />
+      <View style={[darkStyles.glowBottomLeft, { backgroundColor: colors.balanceCard.glowBottomLeft }]} />
+      <View style={[darkStyles.border, { borderRadius: Radius['2xl'], borderColor: colors.balanceCard.innerBorder }]} />
 
       <View style={styles.content}>
-        <AppText variant="labelMD" color="rgba(148,163,184,0.9)" style={darkStyles.label}>
+        <AppText variant="labelMD" color={colors.balanceCard.labelColor} style={darkStyles.label}>
           TOTAL BALANCE
         </AppText>
         {isLoading ? (
-          <ActivityIndicator size="small" color="#A78BFA" style={styles.loader} />
+          <ActivityIndicator size="small" color={colors.balanceCard.balanceColor} style={styles.loader} />
         ) : (
-          <AppText variant="numericLG" color="#F1F5F9" style={darkStyles.balance}>
+          <AppText variant="numericLG" color={colors.balanceCard.balanceColor} style={darkStyles.balance}>
             {sym}{formatBalance(totalBalance)}
           </AppText>
         )}
 
-        <View style={darkStyles.divider} />
+        <View style={[darkStyles.divider, { backgroundColor: colors.glass.border }]} />
 
         <View style={darkStyles.statsRow}>
           <View style={darkStyles.statItem}>
-            <AppText variant="labelSM" color="rgba(148,163,184,0.8)">INCOME</AppText>
-            <AppText variant="headingSM" color="#10B981">
+            <AppText variant="labelSM" color={colors.balanceCard.labelColor}>INCOME</AppText>
+            <AppText variant="headingSM" color={colors.status.income}>
               +{sym}{formatBalance(monthSummary.totalIncome)}
             </AppText>
           </View>
-          <View style={darkStyles.statDivider} />
+          <View style={[darkStyles.statDivider, { backgroundColor: colors.glass.border }]} />
           <View style={darkStyles.statItem}>
-            <AppText variant="labelSM" color="rgba(148,163,184,0.8)">EXPENSES</AppText>
-            <AppText variant="headingSM" color="#EF4444">
+            <AppText variant="labelSM" color={colors.balanceCard.labelColor}>EXPENSES</AppText>
+            <AppText variant="headingSM" color={colors.status.expense}>
               -{sym}{formatBalance(monthSummary.totalExpense)}
             </AppText>
           </View>
-          <View style={darkStyles.statDivider} />
+          <View style={[darkStyles.statDivider, { backgroundColor: colors.glass.border }]} />
           <View style={darkStyles.statItem}>
-            <AppText variant="labelSM" color="rgba(148,163,184,0.8)">SAVINGS</AppText>
+            <AppText variant="labelSM" color={colors.balanceCard.labelColor}>SAVINGS</AppText>
             <AppText
               variant="headingSM"
-              color={monthSummary.netSavings >= 0 ? '#10B981' : '#EF4444'}
+              color={monthSummary.netSavings >= 0 ? colors.status.income : colors.status.expense}
             >
               {monthSummary.netSavings >= 0 ? '+' : '-'}{sym}{formatBalance(Math.abs(monthSummary.netSavings))}
             </AppText>
@@ -212,7 +214,6 @@ const styles = StyleSheet.create({
     width: 34,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#0A0A0A',
     justifyContent: 'center',
     paddingHorizontal: 3,
   },
@@ -220,7 +221,6 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#FFFFFF',
     alignSelf: 'flex-end',
   },
   cardName: {
@@ -235,7 +235,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,0,0,0.15)',
   },
   cardNumberStrip: {
-    backgroundColor: 'rgba(0,0,0,0.82)',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: Spacing['4'],
@@ -267,7 +266,6 @@ const styles = StyleSheet.create({
     right: -20,
     top: -40,
     fontSize: 200,
-    color: 'rgba(0,0,0,0.07)',
     lineHeight: 210,
   },
   decorAsteriskSm: {
@@ -275,7 +273,6 @@ const styles = StyleSheet.create({
     left: -30,
     bottom: -30,
     fontSize: 100,
-    color: 'rgba(0,0,0,0.05)',
     lineHeight: 110,
   },
 });
@@ -283,8 +280,6 @@ const styles = StyleSheet.create({
 const darkStyles = StyleSheet.create({
   container: {
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    shadowColor: '#6C63FF',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
@@ -297,7 +292,6 @@ const darkStyles = StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: 80,
-    backgroundColor: '#6C63FF',
     opacity: 0.12,
   },
   glowBottomLeft: {
@@ -307,24 +301,20 @@ const darkStyles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#38BDF8',
     opacity: 0.08,
   },
   border: {
     ...StyleSheet.absoluteFill,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
   },
   label: {
     letterSpacing: 2,
   },
   balance: {
-    color: '#F1F5F9',
     marginTop: 4,
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     marginVertical: Spacing['3'],
   },
   statsRow: {
@@ -339,7 +329,6 @@ const darkStyles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 36,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     marginHorizontal: Spacing['3'],
   },
 });
@@ -347,8 +336,6 @@ const darkStyles = StyleSheet.create({
 const lightStyles = StyleSheet.create({
   container: {
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.45)',
-    shadowColor: '#C4F135',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.22,
     shadowRadius: 16,
@@ -361,7 +348,6 @@ const lightStyles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: '#FFFFFF',
     opacity: 0.35,
   },
   glowBottomLeft: {
@@ -371,13 +357,11 @@ const lightStyles = StyleSheet.create({
     width: 110,
     height: 110,
     borderRadius: 55,
-    backgroundColor: '#38BDF8',
     opacity: 0.20,
   },
   border: {
     ...StyleSheet.absoluteFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.55)',
   },
 });
 

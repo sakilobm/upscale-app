@@ -28,10 +28,9 @@ function useEntrance(delay: number) {
 }
 
 export function SectionCard({ title, children, delay = 0, accentColor }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const anim  = useEntrance(delay);
   const dot   = accentColor ?? colors.brand.primary;
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
 
   return (
     <Animated.View style={anim}>
@@ -50,8 +49,9 @@ export function SectionCard({ title, children, delay = 0, accentColor }: Props) 
         style={[
           s.card,
           {
-            backgroundColor: cardBg,
-            borderColor:     isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+            backgroundColor: colors.surface.sheet,
+            borderColor:     colors.glass.background,
+            shadowColor:     colors.black,
           },
         ]}
       >
@@ -79,7 +79,7 @@ const s = StyleSheet.create({
     borderWidth:  1,
     overflow:     'hidden',
     ...Platform.select({
-      ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 14 },
+      ios:     { shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 14 },
       android: { elevation: 3 },
     }),
   },

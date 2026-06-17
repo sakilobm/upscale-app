@@ -41,6 +41,15 @@ export function useProfile() {
     (code: CurrencyCode) => {
       if (user) {
         setUser({ ...user, currency: code });
+        
+        // Sync all existing accounts' currencies to the new currency code
+        const { accounts, updateAccount } = require('@store/accountStore').useAccountStore.getState();
+        accounts.forEach((a: any) => updateAccount(a.id, { currency: code }));
+
+        // Sync all existing transactions' currencies to the new currency code
+        const { transactions, updateTransaction } = useTransactionStore.getState();
+        transactions.forEach((t) => updateTransaction(t.id, { currency: code }));
+
         toast.success(`Currency changed to ${code}`);
       }
     },

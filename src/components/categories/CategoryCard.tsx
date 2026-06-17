@@ -31,7 +31,7 @@ interface Props {
 }
 
 export function CategoryCard({ cat, onEdit, onDelete }: Props) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const [showActions, setShowActions] = useState(false);
 
   const scale    = useSharedValue(1);
@@ -62,17 +62,17 @@ export function CategoryCard({ cat, onEdit, onDelete }: Props) {
         >
           <Ionicons name={cat.icon as any} size={28} color={cat.color} />
 
-          <View style={[s.badge, { backgroundColor: cat.isCustom ? cat.color + '28' : (isDark ? '#FFFFFF14' : '#00000010') }]}>
+          <View style={[s.badge, { backgroundColor: cat.isCustom ? cat.color + '28' : colors.glass.backgroundMid }]}>
             <Ionicons name={cat.isCustom ? 'pencil' : 'lock-closed'} size={9} color={cat.isCustom ? cat.color : colors.text.tertiary} />
           </View>
 
           {showActions && (
-            <View style={[s.overlay, { backgroundColor: isDark ? '#0F1524EE' : '#FFFFFFEE', borderRadius: Radius.xl }]}>
+            <View style={[s.overlay, { backgroundColor: colors.background.secondary + 'EE', borderRadius: Radius.xl }]}>
               <Pressable onPress={() => { setShowActions(false); onEdit(cat); }} style={[s.overlayBtn, { backgroundColor: cat.color + '22' }]}>
                 <Ionicons name="pencil" size={15} color={cat.color} />
               </Pressable>
-              <Pressable onPress={() => { setShowActions(false); onDelete(cat); }} style={[s.overlayBtn, { backgroundColor: '#EF444422' }]}>
-                <Ionicons name="trash" size={15} color="#EF4444" />
+              <Pressable onPress={() => { setShowActions(false); onDelete(cat); }} style={[s.overlayBtn, { backgroundColor: colors.status.expense + '22' }]}>
+                <Ionicons name="trash" size={15} color={colors.status.expense} />
               </Pressable>
               <Pressable onPress={() => setShowActions(false)} hitSlop={8}>
                 <Ionicons name="close-circle" size={18} color={colors.text.tertiary} />

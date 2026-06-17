@@ -61,8 +61,8 @@ export function AccountBar() {
           onPress={() => router.push('/accounts')}
           style={({ pressed }) => [s.manageBtn, { opacity: pressed ? 0.65 : 1 }]}
         >
-          <Ionicons name="settings-outline" size={14} color={colors.text.tertiary} />
-          <AppText variant="labelSM" color={colors.text.tertiary} style={{ fontSize: 12 }}>Manage</AppText>
+          <Ionicons name="settings-outline" size={14} color={colors.text.secondary} />
+          <AppText variant="labelSM" color={colors.text.secondary} style={{ fontSize: 12 }}>Manage</AppText>
         </Pressable>
       </ScrollView>
     </View>

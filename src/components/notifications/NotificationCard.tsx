@@ -6,15 +6,24 @@ import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
 import { format, isToday, isYesterday, formatDistanceToNowStrict } from 'date-fns';
 import type { AppNotification, NotificationType } from '@store/notificationStore';
+import type { AppTheme } from '@constants/themes';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
-const TYPE_META: Record<NotificationType, { icon: IoniconName; color: string }> = {
-  budget_exceeded: { icon: 'alert-circle',      color: '#EF4444' },
-  budget_warning:  { icon: 'warning',            color: '#F59E0B' },
-  payment_due:     { icon: 'calendar',           color: '#3B82F6' },
-  reminder:        { icon: 'alarm',              color: '#8B5CF6' },
-  system:          { icon: 'information-circle', color: '#64748B' },
+const TYPE_ICON: Record<NotificationType, IoniconName> = {
+  budget_exceeded: 'alert-circle',
+  budget_warning:  'warning',
+  payment_due:     'calendar',
+  reminder:        'alarm',
+  system:          'information-circle',
+};
+
+const TYPE_COLOR: Record<NotificationType, (c: AppTheme) => string> = {
+  budget_exceeded: (c) => c.status.expense,
+  budget_warning:  (c) => c.status.warning,
+  payment_due:     (c) => c.status.info,
+  reminder:        (c) => c.brand.secondary,
+  system:          (c) => c.text.secondary,
 };
 
 function relativeTime(iso: string): string {
@@ -32,10 +41,10 @@ interface Props {
 }
 
 export function NotificationCard({ notification, index, onPress, onDelete }: Props) {
-  const { colors, isDark } = useTheme();
-  const meta   = TYPE_META[notification.type];
-  const isRead = notification.isRead;
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
+  const { colors } = useTheme();
+  const metaIcon  = TYPE_ICON[notification.type];
+  const metaColor = TYPE_COLOR[notification.type](colors);
+  const isRead    = notification.isRead;
 
   return (
     <Animated.View
@@ -44,28 +53,28 @@ export function NotificationCard({ notification, index, onPress, onDelete }: Pro
       style={[
         s.card,
         {
-          backgroundColor: cardBg,
-          borderColor:     isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+          backgroundColor: colors.surface.sheet,
+          borderColor:     colors.glass.background,
         },
         !isRead && Platform.select({
-          ios:     { shadowColor: meta.color, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 10 },
+          ios:     { shadowColor: metaColor, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 10 },
           android: { elevation: 3 },
         }),
         isRead && Platform.select({
-          ios:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4 },
+          ios:     { shadowColor: colors.black, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4 },
           android: { elevation: 1 },
         }),
       ]}
     >
       {/* Unread left accent bar */}
       {!isRead && (
-        <View style={[s.accentBar, { backgroundColor: meta.color }]} />
+        <View style={[s.accentBar, { backgroundColor: metaColor }]} />
       )}
 
       <Pressable onPress={onPress} style={[s.pressable, !isRead && { paddingLeft: 16 }]}>
         {/* Icon circle */}
-        <View style={[s.iconCircle, { backgroundColor: meta.color + (isRead ? '12' : '1E') }]}>
-          <Ionicons name={meta.icon} size={22} color={meta.color} style={isRead ? { opacity: 0.7 } : undefined} />
+        <View style={[s.iconCircle, { backgroundColor: metaColor + (isRead ? '12' : '1E') }]}>
+          <Ionicons name={metaIcon} size={22} color={metaColor} style={isRead ? { opacity: 0.7 } : undefined} />
         </View>
 
         {/* Content */}
@@ -80,7 +89,7 @@ export function NotificationCard({ notification, index, onPress, onDelete }: Pro
               {notification.title}
             </AppText>
             {!isRead && (
-              <View style={[s.unreadDot, { backgroundColor: meta.color }]} />
+              <View style={[s.unreadDot, { backgroundColor: metaColor }]} />
             )}
           </View>
 
@@ -101,7 +110,7 @@ export function NotificationCard({ notification, index, onPress, onDelete }: Pro
 
       {/* Delete button */}
       <Pressable onPress={onDelete} style={s.deleteBtn} hitSlop={10}>
-        <View style={[s.deleteCircle, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}>
+        <View style={[s.deleteCircle, { backgroundColor: colors.glass.background }]}>
           <Ionicons name="trash-outline" size={15} color={colors.text.tertiary} />
         </View>
       </Pressable>

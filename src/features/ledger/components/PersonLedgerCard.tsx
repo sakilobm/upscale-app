@@ -160,7 +160,7 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
   const dirColor =
     entry.direction === 'OWED_TO_ME' ? colors.status.income : colors.status.expense;
 
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
+  const cardBg = colors.surface.sheet;
 
   return (
     <View style={styles.swipeContainer}>
@@ -171,14 +171,14 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
             onPress={handleSettle}
             style={[styles.actionBtn, { backgroundColor: colors.status.income }]}
           >
-            <Ionicons name="checkmark" size={20} color="#fff" />
+            <Ionicons name="checkmark" size={20} color={colors.white} />
           </Pressable>
         )}
         <Pressable
           onPress={handleDelete}
           style={[styles.actionBtn, { backgroundColor: colors.status.expense }]}
         >
-          <Ionicons name="trash-outline" size={18} color="#fff" />
+          <Ionicons name="trash-outline" size={18} color={colors.white} />
         </Pressable>
       </View>
 
@@ -190,8 +190,8 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
             cardStyle,
             {
               backgroundColor: cardBg,
-              borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-              shadowColor: isDark ? '#000' : '#000',
+              borderColor: colors.glass.background,
+              shadowColor: colors.black,
             },
           ]}
         >
@@ -205,7 +205,7 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
               }
             }}
             style={styles.cardContent}
-            android_ripple={{ color: 'rgba(255,255,255,0.05)' }}
+            android_ripple={{ color: colors.glass.backgroundMid }}
           >
             {/* Avatar */}
             <AvatarRing

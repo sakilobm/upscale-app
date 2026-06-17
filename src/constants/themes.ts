@@ -7,6 +7,14 @@ export type AppTheme = {
     tertiary: string;
     card: string;
   };
+  surface: {
+    input: string;   // TextInput / interactive field background
+    sheet: string;   // Modal / bottom-sheet card surface
+  };
+  overlay: {
+    medium: string;  // Standard modal backdrop (~45% opacity)
+    heavy:  string;  // Dense overlay backdrop (~60% opacity)
+  };
   glass: {
     background: string;
     backgroundMid: string;
@@ -20,6 +28,7 @@ export type AppTheme = {
     secondary: string;
     accent: string;
     accentWarm: string;
+    onPrimary: string;  // Contrasting text/icon color on top of brand.primary
   };
   gradients: {
     purpleBlue: readonly [string, string];
@@ -32,6 +41,9 @@ export type AppTheme = {
     expense: readonly [string, string];
     savings: readonly [string, string];
     card: readonly [string, string];
+    amberOrange: readonly [string, string];
+    indigoViolet: readonly [string, string];
+    amberYellow: readonly [string, string];
   };
   status: {
     income: string;
@@ -74,6 +86,31 @@ export type AppTheme = {
   white: string;
   black: string;
   transparent: string;
+  balanceCard: {
+    gradient: readonly [string, string, string];
+    glowTopRight: string;
+    glowBottomLeft: string;
+    containerBorder: string;
+    innerBorder: string;
+    titleColor: string;
+    balanceColor: string;
+    labelColor: string;
+    valueColor: string;
+  };
+  profileCard: {
+    gradient: readonly [string, string];
+    blobTL: string;
+    blobBR: string;
+    borderColor: string;
+    nameColor: string;
+    emailColor: string;
+    badgeText: string;
+    badgeBg: string;
+    badgeBorder: string;
+    proBg: string;
+    proBorder: string;
+    proText: string;
+  };
   isDark: boolean;
 };
 
@@ -83,6 +120,14 @@ export const DarkTheme: AppTheme = {
     secondary: '#0D1220',
     tertiary: '#121829',
     card: '#0F1524',
+  },
+  surface: {
+    input: '#1A2235',
+    sheet: '#0D1220',
+  },
+  overlay: {
+    medium: 'rgba(0,0,0,0.45)',
+    heavy:  'rgba(0,0,0,0.60)',
   },
   glass: {
     background: 'rgba(255, 255, 255, 0.05)',
@@ -97,6 +142,7 @@ export const DarkTheme: AppTheme = {
     secondary: '#A78BFA',
     accent: '#38BDF8',
     accentWarm: '#FB923C',
+    onPrimary: '#FFFFFF',
   },
   gradients: {
     purpleBlue: ['#6C63FF', '#38BDF8'],
@@ -109,6 +155,9 @@ export const DarkTheme: AppTheme = {
     expense: ['#EF4444', '#F87171'],
     savings: ['#6C63FF', '#818CF8'],
     card: ['#1A1040', '#0D0820'],
+    amberOrange: ['#F59E0B', '#FB923C'],
+    indigoViolet: ['#6366F1', '#8B5CF6'],
+    amberYellow: ['#F59E0B', '#FBBF24'],
   },
   status: {
     income: '#10B981',
@@ -151,6 +200,31 @@ export const DarkTheme: AppTheme = {
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
+  balanceCard: {
+    gradient: ['#18103A', '#0A051C', '#040712'],
+    glowTopRight: 'rgba(108, 99, 255, 0.30)',
+    glowBottomLeft: 'rgba(56, 189, 248, 0.22)',
+    containerBorder: 'rgba(255, 255, 255, 0.1)',
+    innerBorder: 'rgba(255, 255, 255, 0.18)',
+    titleColor: '#FFFFFF',
+    balanceColor: '#FFFFFF',
+    labelColor: 'rgba(255, 255, 255, 0.65)',
+    valueColor: 'rgba(255, 255, 255, 0.85)',
+  },
+  profileCard: {
+    gradient: ['#1A1040', '#0D0826'],
+    blobTL: 'rgba(108, 99, 255, 0.42)',
+    blobBR: 'rgba(56, 189, 248, 0.25)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    nameColor: '#FFFFFF',
+    emailColor: 'rgba(255, 255, 255, 0.78)',
+    badgeText: 'rgba(255, 255, 255, 0.88)',
+    badgeBg: 'rgba(255, 255, 255, 0.06)',
+    badgeBorder: 'rgba(255, 255, 255, 0.12)',
+    proBg: 'rgba(108, 99, 255, 0.14)',
+    proBorder: 'rgba(108, 99, 255, 0.25)',
+    proText: '#E9D5FF',
+  },
   isDark: true,
 };
 
@@ -160,6 +234,14 @@ export const LightTheme: AppTheme = {
     secondary: '#FFFFFF',
     tertiary: '#ECEEF2',
     card: '#FFFFFF',
+  },
+  surface: {
+    input: '#F3F4F6',
+    sheet: '#FFFFFF',
+  },
+  overlay: {
+    medium: 'rgba(0,0,0,0.35)',
+    heavy:  'rgba(0,0,0,0.55)',
   },
   glass: {
     background: 'rgba(0, 0, 0, 0.028)',
@@ -174,6 +256,7 @@ export const LightTheme: AppTheme = {
     secondary: '#0A0A0A',
     accent: '#6C63FF',
     accentWarm: '#FB923C',
+    onPrimary: '#000000',
   },
   gradients: {
     purpleBlue: ['#6C63FF', '#38BDF8'],
@@ -186,6 +269,9 @@ export const LightTheme: AppTheme = {
     expense: ['#EF4444', '#F87171'],
     savings: ['#6C63FF', '#818CF8'],
     card: ['#C4F135', '#DAFF5A'],
+    amberOrange: ['#F59E0B', '#FB923C'],
+    indigoViolet: ['#6366F1', '#8B5CF6'],
+    amberYellow: ['#F59E0B', '#FBBF24'],
   },
   status: {
     income: '#16A34A',
@@ -228,5 +314,30 @@ export const LightTheme: AppTheme = {
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
+  balanceCard: {
+    gradient: ['#C4F135', '#5ED66B', '#10B981'],
+    glowTopRight: 'rgba(255, 255, 255, 0.58)',
+    glowBottomLeft: 'rgba(56, 189, 248, 0.40)',
+    containerBorder: 'rgba(255, 255, 255, 0.45)',
+    innerBorder: 'rgba(255, 255, 255, 0.55)',
+    titleColor: '#000000',
+    balanceColor: '#000000',
+    labelColor: 'rgba(0, 0, 0, 0.68)',
+    valueColor: 'rgba(0, 0, 0, 0.85)',
+  },
+  profileCard: {
+    gradient: ['#C4F135', '#A8E000'],
+    blobTL: 'rgba(255, 255, 255, 0.55)',
+    blobBR: 'rgba(0, 0, 0, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.45)',
+    nameColor: '#000000',
+    emailColor: 'rgba(0, 0, 0, 0.70)',
+    badgeText: 'rgba(0, 0, 0, 0.75)',
+    badgeBg: 'rgba(0, 0, 0, 0.05)',
+    badgeBorder: 'rgba(0, 0, 0, 0.10)',
+    proBg: 'rgba(0, 0, 0, 0.05)',
+    proBorder: 'rgba(0, 0, 0, 0.10)',
+    proText: '#000000',
+  },
   isDark: false,
 };

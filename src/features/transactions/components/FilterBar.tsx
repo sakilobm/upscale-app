@@ -23,7 +23,7 @@ export const FilterBar = memo(function FilterBar({
   activeType,
   onTypeChange,
 }: FilterBarProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const activeIndex = FILTERS.findIndex((f) => f.value === activeType);
 
   const handlePress = useCallback(
@@ -34,9 +34,9 @@ export const FilterBar = memo(function FilterBar({
     [onTypeChange]
   );
 
-  const trackBg  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
-  const activeBg = isDark ? colors.brand.primary      : colors.text.primary;
-  const activeTx = isDark ? colors.text.inverse        : colors.white;
+  const trackBg  = colors.glass.background;
+  const activeBg = colors.brand.primary;
+  const activeTx = colors.brand.onPrimary;
 
   return (
     <View style={[styles.track, { backgroundColor: trackBg }]}>
@@ -53,7 +53,7 @@ export const FilterBar = memo(function FilterBar({
                 borderRadius:    Radius.full,
               },
             ]}
-            android_ripple={{ color: 'transparent' }}
+            android_ripple={{ color: colors.transparent }}
           >
             <AppText
               variant="labelMD"

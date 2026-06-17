@@ -56,8 +56,8 @@ export function SetupSlide({
     }, 180);
   }
 
-  const inputBg     = isDark ? colors.background.secondary : '#F4F4F8';
-  const inputBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)';
+  const inputBg     = colors.surface.input;
+  const inputBorder = colors.glass.border;
   const accent      = avatar.gradient[0];
 
   return (
@@ -81,12 +81,12 @@ export function SetupSlide({
             colors={avatar.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={s.avatarCircle}
+            style={[s.avatarCircle, { shadowColor: colors.black }]}
           >
             <Text style={s.avatarEmoji}>{avatar.emoji}</Text>
           </LinearGradient>
-          <View style={[s.editBadge, { backgroundColor: accent }]}>
-            <Ionicons name="pencil" size={10} color="#fff" />
+          <View style={[s.editBadge, { backgroundColor: accent, shadowColor: colors.black }]}>
+            <Ionicons name="pencil" size={10} color={colors.white} />
           </View>
         </Animated.View>
 
@@ -119,6 +119,7 @@ export function SetupSlide({
                     borderColor: active ? preset.gradient[0] : 'transparent',
                     opacity:     pressed ? 0.7 : 1,
                     transform:   [{ scale: active ? 1.1 : 1 }],
+                    shadowColor: colors.black,
                   },
                 ]}
               >
@@ -166,6 +167,7 @@ export function SetupSlide({
             {
               backgroundColor: inputBg,
               borderColor:     name.length > 0 ? accent + '80' : inputBorder,
+              shadowColor:     colors.black,
             },
           ]}
         >
@@ -274,7 +276,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     ...Platform.select({
       ios: {
-        shadowColor:   '#000',
         shadowOffset:  { width: 0, height: 12 },
         shadowOpacity: 0.32,
         shadowRadius:  20,
@@ -294,7 +295,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     ...Platform.select({
       ios: {
-        shadowColor:   '#000',
         shadowOffset:  { width: 0, height: 3 },
         shadowOpacity: 0.35,
         shadowRadius:  6,
@@ -317,7 +317,6 @@ const s = StyleSheet.create({
     padding:       3,
     ...Platform.select({
       ios: {
-        shadowColor:   '#000',
         shadowOffset:  { width: 0, height: 2 },
         shadowOpacity: 0.10,
         shadowRadius:  4,
@@ -351,7 +350,6 @@ const s = StyleSheet.create({
     borderWidth:       1.5,
     ...Platform.select({
       ios: {
-        shadowColor:   '#000',
         shadowOffset:  { width: 0, height: 2 },
         shadowOpacity: 0.06,
         shadowRadius:  8,

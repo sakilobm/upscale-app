@@ -67,10 +67,10 @@ export default function ProfileScreen() {
           onEditPress={handlers.editName}
         />
 
-        <SectionCard title="Appearance" delay={80} accentColor="#A78BFA">
+        <SectionCard title="Appearance" delay={80} accentColor={colors.brand.secondary}>
           <SettingRow
             icon={isDark ? 'moon' : 'sunny-outline'}
-            iconColor={isDark ? '#A78BFA' : '#F59E0B'}
+            iconColor={isDark ? colors.brand.secondary : colors.status.warning}
             label={isDark ? 'Dark Mode' : 'Light Mode'}
             subtitle={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
             isLast
@@ -86,32 +86,32 @@ export default function ProfileScreen() {
           />
         </SectionCard>
 
-        <SectionCard title="Account" delay={160} accentColor="#6C63FF">
-          <SettingRow animDelay={0}   icon="wallet-outline"           iconColor="#6C63FF" label="Manage Accounts"   subtitle="Add, edit, or delete accounts"                         onPress={() => router.push('/accounts')} />
-          <SettingRow animDelay={40}  icon="grid-outline"             iconColor="#10B981" label="Manage Categories" subtitle="Create & customize spending categories"                 onPress={() => router.push('/categories')} />
-          <SettingRow animDelay={80}  icon="notifications-outline"    iconColor="#F97316" label="Notifications"     subtitle={`${Object.values(preferences.notifications).filter(Boolean).length} of 4 enabled`} onPress={sheets.notifications.open} />
-          <SettingRow animDelay={120} icon="globe-outline"            iconColor="#3B82F6" label="Currency & Region" subtitle={`${data.user?.currency ?? 'USD'} · ${CURRENCY_SYMBOLS[data.user?.currency ?? 'USD']}`} onPress={sheets.currency.open} />
-          <SettingRow animDelay={160} icon="shield-checkmark-outline" iconColor="#EF4444" label="Security & Privacy" subtitle={preferences.security.biometric ? 'Biometrics on' : 'PIN only'} onPress={sheets.security.open} isLast />
+        <SectionCard title="Account" delay={160} accentColor={colors.brand.primary}>
+          <SettingRow animDelay={0}   icon="wallet-outline"           iconColor={colors.brand.primary} label="Manage Accounts"   subtitle="Add, edit, or delete accounts"                         onPress={() => router.push('/accounts')} />
+          <SettingRow animDelay={40}  icon="grid-outline"             iconColor={colors.status.income} label="Manage Categories" subtitle="Create & customize spending categories"                 onPress={() => router.push('/categories')} />
+          <SettingRow animDelay={80}  icon="notifications-outline"    iconColor={colors.brand.accentWarm} label="Notifications"     subtitle={`${Object.values(preferences.notifications).filter(Boolean).length} of 4 enabled`} onPress={sheets.notifications.open} />
+          <SettingRow animDelay={120} icon="globe-outline"            iconColor={colors.status.info} label="Currency & Region" subtitle={`${data.user?.currency ?? 'USD'} · ${CURRENCY_SYMBOLS[data.user?.currency ?? 'USD']}`} onPress={sheets.currency.open} />
+          <SettingRow animDelay={160} icon="shield-checkmark-outline" iconColor={colors.status.expense} label="Security & Privacy" subtitle={preferences.security.biometric ? 'Biometrics on' : 'PIN only'} onPress={sheets.security.open} isLast />
         </SectionCard>
 
-        <SectionCard title="Data" delay={240} accentColor="#10B981">
+        <SectionCard title="Data" delay={240} accentColor={colors.status.income}>
           <SettingRow
             animDelay={0}
-            icon="cloud-done-outline" iconColor="#10B981" label="Backup & Sync"
+            icon="cloud-done-outline" iconColor={colors.status.income} label="Backup & Sync"
             subtitle="Last synced: Today" onPress={handlers.backup}
             right={
-              <View style={[s.badge, { backgroundColor: '#10B98118' }]}>
-                <AppText variant="caption" style={{ color: '#10B981', fontSize: 10, fontWeight: '700' }}>ON</AppText>
+              <View style={[s.badge, { backgroundColor: colors.status.income + '18' }]}>
+                <AppText variant="caption" style={{ color: colors.status.income, fontSize: 10, fontWeight: '700' }}>ON</AppText>
               </View>
             }
           />
-          <SettingRow animDelay={40}  icon="download-outline" iconColor="#8B5CF6" label="Export Data"   subtitle={`${data.txCount} transactions ready`}      onPress={sheets.export.open} />
-          <SettingRow animDelay={80}  icon="trash-outline"    iconColor="#EF4444" label="Clear All Data" subtitle="Permanently erase all app data"             onPress={confirms.clearData.show} isLast />
+          <SettingRow animDelay={40}  icon="download-outline" iconColor={colors.brand.secondary} label="Export Data"   subtitle={`${data.txCount} transactions ready`}      onPress={sheets.export.open} />
+          <SettingRow animDelay={80}  icon="trash-outline"    iconColor={colors.status.expense} label="Clear All Data" subtitle="Permanently erase all app data"             onPress={confirms.clearData.show} isLast />
         </SectionCard>
 
-        <SectionCard title="Support" delay={320} accentColor="#06B6D4">
-          <SettingRow animDelay={0}   icon="help-circle-outline"        iconColor="#06B6D4"             label="Help & Support" subtitle="FAQs and contact"    onPress={sheets.help.open} />
-          <SettingRow animDelay={40}  icon="star-outline"               iconColor="#FBBF24"             label="Rate WhereCash" subtitle="Share your feedback"  onPress={confirms.rate.show} />
+        <SectionCard title="Support" delay={320} accentColor={colors.brand.accent}>
+          <SettingRow animDelay={0}   icon="help-circle-outline"        iconColor={colors.brand.accent}          label="Help & Support" subtitle="FAQs and contact"    onPress={sheets.help.open} />
+          <SettingRow animDelay={40}  icon="star-outline"               iconColor={colors.status.warning}        label="Rate WhereCash" subtitle="Share your feedback"  onPress={confirms.rate.show} />
           <SettingRow animDelay={80}  icon="information-circle-outline" iconColor={colors.text.tertiary} label="About"         subtitle="v1.0.0 · Build 100"  onPress={() => toast.info('WhereCash v1.0.0 — Built with Expo & React Native')} isLast />
         </SectionCard>
 
@@ -121,14 +121,14 @@ export default function ProfileScreen() {
             style={({ pressed }) => [
               s.signOutBtn,
               {
-                backgroundColor: isDark ? '#EF444418' : '#FEF2F2',
-                borderColor:     isDark ? '#EF444430' : '#FCA5A5',
+                backgroundColor: colors.status.expense + '15',
+                borderColor:     colors.status.expense + '30',
                 opacity: pressed ? 0.75 : 1,
               },
             ]}
           >
-            <Ionicons name="log-out-outline" size={18} color="#EF4444" />
-            <AppText variant="labelLG" style={{ color: '#EF4444' }}>Sign Out</AppText>
+            <Ionicons name="log-out-outline" size={18} color={colors.status.expense} />
+            <AppText variant="labelLG" style={{ color: colors.status.expense }}>Sign Out</AppText>
           </Pressable>
           <AppText variant="caption" color={colors.text.tertiary} align="center" style={{ marginTop: Spacing['3'] }}>
             WhereCash v1.0.0 · Made with ♥

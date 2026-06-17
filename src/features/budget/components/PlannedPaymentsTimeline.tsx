@@ -75,7 +75,7 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
   const dotColor =
     payment.status === 'SETTLED' ? colors.status.income :
       payment.status === 'OVERDUE' ? colors.status.expense :
-        urgent ? '#F59E0B' : colors.status.info;
+        urgent ? colors.status.warning : colors.status.info;
 
   // ── Collapse + call action (used for settle)
   const dismissRow = (action: () => void) => {
@@ -171,7 +171,7 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
   }));
   const glowStyle = useAnimatedStyle(() => ({ opacity: glowOp.value }));
 
-  const cardBg = isDark ? colors.background.secondary : '#FFFFFF';
+  const cardBg = colors.surface.sheet;
 
   return (
     <Animated.View style={wrapStyle}>
@@ -185,8 +185,8 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
             { backgroundColor: colors.status.income, height: ROW_HEIGHT },
           ]}
         >
-          <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
-          <AppText variant="labelSM" style={styles.underlayText}>Settle</AppText>
+          <Ionicons name="checkmark-circle-outline" size={20} color={colors.white} />
+          <AppText variant="labelSM" style={[styles.underlayText, { color: colors.white }]}>Settle</AppText>
         </Animated.View>
       )}
 
@@ -200,8 +200,8 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
           ]}
         >
           <Pressable onPress={dismissLeft} style={styles.underlayDeletePressable}>
-            <AppText variant="labelSM" style={styles.underlayText}>Delete</AppText>
-            <Ionicons name="trash-outline" size={18} color="#fff" />
+            <AppText variant="labelSM" style={[styles.underlayText, { color: colors.white }]}>Delete</AppText>
+            <Ionicons name="trash-outline" size={18} color={colors.white} />
           </Pressable>
         </Animated.View>
       )}
@@ -238,7 +238,8 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
               {
                 height: ROW_HEIGHT,
                 backgroundColor: cardBg,
-                borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+                borderColor: colors.glass.background,
+                shadowColor: colors.black,
               },
             ]}
           >
@@ -415,7 +416,7 @@ const styles = StyleSheet.create({
     paddingRight: Spacing['5'],
     gap: Spacing['2'],
   },
-  underlayText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+  underlayText: { fontWeight: '700', fontSize: 13 },
 
   // ── Glow ring ─────────────────────────────────────────────────────────────
   unlockGlow: {
@@ -437,7 +438,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     borderWidth: 1,
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
+      ios: { shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
       android: { elevation: 1 },
     }),
   },

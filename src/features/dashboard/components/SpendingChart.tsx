@@ -15,7 +15,7 @@ export const SpendingChart = memo(function SpendingChart({
   data,
   isLoading,
 }: SpendingChartProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { symbol } = useFormatCurrency();
   const items = data.slice(0, MAX_ITEMS);
 
@@ -24,15 +24,16 @@ export const SpendingChart = memo(function SpendingChart({
       style={[
         styles.card,
         {
-          backgroundColor: isDark ? colors.background.secondary : '#FFFFFF',
-          borderColor:     isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+          backgroundColor: colors.surface.sheet,
+          borderColor:     colors.glass.backgroundMid,
+          shadowColor:     colors.black,
         },
       ]}
     >
       <View style={styles.header}>
         <AppText variant="headingSM" color={colors.text.primary}>Spending Breakdown</AppText>
-        <View style={[styles.monthPill, { backgroundColor: colors.brand.primary + (isDark ? '28' : '18') }]}>
-          <AppText variant="labelSM" style={{ color: isDark ? colors.brand.secondary : colors.brand.accent, fontSize: 11 }}>
+        <View style={[styles.monthPill, { backgroundColor: colors.brand.primary + '22' }]}>
+          <AppText variant="labelSM" style={{ color: colors.brand.secondary, fontSize: 11 }}>
             This Month
           </AppText>
         </View>
@@ -50,7 +51,7 @@ export const SpendingChart = memo(function SpendingChart({
             const catColor = getCategoryById(item.category).color;
             const gradient: [string, string] = [catColor, catColor + '80'];
             return (
-              <View key={item.category} style={[styles.row, idx < items.length - 1 && { borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}>
+              <View key={item.category} style={[styles.row, idx < items.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.glass.background }]}>
                 <CategoryIcon category={item.category} size={38} />
                 <View style={styles.rowContent}>
                   <View style={styles.rowHeader}>
@@ -87,7 +88,6 @@ const styles = StyleSheet.create({
     overflow:     'hidden',
     ...Platform.select({
       ios: {
-        shadowColor:   '#000',
         shadowOffset:  { width: 0, height: 2 },
         shadowOpacity: 0.07,
         shadowRadius:  12,

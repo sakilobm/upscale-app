@@ -47,7 +47,7 @@ export const QuickStatCard = memo(function QuickStatCard({
         style={[
           styles.lightCard,
           {
-            backgroundColor:  '#FFFFFF',
+            backgroundColor:  colors.surface.sheet,
             borderColor:      baseColor + '22',
             shadowColor:      baseColor,
           },
@@ -78,7 +78,7 @@ export const QuickStatCard = memo(function QuickStatCard({
         {/* Amount */}
         <AppText
           variant="headingSM"
-          style={[styles.lightAmount, { color: isDark ? amountColor : '#111827' }]}
+          style={[styles.lightAmount, { color: colors.text.primary }]}
           numberOfLines={1}
           adjustsFontSizeToFit
         >
@@ -104,6 +104,7 @@ export const QuickStatCard = memo(function QuickStatCard({
         {
           backgroundColor: colors.background.secondary,
           borderColor:     baseColor + '28',
+          shadowColor:     colors.black,
         },
       ]}
     >
@@ -180,7 +181,6 @@ const styles = StyleSheet.create({
         shadowOffset:  { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius:  12,
-        shadowColor:   '#000',
       },
       android: { elevation: 4 },
     }),
@@ -215,7 +215,6 @@ const styles = StyleSheet.create({
   lightAmount: {
     fontSize:    20,
     fontWeight:  '800',
-    color:       '#111827',
     letterSpacing: -0.5,
     lineHeight:  26,
   },
