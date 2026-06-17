@@ -8,12 +8,13 @@
  *   src/components/accounts/AccountFormSheet.tsx
  */
 
-import { useState, useRef, type ComponentProps } from 'react';
+import { useState, useRef, useEffect, type ComponentProps } from 'react';
 import { Dimensions, type NativeSyntheticEvent, type NativeScrollEvent, ScrollView } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
   useSharedValue, useAnimatedStyle, interpolateColor,
 } from 'react-native-reanimated';
+import { useLocalSearchParams } from 'expo-router';
 import { useAccountStore } from '@store/accountStore';
 import { useTheme } from '@hooks/useTheme';
 import { toast } from '@store/toastStore';
@@ -60,6 +61,16 @@ export function useAccountsScreen() {
   const [formVisible,    setFormVisible]    = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [deleteTarget,   setDeleteTarget]   = useState<Account | null>(null);
+
+  const params = useLocalSearchParams<{ add?: string }>();
+
+  useEffect(() => {
+    if (params.add === 'true') {
+      setEditingAccount(null);
+      setFormVisible(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  }, [params.add]);
 
   const scrollX   = useSharedValue(0);
   const scrollRef = useRef<ScrollView>(null);

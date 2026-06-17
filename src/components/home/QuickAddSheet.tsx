@@ -27,6 +27,8 @@ import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Radius } from '@constants/index';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 
 import { CURRENCY_SYMBOLS } from '@store/types';
 
@@ -56,6 +58,14 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
 
   const slideY = useSharedValue(SH * 0.9);
   const kbH = useKeyboardHeight();
+
+  const handleCreateAccount = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onClose();
+    setTimeout(() => {
+      router.push('/accounts?add=true');
+    }, 320);
+  };
 
   useEffect(() => {
     if (visible) {
@@ -88,181 +98,221 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
 
               <View style={[s.handle, { backgroundColor: colors.text.tertiary + '40' }]} />
 
-              {/* Type toggle */}
-              <View style={[s.typeRow, { backgroundColor: colors.glass.backgroundMid }]}>
-                {(['expense', 'income'] as const).map((t) => {
-                  const active = type === t;
-                  const tColor = t === 'expense' ? colors.status.expense : colors.status.income;
-                  return (
-                    <Pressable
-                      key={t}
-                      onPress={() => { handleTypeChange(t); Haptics.selectionAsync(); }}
-                      style={[
-                        s.typeBtn,
-                        active && { backgroundColor: tColor + '1A', borderColor: tColor + '44', borderWidth: 1 },
-                      ]}
-                    >
-                      <Ionicons
-                        name={t === 'expense' ? 'arrow-down-circle-outline' : 'arrow-up-circle-outline'}
-                        size={18}
-                        color={active ? tColor : colors.text.tertiary}
-                      />
-                      <AppText
-                        variant="labelMD"
-                        style={{ color: active ? tColor : colors.text.tertiary, fontWeight: active ? '700' : '500' }}
-                      >
-                        {t === 'expense' ? 'Expense' : 'Income'}
-                      </AppText>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              {/* Amount */}
-              <View style={s.amountSection}>
-                <AppText style={[s.amountDisplay, { color: accentColor }]}>{currentSymbol}{amountDisplay}</AppText>
-                <AppText variant="caption" style={{ color: colors.text.tertiary }}>
-                  {selectedAccountCurrency}
-                </AppText>
-              </View>
-
-              {/* Numpad */}
-              <View style={s.numpad}>
-                {NUMPAD_KEYS.map((key) => {
-                  const isBackspace = key === '⌫';
-                  const isDot = key === '.';
-                  return (
-                    <Pressable
-                      key={key}
-                      onPress={() => { handleKey(key); Haptics.selectionAsync(); }}
-                      style={({ pressed }) => [
-                        s.numKey,
-                        {
-                          backgroundColor: isBackspace ? accentColor + '15' : (isDark ? colors.glass.background : colors.background.primary),
-                          opacity: pressed ? 0.6 : 1,
-                        },
-                      ]}
-                    >
-                      {isBackspace ? (
-                        <Ionicons name="backspace-outline" size={22} color={accentColor} />
-                      ) : (
-                        <AppText style={[s.numKeyText, { color: isDot ? colors.text.secondary : colors.text.primary }]}>
-                          {key}
-                        </AppText>
-                      )}
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              {/* Category */}
-              <AppText variant="labelSM" style={[s.sectionLabel, { color: colors.text.tertiary }]}>CATEGORY</AppText>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catScroll}>
-                {cats.map((catDef) => {
-                  const active = category === catDef.id;
-                  return (
-                    <Pressable
-                      key={catDef.id}
-                      onPress={() => { setCategory(catDef.id); Haptics.selectionAsync(); }}
-                      style={[
-                        s.catChip,
-                        {
-                          backgroundColor: active ? catDef.color + '20' : inputBg,
-                          borderColor: active ? catDef.color + '50' : 'transparent',
-                          borderWidth: 1.5,
-                        },
-                      ]}
-                    >
-                      <View style={[s.catIcon, { backgroundColor: catDef.color + '20' }]}>
-                        <Ionicons name={catDef.icon as IoniconName} size={15} color={catDef.color} />
-                      </View>
-                      <AppText
-                        variant="labelSM"
-                        style={{
-                          color: active ? catDef.color : colors.text.secondary,
-                          fontWeight: active ? '700' : '500',
-                          fontSize: 11,
-                        }}
-                      >
-                        {catDef.label}
-                      </AppText>
-                    </Pressable>
-                  );
-                })}
-                <Pressable
-                  onPress={() => { setCatFormVisible(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                  style={[s.catChip, s.catNewChip, { borderColor: colors.brand.primary + '45' }]}
-                >
-                  <View style={[s.catIcon, { backgroundColor: colors.brand.primary + '18' }]}>
-                    <Ionicons name="add" size={15} color={colors.brand.primary} />
-                  </View>
-                  <AppText variant="labelSM" style={{ color: colors.brand.primary, fontWeight: '600', fontSize: 11 }}>
-                    New
+              {accounts.length === 0 ? (
+                <View style={s.emptyContainer}>
+                  <LinearGradient
+                    colors={colors.gradients.purpleBlue}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={s.emptyIconGlow}
+                  >
+                    <Ionicons name="wallet-outline" size={36} color={colors.white} />
+                  </LinearGradient>
+                  
+                  <AppText variant="headingSM" style={[s.emptyTitle, { color: colors.text.primary }]}>
+                    Account Required
                   </AppText>
-                </Pressable>
-              </ScrollView>
+                  
+                  <AppText variant="bodyMD" style={[s.emptyDesc, { color: colors.text.secondary }]}>
+                    You need at least one account to link transactions. Create your checking, savings, or cash account to get started.
+                  </AppText>
 
-              {/* Account (only when >1) */}
-              {accounts.length > 1 && (
+                  <Pressable
+                    onPress={handleCreateAccount}
+                    style={({ pressed }) => [
+                      s.emptyBtn,
+                      {
+                        backgroundColor: colors.brand.primary,
+                        opacity: pressed ? 0.85 : 1,
+                        shadowColor: colors.brand.primary,
+                      }
+                    ]}
+                  >
+                    <Ionicons name="add-circle" size={20} color={colors.brand.onPrimary} />
+                    <AppText style={[s.emptyBtnText, { color: colors.brand.onPrimary }]}>
+                      Create First Account
+                    </AppText>
+                  </Pressable>
+                </View>
+              ) : (
                 <>
-                  <AppText variant="labelSM" style={[s.sectionLabel, { color: colors.text.tertiary }]}>ACCOUNT</AppText>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.accountScroll}>
-                    {accounts.map((acc) => {
-                      const active = accountId === acc.id;
+                  {/* Type toggle */}
+                  <View style={[s.typeRow, { backgroundColor: colors.glass.backgroundMid }]}>
+                    {(['expense', 'income'] as const).map((t) => {
+                      const active = type === t;
+                      const tColor = t === 'expense' ? colors.status.expense : colors.status.income;
                       return (
                         <Pressable
-                          key={acc.id}
-                          onPress={() => setAccountId(acc.id)}
+                          key={t}
+                          onPress={() => { handleTypeChange(t); Haptics.selectionAsync(); }}
                           style={[
-                            s.accountChip,
-                            {
-                              backgroundColor: active ? acc.color + '1A' : inputBg,
-                              borderColor: active ? acc.color + '55' : 'transparent',
-                              borderWidth: 1.5,
-                            },
+                            s.typeBtn,
+                            active && { backgroundColor: tColor + '1A', borderColor: tColor + '44', borderWidth: 1 },
                           ]}
                         >
-                          <View style={[s.accountIcon, { backgroundColor: acc.color + '22' }]}>
-                            <Ionicons name={acc.icon as IoniconName} size={14} color={acc.color} />
-                          </View>
+                          <Ionicons
+                            name={t === 'expense' ? 'arrow-down-circle-outline' : 'arrow-up-circle-outline'}
+                            size={18}
+                            color={active ? tColor : colors.text.tertiary}
+                          />
                           <AppText
-                            variant="labelSM"
-                            style={{ color: active ? acc.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
+                            variant="labelMD"
+                            style={{ color: active ? tColor : colors.text.tertiary, fontWeight: active ? '700' : '500' }}
                           >
-                            {acc.name}
+                            {t === 'expense' ? 'Expense' : 'Income'}
                           </AppText>
                         </Pressable>
                       );
                     })}
+                  </View>
+
+                  {/* Amount */}
+                  <View style={s.amountSection}>
+                    <AppText style={[s.amountDisplay, { color: accentColor }]}>{currentSymbol}{amountDisplay}</AppText>
+                    <AppText variant="caption" style={{ color: colors.text.tertiary }}>
+                      {selectedAccountCurrency}
+                    </AppText>
+                  </View>
+
+                  {/* Numpad */}
+                  <View style={s.numpad}>
+                    {NUMPAD_KEYS.map((key) => {
+                      const isBackspace = key === '⌫';
+                      const isDot = key === '.';
+                      return (
+                        <Pressable
+                          key={key}
+                          onPress={() => { handleKey(key); Haptics.selectionAsync(); }}
+                          style={({ pressed }) => [
+                            s.numKey,
+                            {
+                              backgroundColor: isBackspace ? accentColor + '15' : (isDark ? colors.glass.background : colors.background.primary),
+                              opacity: pressed ? 0.6 : 1,
+                            },
+                          ]}
+                        >
+                          {isBackspace ? (
+                            <Ionicons name="backspace-outline" size={22} color={accentColor} />
+                          ) : (
+                            <AppText style={[s.numKeyText, { color: isDot ? colors.text.secondary : colors.text.primary }]}>
+                              {key}
+                            </AppText>
+                          )}
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+
+                  {/* Category */}
+                  <AppText variant="labelSM" style={[s.sectionLabel, { color: colors.text.tertiary }]}>CATEGORY</AppText>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catScroll}>
+                    {cats.map((catDef) => {
+                      const active = category === catDef.id;
+                      return (
+                        <Pressable
+                          key={catDef.id}
+                          onPress={() => { setCategory(catDef.id); Haptics.selectionAsync(); }}
+                          style={[
+                            s.catChip,
+                            {
+                              backgroundColor: active ? catDef.color + '20' : inputBg,
+                              borderColor: active ? catDef.color + '50' : 'transparent',
+                              borderWidth: 1.5,
+                            },
+                          ]}
+                        >
+                          <View style={[s.catIcon, { backgroundColor: catDef.color + '20' }]}>
+                            <Ionicons name={catDef.icon as IoniconName} size={15} color={catDef.color} />
+                          </View>
+                          <AppText
+                            variant="labelSM"
+                            style={{
+                              color: active ? catDef.color : colors.text.secondary,
+                              fontWeight: active ? '700' : '500',
+                              fontSize: 11,
+                            }}
+                          >
+                            {catDef.label}
+                          </AppText>
+                        </Pressable>
+                      );
+                    })}
+                    <Pressable
+                      onPress={() => { setCatFormVisible(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                      style={[s.catChip, s.catNewChip, { borderColor: colors.brand.primary + '45' }]}
+                    >
+                      <View style={[s.catIcon, { backgroundColor: colors.brand.primary + '18' }]}>
+                        <Ionicons name="add" size={15} color={colors.brand.primary} />
+                      </View>
+                      <AppText variant="labelSM" style={{ color: colors.brand.primary, fontWeight: '600', fontSize: 11 }}>
+                        New
+                      </AppText>
+                    </Pressable>
                   </ScrollView>
+
+                  {/* Account (only when >1) */}
+                  {accounts.length > 1 && (
+                    <>
+                      <AppText variant="labelSM" style={[s.sectionLabel, { color: colors.text.tertiary }]}>ACCOUNT</AppText>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.accountScroll}>
+                        {accounts.map((acc) => {
+                          const active = accountId === acc.id;
+                          return (
+                            <Pressable
+                              key={acc.id}
+                              onPress={() => setAccountId(acc.id)}
+                              style={[
+                                s.accountChip,
+                                {
+                                  backgroundColor: active ? acc.color + '1A' : inputBg,
+                                  borderColor: active ? acc.color + '55' : 'transparent',
+                                  borderWidth: 1.5,
+                                },
+                              ]}
+                            >
+                              <View style={[s.accountIcon, { backgroundColor: acc.color + '22' }]}>
+                                <Ionicons name={acc.icon as IoniconName} size={14} color={acc.color} />
+                              </View>
+                              <AppText
+                                variant="labelSM"
+                                style={{ color: active ? acc.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
+                              >
+                                {acc.name}
+                              </AppText>
+                            </Pressable>
+                          );
+                        })}
+                      </ScrollView>
+                    </>
+                  )}
+
+                  {/* Note */}
+                  <TextInput
+                    style={[
+                      s.noteInput,
+                      {
+                        backgroundColor: inputBg,
+                        color: colors.text.primary,
+                        borderColor: colors.glass.border,
+                      },
+                    ]}
+                    value={note}
+                    onChangeText={setNote}
+                    placeholder="Add a note (optional)"
+                    placeholderTextColor={colors.text.tertiary}
+                    maxLength={80}
+                  />
+
+                  {/* Add button */}
+                  <Pressable
+                    onPress={handleSave}
+                    style={({ pressed }) => [s.addBtn, { backgroundColor: accentColor, opacity: pressed ? 0.85 : 1 }]}
+                  >
+                    <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+                    <AppText style={[s.addBtnText, { color: colors.white }]}>Add {type === 'expense' ? 'Expense' : 'Income'}</AppText>
+                  </Pressable>
                 </>
               )}
-
-              {/* Note */}
-              <TextInput
-                style={[
-                  s.noteInput,
-                  {
-                    backgroundColor: inputBg,
-                    color: colors.text.primary,
-                    borderColor: colors.glass.border,
-                  },
-                ]}
-                value={note}
-                onChangeText={setNote}
-                placeholder="Add a note (optional)"
-                placeholderTextColor={colors.text.tertiary}
-                maxLength={80}
-              />
-
-              {/* Add button */}
-              <Pressable
-                onPress={handleSave}
-                style={({ pressed }) => [s.addBtn, { backgroundColor: accentColor, opacity: pressed ? 0.85 : 1 }]}
-              >
-                <Ionicons name="checkmark-circle" size={20} color={colors.white} />
-                <AppText style={[s.addBtnText, { color: colors.white }]}>Add {type === 'expense' ? 'Expense' : 'Income'}</AppText>
-              </Pressable>
             </Animated.View>
           </KeyboardAvoidingView>
         </View>
@@ -306,4 +356,22 @@ const s = StyleSheet.create({
   noteInput: { height: 44, borderRadius: Radius.lg, paddingHorizontal: 14, fontSize: 14, borderWidth: 1, marginBottom: 12, marginTop: 4 },
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 54, borderRadius: Radius.lg, marginTop: 4 },
   addBtnText: { fontWeight: '700', fontSize: 16 },
+  emptyContainer: { alignItems: 'center', paddingVertical: 24, paddingHorizontal: 16, gap: 16 },
+  emptyIconGlow: {
+    width: 68, height: 68, borderRadius: 34, alignItems: 'center', justifyContent: 'center',
+    ...Platform.select({
+      ios: { shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 6 } },
+      android: { elevation: 6 },
+    }),
+  },
+  emptyTitle: { fontWeight: '800', textAlign: 'center', marginTop: 8 },
+  emptyDesc: { textAlign: 'center', lineHeight: 20, paddingHorizontal: 12 },
+  emptyBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 52, borderRadius: Radius.lg, paddingHorizontal: 20, width: '100%', marginTop: 8,
+    ...Platform.select({
+      ios: { shadowOpacity: 0.15, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } },
+      android: { elevation: 3 },
+    }),
+  },
+  emptyBtnText: { fontWeight: '700', fontSize: 16 },
 });

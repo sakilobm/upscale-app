@@ -81,3 +81,19 @@ Instead of rendering static tabs, the layout renders `CustomTabBar` which fetche
 
 - Theme values (`LightTheme` and `DarkTheme` from `src/constants/themes.ts`) are hooked dynamically in UI components using the `useTheme` interface.
 - Changing theme mode automatically triggers color updates within the custom tab bar (dynamic transition from lime neon indicators on light theme to soft glassmorphic indigo indicators on dark theme).
+
+
+## 5. Multi-Layer Refactoring & Headless Logic Standards
+
+To ensure clean architecture, high developer velocity, and robust maintenance, the codebase enforces a strict separation of concerns between visual presentation layers and business logic layers:
+
+### 1. Directory Structure (`src/features/`)
+Feature-specific logical units are isolated under the `src/features/` directory:
+- **`src/features/[feature_name]/hooks/`**: Exposes Custom Hooks encapsulating all headless logic (e.g., local screen state, form validation, device haptics, store triggers, network requests, and query parameters).
+- **`src/features/[feature_name]/components/`**: Exposes atomic sub-components specific to the feature.
+- **`src/app/`**: Serves as the routing tree. Screens here act as lean declarative "View Shells" (typically < 150 lines) that bind hooks directly to presentation components.
+
+### 2. Strict Headless UI Contract Guidelines
+- **Zero Raw State/Haptics in View Shell**: Screens under `src/app/` must not import raw Zustand stores directly, trigger device haptics, or manage local form input validation states.
+- **Hook Ownership**: Feature hooks are the sole owners of user interaction handling, form state management, query parameters (e.g., `useLocalSearchParams`), and toast notifications.
+- **Visual Uniformity**: Visual output, layout styles, and animations (e.g., `react-native-reanimated`) must remain structurally clean and draw exclusively from global theme tokens (`colors.brand`, `colors.background`, `colors.text`) without inline hardcoding.
