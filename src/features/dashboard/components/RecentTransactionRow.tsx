@@ -6,6 +6,8 @@ import { AmountText } from '@components/AmountText';
 import { Spacing } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
 import { format } from 'date-fns';
+import { Ionicons } from '@expo/vector-icons';
+import { useAccountStore } from '@store/accountStore';
 import type { Transaction } from '@store/types';
 
 interface RecentTransactionRowProps {
@@ -18,7 +20,14 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
   onPress,
 }: RecentTransactionRowProps) {
   const { colors, isDark } = useTheme();
+  const accounts = useAccountStore((s) => s.accounts);
+  const account = accounts.find((a) => a.id === transaction.accountId);
   const formattedDate = format(new Date(transaction.date), 'MMM d');
+
+  const isRedundant = transaction.description.trim().toLowerCase() === transaction.category.trim().toLowerCase();
+  const subtitle = isRedundant
+    ? formattedDate
+    : `${transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)} · ${formattedDate}`;
 
   return (
     <Pressable
@@ -43,9 +52,27 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
         >
           {transaction.description}
         </AppText>
-        <AppText variant="caption" color={colors.text.tertiary}>
-          {transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)} · {formattedDate}
-        </AppText>
+        <View style={styles.metaRow}>
+          <AppText variant="caption" color={colors.text.tertiary}>
+            {subtitle}
+          </AppText>
+          {account && (
+            <View
+              style={[
+                styles.accountBadge,
+                {
+                  backgroundColor: isDark ? account.color + '22' : account.color + '15',
+                  borderColor:     isDark ? account.color + '44' : account.color + '30',
+                },
+              ]}
+            >
+              <Ionicons name={(account.icon || 'wallet-outline') as any} size={9} color={account.color} />
+              <AppText style={[styles.accountBadgeText, { color: account.color }]}>
+                {account.name}
+              </AppText>
+            </View>
+          )}
+        </View>
       </View>
       <AmountText
         amount={transaction.amount}
@@ -68,6 +95,27 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   details: { flex: 1, gap: 3 },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+    marginTop: 2,
+  },
+  accountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  accountBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.1,
+  },
   description: {
     fontWeight: '600',
   },
