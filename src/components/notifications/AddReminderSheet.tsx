@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  View, StyleSheet, Pressable, TextInput, Modal, Platform,
+  View, StyleSheet, Pressable, TextInput, Modal, Platform, Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
@@ -310,6 +310,10 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
   const [timeState, setTimeState] = useState<TimeState>(parse24h(DEFAULT_REMINDER_FORM.time));
   const [errors, setErrors] = useState<FormErrors>({});
 
+  const { height: SH } = Dimensions.get('window');
+  const slideY = useSharedValue(SH);
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: slideY.value }] }));
+
   // Sync timeState → form.time (avoids nested setState anti-pattern)
   useEffect(() => {
     setForm((f) => ({ ...f, time: to24h(timeState.hour, timeState.minute, timeState.ampm) }));
@@ -322,6 +326,9 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
       setForm({ ...DEFAULT_REMINDER_FORM, date: todayStr });
       setTimeState(parse24h(DEFAULT_REMINDER_FORM.time));
       setErrors({});
+      slideY.value = withTiming(0, { duration: 360, easing: Easing.out(Easing.cubic) });
+    } else {
+      slideY.value = withTiming(SH, { duration: 280, easing: Easing.in(Easing.cubic) });
     }
   }, [visible]);
 
@@ -366,9 +373,7 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
 
         {/* Sheet */}
         <Animated.View
-          entering={SlideInDown.duration(320)}
-          exiting={SlideOutDown.duration(240)}
-          style={[s.sheet, { backgroundColor: colors.surface.sheet, shadowColor: colors.black }]}
+          style={[s.sheet, { backgroundColor: colors.surface.sheet, shadowColor: colors.black }, sheetStyle]}
         >
           {/* Drag handle */}
           <View style={[s.handle, { backgroundColor: colors.glass.backgroundStrong }]} />
