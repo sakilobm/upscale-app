@@ -17,7 +17,7 @@ export function useDashboardData(): UseDashboardDataReturn {
 
   const vm = useMemo<DashboardViewModel>(() => {
     const currentMonth = format(new Date(), 'yyyy-MM');
-    const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+    const totalBalance = accounts.reduce((sum, a) => sum + (a.type === 'credit' ? -a.balance : a.balance), 0);
     const monthSummary = computeMonthSummary(transactions, currentMonth);
     const spendingByCategory = computeSpendingByCategory(transactions);
     const recentTransactions = [...transactions]

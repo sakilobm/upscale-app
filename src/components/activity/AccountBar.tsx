@@ -26,7 +26,7 @@ export function AccountBar() {
   const filters    = useTransactionStore((s) => s.filters);
   const setFilters = useTransactionStore((s) => s.setFilters);
 
-  const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+  const totalBalance = accounts.reduce((sum, a) => sum + (a.type === 'credit' ? -a.balance : a.balance), 0);
 
   const allChip: ChipData = {
     id: null, name: 'All',

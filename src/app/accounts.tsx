@@ -105,7 +105,132 @@ export default function AccountsScreen() {
               <AccountStatCard label="Currency" value={selectedAccount.currency}                                                               icon="globe-outline"  color={accColor} />
             </View>
 
-            <View style={s.actionsRow}>
+            {/* Investment specific Projection & Target Goal Features */}
+            {selectedAccount.type === 'investment' && (
+              <Animated.View entering={FadeIn.delay(200).duration(400)} style={[s.featureCard, { backgroundColor: colors.surface.sheet, shadowColor: colors.black, borderColor: colors.glass.border }]}>
+                <View style={s.featureHeader}>
+                  <Ionicons name="trending-up" size={18} color={accColor} />
+                  <AppText variant="labelMD" style={{ color: colors.text.primary, fontWeight: '700', marginLeft: 6 }}>
+                    Investment Projections & Goals
+                  </AppText>
+                </View>
+
+                {/* Progress bar */}
+                {(() => {
+                  const currentVal = selectedAccount.balance;
+                  const target = Math.max(10000, Math.ceil((currentVal * 1.6) / 10000) * 10000);
+                  const progress = Math.min(1, currentVal / target);
+                  const percent = Math.round(progress * 100);
+                  const sym = CURRENCY_SYMBOLS[selectedAccount.currency] ?? '$';
+
+                  return (
+                    <View style={s.goalSection}>
+                      <View style={s.goalInfo}>
+                        <AppText variant="caption" color={colors.text.secondary}>Goal Progress</AppText>
+                        <AppText variant="labelSM" style={{ color: accColor, fontWeight: '800' }}>
+                          {percent}% achieved
+                        </AppText>
+                      </View>
+                      
+                      <View style={[s.progressTrack, { backgroundColor: isDark ? colors.glass.backgroundStrong : 'rgba(0,0,0,0.06)' }]}>
+                        <View style={[s.progressBar, { width: `${percent}%`, backgroundColor: accColor }]} />
+                      </View>
+
+                      <View style={s.goalTargetRow}>
+                        <AppText variant="caption" color={colors.text.tertiary}>
+                          Current: {sym}{currentVal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                        </AppText>
+                        <AppText variant="caption" style={{ color: colors.text.secondary, fontWeight: '600' }}>
+                          Target: {sym}{target.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                        </AppText>
+                      </View>
+                    </View>
+                  );
+                })()}
+
+                <View style={[s.divider, { backgroundColor: colors.glass.border }]} />
+
+                <AppText variant="labelSM" color={colors.text.tertiary} style={{ marginBottom: 8, letterSpacing: 0.5 }}>
+                  FUTURE GROWTH ESTIMATES (12% CAGR)
+                </AppText>
+                <View style={s.projectionGrid}>
+                  <View style={[s.projBox, { backgroundColor: isDark ? colors.glass.background : colors.background.primary, borderColor: colors.glass.border }]}>
+                    <View style={s.projHeader}>
+                      <AppText variant="labelSM" color={colors.text.secondary}>5 Years</AppText>
+                      <View style={[s.growthBadge, { backgroundColor: colors.status.income + '15' }]}>
+                        <AppText variant="caption" style={{ color: colors.status.income, fontWeight: '700', fontSize: 10 }}>+76%</AppText>
+                      </View>
+                    </View>
+                    <AppText variant="labelLG" style={{ color: colors.text.primary, fontWeight: '800', marginTop: 4 }}>
+                      {(CURRENCY_SYMBOLS[selectedAccount.currency] ?? '$')}{Math.round(selectedAccount.balance * 1.7623).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </AppText>
+                  </View>
+
+                  <View style={[s.projBox, { backgroundColor: isDark ? colors.glass.background : colors.background.primary, borderColor: colors.glass.border }]}>
+                    <View style={s.projHeader}>
+                      <AppText variant="labelSM" color={colors.text.secondary}>10 Years</AppText>
+                      <View style={[s.growthBadge, { backgroundColor: colors.status.income + '15' }]}>
+                        <AppText variant="caption" style={{ color: colors.status.income, fontWeight: '700', fontSize: 10 }}>+210%</AppText>
+                      </View>
+                    </View>
+                    <AppText variant="labelLG" style={{ color: colors.text.primary, fontWeight: '800', marginTop: 4 }}>
+                      {(CURRENCY_SYMBOLS[selectedAccount.currency] ?? '$')}{Math.round(selectedAccount.balance * 3.1058).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </AppText>
+                  </View>
+                </View>
+              </Animated.View>
+            )}
+
+            {/* Credit Card Utilization Features */}
+            {selectedAccount.type === 'credit' && (
+              <Animated.View entering={FadeIn.delay(200).duration(400)} style={[s.featureCard, { backgroundColor: colors.surface.sheet, shadowColor: colors.black, borderColor: colors.glass.border }]}>
+                <View style={s.featureHeader}>
+                  <Ionicons name="card-outline" size={18} color={accColor} />
+                  <AppText variant="labelMD" style={{ color: colors.text.primary, fontWeight: '700', marginLeft: 6 }}>
+                    Credit Limit & Utilization
+                  </AppText>
+                </View>
+
+                {/* Progress bar */}
+                {(() => {
+                  const currentBalance = selectedAccount.balance;
+                  const limit = Math.max(50000, Math.ceil((currentBalance * 3.5) / 10000) * 10000);
+                  const utilization = limit > 0 ? Math.min(1, currentBalance / limit) : 0;
+                  const percent = Math.round(utilization * 100);
+                  const available = limit - currentBalance;
+                  const sym = CURRENCY_SYMBOLS[selectedAccount.currency] ?? '$';
+
+                  const utilColor = percent < 30 ? colors.status.income : percent < 70 ? colors.status.warning : colors.status.expense;
+                  const utilMsg = percent < 30 ? 'Excellent utilization' : percent < 70 ? 'Moderate utilization' : 'High credit usage!';
+
+                  return (
+                    <View style={s.goalSection}>
+                      <View style={s.goalInfo}>
+                        <AppText variant="caption" color={colors.text.secondary}>Usage Ratio</AppText>
+                        <AppText variant="labelSM" style={{ color: utilColor, fontWeight: '800' }}>
+                          {percent}% ({utilMsg})
+                        </AppText>
+                      </View>
+                      
+                      <View style={[s.progressTrack, { backgroundColor: isDark ? colors.glass.backgroundStrong : 'rgba(0,0,0,0.06)' }]}>
+                        <View style={[s.progressBar, { width: `${percent}%`, backgroundColor: utilColor }]} />
+                      </View>
+
+                      <View style={s.goalTargetRow}>
+                        <AppText variant="caption" color={colors.text.tertiary}>
+                          Available limit: {sym}{available.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                        </AppText>
+                        <AppText variant="caption" style={{ color: colors.text.secondary, fontWeight: '600' }}>
+                          Total Limit: {sym}{limit.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                        </AppText>
+                      </View>
+                    </View>
+                  );
+                })()}
+              </Animated.View>
+            )}
+
+            <View style={[s.actionsRow, { marginTop: 16 }]}>
               <Pressable onPress={() => handlers.edit(selectedAccount)} style={({ pressed }) => [s.actionBtn, { backgroundColor: accColor + '18', opacity: pressed ? 0.7 : 1 }]}>
                 <Ionicons name="pencil" size={16} color={accColor} />
                 <AppText variant="labelMD" style={{ color: accColor, fontWeight: '600' }}>Edit</AppText>
@@ -205,4 +330,67 @@ const s = StyleSheet.create({
 
   accRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: Radius.lg, borderWidth: 1 },
   accRowIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+
+  featureCard: {
+    borderRadius: Radius.lg,
+    padding: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+    ...Platform.select({
+      ios: { shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
+      android: { elevation: 2 },
+    }),
+  },
+  featureHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  goalSection: {
+    gap: 8,
+  },
+  goalInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  goalTargetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  divider: {
+    height: 1,
+    marginVertical: 14,
+  },
+  projectionGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  projBox: {
+    flex: 1,
+    padding: 12,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  projHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  growthBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
 });

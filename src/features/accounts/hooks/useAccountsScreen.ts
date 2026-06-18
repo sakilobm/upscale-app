@@ -86,7 +86,7 @@ export function useAccountsScreen() {
   });
 
   const selectedAccount = accounts[selectedIdx] ?? accounts[0] ?? null;
-  const totalBalance    = accounts.reduce((s, a) => s + a.balance, 0);
+  const totalBalance    = accounts.reduce((s, a) => s + (a.type === 'credit' ? -a.balance : a.balance), 0);
   const accColor        = selectedAccount?.color ?? colors.brand.primary;
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {

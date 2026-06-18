@@ -137,6 +137,7 @@ const LightCard = memo(function LightCard({
             </View>
           ) : (
             <ScrollView
+              nestedScrollEnabled={true}
               showsVerticalScrollIndicator={false}
               style={{ maxHeight: 110, marginTop: 12 }}
               contentContainerStyle={{ gap: 8 }}
@@ -264,6 +265,7 @@ const DarkCard = memo(function DarkCard({
               </View>
             ) : (
               <ScrollView
+                nestedScrollEnabled={true}
                 showsVerticalScrollIndicator={false}
                 style={{ maxHeight: 110 }}
                 contentContainerStyle={{ gap: 2 }}

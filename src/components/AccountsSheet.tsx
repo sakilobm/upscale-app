@@ -283,7 +283,7 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
     setDeleteTarget(null);
   };
 
-  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
+  const totalBalance = accounts.reduce((s, a) => s + (a.type === 'credit' ? -a.balance : a.balance), 0);
   const cardBg = colors.surface.sheet;
   const inputBg = colors.surface.input;
 
