@@ -33,6 +33,7 @@ export function useHomeScreen() {
 
   const [addVisible, setAddVisible] = useState(false);
   const [addType,    setAddType]    = useState<'expense' | 'income'>('expense');
+  const [transferVisible, setTransferVisible] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const openAdd = useCallback((type: 'expense' | 'income') => {
@@ -43,6 +44,13 @@ export function useHomeScreen() {
 
   const closeAdd = useCallback(() => setAddVisible(false), []);
 
+  const openTransfer = useCallback(() => {
+    setTransferVisible(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }, []);
+
+  const closeTransfer = useCallback(() => setTransferVisible(false), []);
+
   const handleTransactionPress = useCallback((tx: Transaction) => {
     setEditingTransaction(tx);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -51,9 +59,9 @@ export function useHomeScreen() {
   const quickActions = useMemo<QuickAction[]>(() => [
     { icon: 'trending-down', label: 'Expense',  color: colors.status.expense, action: () => openAdd('expense') },
     { icon: 'trending-up',   label: 'Income',   color: colors.status.income,  action: () => openAdd('income') },
-    { icon: 'shuffle',       label: 'Split',    color: colors.brand.primary,  action: () => toast.info('Split expenses — coming soon') },
+    { icon: 'swap-horizontal', label: 'Transfer', color: colors.brand.primary,  action: () => openTransfer() },
     { icon: 'receipt',       label: 'Activity', color: colors.status.warning, action: () => router.push('/(tabs)/transactions') },
-  ], [openAdd, colors]);
+  ], [openAdd, openTransfer, colors]);
 
   const firstName = user?.fullName?.split(' ')[0] ?? 'Sakil';
   const initials  = user?.fullName
@@ -71,6 +79,11 @@ export function useHomeScreen() {
       type:      addType,
       open:      openAdd,
       close:     closeAdd,
+    },
+    transferSheet: {
+      isVisible: transferVisible,
+      open:      openTransfer,
+      close:     closeTransfer,
     },
     editingTransaction,
     setEditingTransaction,

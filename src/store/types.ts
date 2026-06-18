@@ -38,6 +38,7 @@ export interface Transaction {
   note: string | null;
   date: string;           // ISO 8601
   accountId: string;
+  toAccountId?: string; // Destination account for transfers
   createdAt: string;
   updatedAt: string;
 }

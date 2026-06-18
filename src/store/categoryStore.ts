@@ -96,6 +96,16 @@ export const useCategoryStore = create<CategoryState>()(
 );
 
 export function getCategoryById(id: string): CategoryDef {
+  if (id === 'transfer') {
+    return {
+      id: 'transfer',
+      label: 'Transfer',
+      icon: 'swap-horizontal',
+      color: '#6366F1',
+      isCustom: false,
+      applicableTo: 'both',
+    };
+  }
   const cats = useCategoryStore.getState().categories;
   return (
     cats.find((c) => c.id === id) ?? {
