@@ -6,7 +6,7 @@
  * @associatedFiles src/app/accounts.tsx
  */
 
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, Pressable } from 'react-native';
 import type { ComponentProps } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
@@ -20,10 +20,31 @@ interface Props {
   value: string;
   icon:  IoniconName;
   color: string;
+  onPress?: () => void;
 }
 
-export function AccountStatCard({ label, value, icon, color }: Props) {
+export function AccountStatCard({ label, value, icon, color, onPress }: Props) {
   const { colors } = useTheme();
+
+  if (onPress) {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          s.card,
+          { backgroundColor: colors.surface.sheet, shadowColor: colors.black },
+          pressed && { opacity: 0.7 }
+        ]}
+      >
+        <View style={[s.iconWrap, { backgroundColor: color + '18' }]}>
+          <Ionicons name={icon} size={18} color={color} />
+        </View>
+        <AppText variant="labelSM" style={{ color: colors.text.tertiary, marginTop: 8 }}>{label}</AppText>
+        <AppText variant="labelLG" style={{ color: colors.text.primary, fontWeight: '700', marginTop: 2 }}>{value}</AppText>
+      </Pressable>
+    );
+  }
+
   return (
     <View style={[s.card, { backgroundColor: colors.surface.sheet, shadowColor: colors.black }]}>
       <View style={[s.iconWrap, { backgroundColor: color + '18' }]}>

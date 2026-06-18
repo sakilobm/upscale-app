@@ -7,7 +7,7 @@
  */
 
 import { useEffect, type ComponentProps } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
@@ -22,9 +22,10 @@ type IoniconName = ComponentProps<typeof Ionicons>['name'];
 interface Props {
   account:  Account;
   isActive: boolean;
+  onPress?: () => void;
 }
 
-export function AccountCard({ account, isActive }: Props) {
+export function AccountCard({ account, isActive, onPress }: Props) {
   const { colors } = useTheme();
   const scale = useSharedValue(isActive ? 1 : 0.93);
 
@@ -40,7 +41,11 @@ export function AccountCard({ account, isActive }: Props) {
   return (
     <View style={{ width: CARD_W }}>
       <Animated.View style={[s.shadow, { shadowColor: account.color }, cardStyle]}>
-        <View style={s.clip}>
+        <Pressable
+          onPress={onPress}
+          disabled={!onPress}
+          style={({ pressed }) => [s.clip, pressed && { opacity: 0.92 }]}
+        >
           <LinearGradient
             colors={[account.color, account.color + 'CC']}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -80,7 +85,7 @@ export function AccountCard({ account, isActive }: Props) {
               <AppText style={[s.currencyCode, { color: colors.white + '99' }]}>{account.currency}</AppText>
             </View>
           </View>
-        </View>
+        </Pressable>
       </Animated.View>
     </View>
   );

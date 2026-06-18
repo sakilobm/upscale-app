@@ -88,7 +88,7 @@ export default function AccountsScreen() {
                 onScroll={handlers.scroll} scrollEventThrottle={16} style={{ flexGrow: 0 }}
               >
                 {accounts.map((acc, i) => (
-                  <AccountCard key={acc.id} account={acc} isActive={i === selectedIdx} />
+                  <AccountCard key={acc.id} account={acc} isActive={i === selectedIdx} onPress={() => handlers.edit(acc)} />
                 ))}
               </ScrollView>
             </View>
@@ -100,7 +100,7 @@ export default function AccountsScreen() {
         {selectedAccount && (
           <ScrollView key={selectedAccount.id} showsVerticalScrollIndicator={false} contentContainerStyle={s.details}>
             <View style={s.statsRow}>
-              <AccountStatCard label="Balance"  value={`${CURRENCY_SYMBOLS[selectedAccount.currency] ?? '$'}${selectedAccount.balance.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon="cash-outline"   color={accColor} />
+              <AccountStatCard label="Balance"  value={`${CURRENCY_SYMBOLS[selectedAccount.currency] ?? '$'}${selectedAccount.balance.toLocaleString('en-US', { minimumFractionDigits: 0 })}`} icon="cash-outline"   color={accColor} onPress={() => handlers.edit(selectedAccount)} />
               <AccountStatCard label="Type"     value={selectedAccount.type.charAt(0).toUpperCase() + selectedAccount.type.slice(1)}          icon="layers-outline" color={accColor} />
               <AccountStatCard label="Currency" value={selectedAccount.currency}                                                               icon="globe-outline"  color={accColor} />
             </View>
