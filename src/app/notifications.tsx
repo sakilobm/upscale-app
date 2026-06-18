@@ -26,7 +26,7 @@ type IoniconName = ComponentProps<typeof Ionicons>['name'];
 const TAB_H = 52;
 
 const TABS: { id: NotificationTab; label: string; active: IoniconName; inactive: IoniconName }[] = [
-  { id: 'inbox',     label: 'Inbox',     active: 'mail',  inactive: 'mail-outline'  },
+  { id: 'inbox', label: 'Inbox', active: 'mail', inactive: 'mail-outline' },
   { id: 'reminders', label: 'Reminders', active: 'alarm', inactive: 'alarm-outline' },
 ];
 
@@ -35,36 +35,36 @@ const TABS: { id: NotificationTab; label: string; active: IoniconName; inactive:
 export default function NotificationsScreen() {
   const { colors, isDark } = useTheme();
   const screen = useNotificationsScreen();
-  const bg   = isDark ? colors.background.primary : colors.background.tertiary;
+  const bg = isDark ? colors.background.primary : colors.background.tertiary;
   const card = isDark ? colors.background.secondary : colors.background.card;
 
   const SETTINGS_ROWS = [
     {
-      key:   'budgetExceeded'   as const,
+      key: 'budgetExceeded' as const,
       label: 'Budget Exceeded',
-      sub:   'When spending goes over limit',
-      icon:  'alert-circle'    as IoniconName,
+      sub: 'When spending goes over limit',
+      icon: 'alert-circle' as IoniconName,
       color: colors.status.expense,
     },
     {
-      key:   'budgetWarning'    as const,
+      key: 'budgetWarning' as const,
       label: 'Budget Warning',
-      sub:   'At 80% of your budget',
-      icon:  'warning'          as IoniconName,
+      sub: 'At 80% of your budget',
+      icon: 'warning' as IoniconName,
       color: colors.status.warning,
     },
     {
-      key:   'paymentDue'       as const,
+      key: 'paymentDue' as const,
       label: 'Payment Due',
-      sub:   'Upcoming planned payments',
-      icon:  'calendar'         as IoniconName,
+      sub: 'Upcoming planned payments',
+      icon: 'calendar' as IoniconName,
       color: colors.status.info,
     },
     {
-      key:   'remindersEnabled' as const,
+      key: 'remindersEnabled' as const,
       label: 'Reminders',
-      sub:   'Scheduled personal reminders',
-      icon:  'alarm'            as IoniconName,
+      sub: 'Scheduled personal reminders',
+      icon: 'alarm' as IoniconName,
       color: colors.brand.secondary,
     },
   ];
@@ -131,7 +131,7 @@ export default function NotificationsScreen() {
               width: (barW - 8) / 2,
               backgroundColor: card,
               ...Platform.select({
-                ios:     { shadowColor: colors.black, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.10, shadowRadius: 6 },
+                ios: { shadowColor: colors.black, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.10, shadowRadius: 6 },
                 android: { elevation: 4 },
               }),
             },
@@ -150,7 +150,7 @@ export default function NotificationsScreen() {
               <AppText
                 variant="labelMD"
                 style={{
-                  color:      isActive ? colors.text.primary : colors.text.tertiary,
+                  color: isActive ? colors.text.primary : colors.text.tertiary,
                   fontWeight: isActive ? '800' : '500',
                 }}
               >
@@ -223,7 +223,7 @@ export default function NotificationsScreen() {
                     onValueChange={() => screen.handlers.toggleSetting(key)}
                     trackColor={{
                       false: colors.glass.backgroundStrong,
-                      true:  color + '55',
+                      true: color + '55',
                     }}
                     thumbColor={screen.settings[key] ? color : colors.text.tertiary}
                     ios_backgroundColor={colors.glass.backgroundStrong}
@@ -402,7 +402,7 @@ const s = StyleSheet.create({
     marginHorizontal: 16, borderRadius: 20,
     overflow: 'hidden', marginBottom: 10,
     ...Platform.select({
-      ios:     { shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.07, shadowRadius: 16 },
+      ios: { shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.07, shadowRadius: 16 },
       android: { elevation: 3 },
     }),
   },

@@ -238,16 +238,16 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
                       );
                     })}
                     <Pressable
-                      onPress={() => { setCatFormVisible(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                      style={[s.catChip, s.catNewChip, { borderColor: colors.brand.primary + '45' }]}
-                    >
-                      <View style={[s.catIcon, { backgroundColor: colors.brand.primary + '18' }]}>
-                        <Ionicons name="add" size={15} color={colors.brand.primary} />
-                      </View>
-                      <AppText variant="labelSM" style={{ color: colors.brand.primary, fontWeight: '600', fontSize: 11 }}>
-                        New
-                      </AppText>
-                    </Pressable>
+                  onPress={() => { setCatFormVisible(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                  style={[s.catChip, s.catNewChip, { borderColor: (isDark ? colors.brand.primary : '#8EB41F') + '80' }]}
+                >
+                  <View style={[s.catIcon, { backgroundColor: (isDark ? colors.brand.primary : '#8EB41F') + '22' }]}>
+                    <Ionicons name="add" size={15} color={isDark ? colors.brand.primary : '#8EB41F'} />
+                  </View>
+                  <AppText variant="labelSM" style={{ color: isDark ? colors.brand.primary : '#8EB41F', fontWeight: '700', fontSize: 11 }}>
+                    New
+                  </AppText>
+                </Pressable>
                   </ScrollView>
 
                   {/* Account (only when >1) */}

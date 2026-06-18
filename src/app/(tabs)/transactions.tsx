@@ -17,6 +17,7 @@ import { AccountBar } from '@components/activity/AccountBar';
 import { ActivityEmptyState } from '@components/activity/ActivityEmptyState';
 import { SwipeableTransactionRow } from '@components/activity/SwipeableTransactionRow';
 import { FilterBar } from '@features/transactions/components/FilterBar';
+import { EditTransactionSheet } from '@components/transactions/EditTransactionSheet';
 import { AppText } from '@components/AppText';
 import { LoadingScreen } from '@components/LoadingScreen';
 import { useTheme } from '@hooks/useTheme';
@@ -29,6 +30,7 @@ export default function TransactionsScreen() {
   const {
     groups, isLoading, isEmpty, refresh, removeTransaction, formatDateHeader,
     filters, setFilters, selectedAccount, summary, monthLabel, handleTransactionPress,
+    editingTransaction, setEditingTransaction,
   } = useActivityScreen();
 
   const rawBalanceColor = selectedAccount?.color ?? colors.brand.primary;
@@ -108,6 +110,12 @@ export default function TransactionsScreen() {
           ))}
         </ScrollView>
       )}
+
+      <EditTransactionSheet
+        visible={!!editingTransaction}
+        transaction={editingTransaction}
+        onClose={() => setEditingTransaction(null)}
+      />
     </SafeAreaView>
   );
 }

@@ -33,6 +33,7 @@ export function useHomeScreen() {
 
   const [addVisible, setAddVisible] = useState(false);
   const [addType,    setAddType]    = useState<'expense' | 'income'>('expense');
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const openAdd = useCallback((type: 'expense' | 'income') => {
     setAddType(type);
@@ -42,8 +43,9 @@ export function useHomeScreen() {
 
   const closeAdd = useCallback(() => setAddVisible(false), []);
 
-  const handleTransactionPress = useCallback((_tx: Transaction) => {
-    router.push('/(tabs)/transactions');
+  const handleTransactionPress = useCallback((tx: Transaction) => {
+    setEditingTransaction(tx);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, []);
 
   const quickActions = useMemo<QuickAction[]>(() => [
@@ -70,6 +72,8 @@ export function useHomeScreen() {
       open:      openAdd,
       close:     closeAdd,
     },
+    editingTransaction,
+    setEditingTransaction,
     quickActions,
     handleTransactionPress,
   };

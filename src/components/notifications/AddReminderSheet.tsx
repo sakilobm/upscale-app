@@ -20,10 +20,10 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 const REPEAT_OPTIONS: { label: string; value: RepeatInterval; icon: string }[] = [
-  { label: 'Once',    value: 'none',    icon: 'flash-outline'           },
-  { label: 'Daily',   value: 'daily',   icon: 'sunny-outline'           },
-  { label: 'Weekly',  value: 'weekly',  icon: 'calendar-outline'        },
-  { label: 'Monthly', value: 'monthly', icon: 'refresh-circle-outline'  },
+  { label: 'Once', value: 'none', icon: 'flash-outline' },
+  { label: 'Daily', value: 'daily', icon: 'sunny-outline' },
+  { label: 'Weekly', value: 'weekly', icon: 'calendar-outline' },
+  { label: 'Monthly', value: 'monthly', icon: 'refresh-circle-outline' },
 ];
 
 // ─── Time helpers ─────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ function parse24h(time: string): TimeState {
 function to24h(hour: number, minute: number, ampm: 'AM' | 'PM'): string {
   let h = hour;
   if (ampm === 'AM') { if (h === 12) h = 0; }
-  else               { if (h !== 12) h += 12; }
+  else { if (h !== 12) h += 12; }
   return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
@@ -79,11 +79,11 @@ function TimeStepper({ label, display, onInc, onDec }: {
 }
 
 const ts = StyleSheet.create({
-  wrap:    { alignItems: 'center', gap: 4 },
-  btn:     { width: 44, height: 36, alignItems: 'center', justifyContent: 'center' },
+  wrap: { alignItems: 'center', gap: 4 },
+  btn: { width: 44, height: 36, alignItems: 'center', justifyContent: 'center' },
   display: { width: 78, height: 64, borderRadius: 18, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  value:   { fontSize: 32, fontWeight: '800', letterSpacing: -1.5 },
-  lbl:     { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, marginTop: 2 },
+  value: { fontSize: 32, fontWeight: '800', letterSpacing: -1.5 },
+  lbl: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, marginTop: 2 },
 });
 
 // ─── AmPmToggle ──────────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ function AmPmToggle({ value, onChange }: {
   return (
     <View style={[amp.track, {
       backgroundColor: colors.glass.background,
-      borderColor:     colors.glass.border,
+      borderColor: colors.glass.border,
     }]}>
       {(['AM', 'PM'] as const).map((v) => {
         const active = value === v;
@@ -116,8 +116,8 @@ function AmPmToggle({ value, onChange }: {
 
 const amp = StyleSheet.create({
   track: { borderRadius: 14, borderWidth: 1, overflow: 'hidden', padding: 3, gap: 3 },
-  btn:   { paddingHorizontal: 13, paddingVertical: 11, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  txt:   { fontSize: 14, fontWeight: '800', letterSpacing: 0.4 },
+  btn: { paddingHorizontal: 13, paddingVertical: 11, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  txt: { fontSize: 14, fontWeight: '800', letterSpacing: 0.4 },
 });
 
 // ─── WeekdaySelector ─────────────────────────────────────────────────────────
@@ -150,7 +150,7 @@ function WeekdaySelector({ selected, onChange, hasError }: {
                     : colors.glass.border,
               }]}>
               <AppText style={[wd.txt, {
-                color:      active ? colors.white : colors.text.secondary,
+                color: active ? colors.white : colors.text.secondary,
                 fontWeight: active ? '800' : '600',
               }]}>{abbr}</AppText>
             </Pressable>
@@ -168,9 +168,9 @@ function WeekdaySelector({ selected, onChange, hasError }: {
 }
 
 const wd = StyleSheet.create({
-  row:  { flexDirection: 'row', gap: 5 },
+  row: { flexDirection: 'row', gap: 5 },
   pill: { flex: 1, height: 38, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  txt:  { fontSize: 12, letterSpacing: 0.1 },
+  txt: { fontSize: 12, letterSpacing: 0.1 },
 });
 
 // ─── MiniCalendar ─────────────────────────────────────────────────────────────
@@ -200,12 +200,12 @@ function MiniCalendar({ selected, onSelect }: {
     prevSel.current = selMonth;
   }, [selected]);
 
-  const year  = viewDate.getFullYear();
+  const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
 
   const today = new Date(); today.setHours(0, 0, 0, 0);
 
-  const firstDow    = new Date(year, month, 1).getDay();
+  const firstDow = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const cells: (number | null)[] = [
     ...Array(firstDow).fill(null),
@@ -220,9 +220,9 @@ function MiniCalendar({ selected, onSelect }: {
   const { colors } = useTheme();
   const accentColor = colors.status.savings;
   const textPrimary = colors.text.primary;
-  const textDim     = colors.text.tertiary;
-  const hdrColor    = colors.text.secondary;
-  const todayBg     = accentColor + '20';
+  const textDim = colors.text.tertiary;
+  const hdrColor = colors.text.secondary;
+  const todayBg = accentColor + '20';
 
   return (
     <View style={{ gap: 2 }}>
@@ -254,24 +254,24 @@ function MiniCalendar({ selected, onSelect }: {
         <View key={wi} style={cl.row}>
           {cells.slice(wi * 7, wi * 7 + 7).map((day, ci) => {
             if (!day) return <View key={ci} style={cl.cell} />;
-            const ds     = dayStr(day);
+            const ds = dayStr(day);
             const cellDt = new Date(year, month, day);
             const isPast = cellDt < today;
             const isToday = ds === toDateStr(today);
-            const isSel   = ds === selected;
+            const isSel = ds === selected;
             return (
               <Pressable key={ci}
                 onPress={() => { if (!isPast) { Haptics.selectionAsync(); onSelect(ds); } }}
                 style={[
                   cl.cell,
                   isToday && !isSel && { backgroundColor: todayBg, borderRadius: 10 },
-                  isSel             && { backgroundColor: accentColor,  borderRadius: 10 },
+                  isSel && { backgroundColor: accentColor, borderRadius: 10 },
                 ]}>
                 <AppText style={[
                   cl.dayNum,
                   { color: isPast ? textDim : textPrimary },
                   isToday && !isSel && { color: accentColor, fontWeight: '700' },
-                  isSel             && { color: colors.white, fontWeight: '800' },
+                  isSel && { color: colors.white, fontWeight: '800' },
                 ]}>{day}</AppText>
               </Pressable>
             );
@@ -283,13 +283,13 @@ function MiniCalendar({ selected, onSelect }: {
 }
 
 const cl = StyleSheet.create({
-  header:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  navBtn:   { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  navBtn: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   monthLbl: { fontSize: 15, fontWeight: '700', letterSpacing: -0.3 },
-  row:      { flexDirection: 'row' },
-  dow:      { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600', paddingVertical: 5 },
-  cell:     { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
-  dayNum:   { fontSize: 14, fontWeight: '500' },
+  row: { flexDirection: 'row' },
+  dow: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600', paddingVertical: 5 },
+  cell: { flex: 1, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
+  dayNum: { fontSize: 14, fontWeight: '500' },
 });
 
 // ─── AddReminderSheet ─────────────────────────────────────────────────────────
@@ -297,7 +297,7 @@ const cl = StyleSheet.create({
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onSave:  (form: ReminderFormState) => void;
+  onSave: (form: ReminderFormState) => void;
 }
 
 interface FormErrors { title?: string; weekdays?: string; }
@@ -306,9 +306,9 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
   const { colors } = useTheme();
   const accentColor = colors.status.savings;
 
-  const [form,      setForm]      = useState<ReminderFormState>(DEFAULT_REMINDER_FORM);
+  const [form, setForm] = useState<ReminderFormState>(DEFAULT_REMINDER_FORM);
   const [timeState, setTimeState] = useState<TimeState>(parse24h(DEFAULT_REMINDER_FORM.time));
-  const [errors,    setErrors]    = useState<FormErrors>({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
   // Sync timeState → form.time (avoids nested setState anti-pattern)
   useEffect(() => {
@@ -346,10 +346,10 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
   }
 
   // Stepper handlers — stable closures, no captured stale state
-  const incHour = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, hour:   t.hour   >= 12 ? 1  : t.hour   + 1 })); };
-  const decHour = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, hour:   t.hour   <= 1  ? 12 : t.hour   - 1 })); };
-  const incMin  = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, minute: t.minute >= 59 ? 0  : t.minute + 1 })); };
-  const decMin  = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, minute: t.minute <= 0  ? 59 : t.minute - 1 })); };
+  const incHour = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, hour: t.hour >= 12 ? 1 : t.hour + 1 })); };
+  const decHour = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, hour: t.hour <= 1 ? 12 : t.hour - 1 })); };
+  const incMin = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, minute: t.minute >= 59 ? 0 : t.minute + 1 })); };
+  const decMin = () => { Haptics.selectionAsync(); setTimeState((t) => ({ ...t, minute: t.minute <= 0 ? 59 : t.minute - 1 })); };
 
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose} statusBarTranslucent>
@@ -510,13 +510,13 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
                       }}
                       style={[s.repeatChip, {
                         backgroundColor: active ? accentColor + '18' : inputBg,
-                        borderColor:     active ? accentColor         : bdColor,
+                        borderColor: active ? accentColor : bdColor,
                       }]}
                     >
                       <Ionicons name={icon as any} size={14} color={active ? accentColor : colors.text.tertiary} />
                       <AppText style={[s.repeatLbl, {
-                        color:      active ? accentColor : colors.text.secondary,
-                        fontWeight: active ? '700'  : '600',
+                        color: active ? accentColor : colors.text.secondary,
+                        fontWeight: active ? '700' : '600',
                       }]}>{label}</AppText>
                     </Pressable>
                   );
@@ -566,31 +566,31 @@ export function AddReminderSheet({ visible, onClose, onSave }: Props) {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  root:    { flex: 1, justifyContent: 'flex-end' },
-  backdrop:{ backgroundColor: 'transparent' },
+  root: { flex: 1, justifyContent: 'flex-end' },
+  backdrop: { backgroundColor: 'transparent' },
 
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
     maxHeight: '92%',
     ...Platform.select({
-      ios:     { shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.18, shadowRadius: 24 },
+      ios: { shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.18, shadowRadius: 24 },
       android: { elevation: 24 },
     }),
   },
 
   handle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 4 },
 
-  header:  { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 14 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 14 },
   hdrIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  hdrSub:  { fontSize: 12, marginTop: 1 },
-  closeBtn:{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  hdrSub: { fontSize: 12, marginTop: 1 },
+  closeBtn: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
 
-  field:       { gap: 9 },
+  field: { gap: 9 },
   fieldLblRow: { flexDirection: 'row', alignItems: 'baseline' },
-  fieldLbl:    { fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
+  fieldLbl: { fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
 
   inputBox: { height: 50, borderRadius: 14, borderWidth: 1.5, paddingHorizontal: 14, justifyContent: 'center' },
-  input:    { fontSize: 15, fontWeight: '500', paddingVertical: 0 },
+  input: { fontSize: 15, fontWeight: '500', paddingVertical: 0 },
 
   errRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
   errTxt: { fontSize: 12, fontWeight: '500' },
@@ -599,8 +599,8 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     borderRadius: 20, borderWidth: 1.5, paddingVertical: 16, paddingHorizontal: 12, gap: 8,
   },
-  colon:   { fontSize: 36, fontWeight: '900', marginBottom: 24, letterSpacing: -2, lineHeight: 40 },
-  ampmWrap:{ marginLeft: 6 },
+  colon: { fontSize: 36, fontWeight: '900', marginBottom: 24, letterSpacing: -2, lineHeight: 40 },
+  ampmWrap: { marginLeft: 6 },
 
   repeatGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   repeatChip: {
@@ -612,7 +612,7 @@ const s = StyleSheet.create({
 
   calBox: { borderRadius: 18, borderWidth: 1.5, padding: 16 },
 
-  saveBtn:  { borderRadius: 16, overflow: 'hidden' },
+  saveBtn: { borderRadius: 16, overflow: 'hidden' },
   saveGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 54 },
-  saveTxt:  { fontSize: 16, fontWeight: '800' },
+  saveTxt: { fontSize: 16, fontWeight: '800' },
 });

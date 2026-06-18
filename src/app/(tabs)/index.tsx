@@ -21,6 +21,7 @@ import { useHomeScreen } from '@features/dashboard/hooks/useHomeScreen';
 import { useNotificationStore } from '@store/notificationStore';
 import { getAvatar } from '@constants/avatars';
 import { QuickAddSheet } from '@components/home/QuickAddSheet';
+import { EditTransactionSheet } from '@components/transactions/EditTransactionSheet';
 import { HomeSetupPrompt } from '@components/home/HomeSetupPrompt';
 import { SectionTitle } from '@components/home/SectionTitle';
 import { BalanceCard } from '@features/dashboard/components/BalanceCard';
@@ -38,7 +39,7 @@ type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
-  const { dashboard, user, addSheet, quickActions, handleTransactionPress } = useHomeScreen();
+  const { dashboard, user, addSheet, quickActions, handleTransactionPress, editingTransaction, setEditingTransaction } = useHomeScreen();
   const unreadCount = useNotificationStore((s) => s.notifications.filter((n) => !n.isRead).length);
   const { data, isLoading, isError, isEmpty, refresh } = dashboard;
   const avatar = getAvatar(user.avatarId);
@@ -178,6 +179,7 @@ export default function HomeScreen() {
       </ScrollView>
 
       <QuickAddSheet visible={addSheet.isVisible} initialType={addSheet.type} onClose={addSheet.close} />
+      <EditTransactionSheet visible={!!editingTransaction} transaction={editingTransaction} onClose={() => setEditingTransaction(null)} />
     </SafeAreaView>
   );
 }

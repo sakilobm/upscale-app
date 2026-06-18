@@ -8,8 +8,9 @@
  *   src/store/transactionStore.ts, src/store/accountStore.ts, src/app/(tabs)/transactions.tsx
  */
 
-import { useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
+import * as Haptics from 'expo-haptics';
 import { useTransactions } from './useTransactions';
 import { useTransactionStore } from '@store/transactionStore';
 import { useAccountStore } from '@store/accountStore';
@@ -45,7 +46,12 @@ export function useActivityScreen() {
     ? format(new Date(filters.month + '-01'), 'MMMM yyyy')
     : format(new Date(), 'MMMM yyyy');
 
-  const handleTransactionPress = useCallback((_tx: Transaction) => {}, []);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+
+  const handleTransactionPress = useCallback((tx: Transaction) => {
+    setEditingTransaction(tx);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
 
   return {
     groups, isLoading, isEmpty, refresh, removeTransaction, formatDateHeader,
@@ -53,6 +59,8 @@ export function useActivityScreen() {
     selectedAccount,
     summary,
     monthLabel,
+    editingTransaction,
+    setEditingTransaction,
     handleTransactionPress,
   };
 }
