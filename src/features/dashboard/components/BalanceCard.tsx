@@ -1,10 +1,13 @@
-import React, { memo } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text, Dimensions } from 'react-native';
+import React, { memo, useState, useEffect } from 'react';
+import { View, StyleSheet, ActivityIndicator, Text, Dimensions, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { Radius, Spacing, BlurConfigs } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
+import { useAccountStore } from '@store/accountStore';
 import { CURRENCY_SYMBOLS } from '@store/types';
 import type { BalanceCardProps } from '../types';
 
@@ -23,22 +26,59 @@ export const BalanceCard = memo(function BalanceCard({
   isLoading,
   currency,
 }: BalanceCardProps) {
-  const { isDark, colors } = useTheme();
+  const { isDark } = useTheme();
+  const [showAccounts, setShowAccounts] = useState(false);
 
   if (!isDark) {
-    return <LightCard totalBalance={totalBalance} monthSummary={monthSummary} isLoading={isLoading} currency={currency} />;
+    return (
+      <LightCard
+        totalBalance={totalBalance}
+        monthSummary={monthSummary}
+        isLoading={isLoading}
+        currency={currency}
+        showAccounts={showAccounts}
+        onToggleAccounts={() => setShowAccounts(!showAccounts)}
+      />
+    );
   }
-  return <DarkCard totalBalance={totalBalance} monthSummary={monthSummary} isLoading={isLoading} currency={currency} />;
+  return (
+    <DarkCard
+      totalBalance={totalBalance}
+      monthSummary={monthSummary}
+      isLoading={isLoading}
+      currency={currency}
+      showAccounts={showAccounts}
+      onToggleAccounts={() => setShowAccounts(!showAccounts)}
+    />
+  );
 });
+
+interface InternalCardProps extends BalanceCardProps {
+  showAccounts: boolean;
+  onToggleAccounts: () => void;
+}
 
 const LightCard = memo(function LightCard({
   totalBalance,
   monthSummary,
   isLoading,
   currency,
-}: BalanceCardProps) {
+  showAccounts,
+  onToggleAccounts,
+}: InternalCardProps) {
   const { colors } = useTheme();
+  const accounts = useAccountStore((s) => s.accounts);
   const sym = CURRENCY_SYMBOLS[currency] ?? '$';
+
+  const toggleX = useSharedValue(showAccounts ? 14 : 0);
+  useEffect(() => {
+    toggleX.value = withSpring(showAccounts ? 14 : 0, { damping: 15, stiffness: 150 });
+  }, [showAccounts]);
+
+  const toggleStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: toggleX.value }],
+  }));
+
   return (
     <View style={[styles.container, lightStyles.container, { shadowColor: colors.brand.primary, borderColor: colors.balanceCard.containerBorder }]}>
       {/* Background neon gradient base */}
@@ -69,15 +109,17 @@ const LightCard = memo(function LightCard({
         {/* Top row: card name + currency */}
         <View style={styles.cardTopRow}>
           <View style={styles.cardNameRow}>
-            <View style={[styles.toggleTrack, { backgroundColor: colors.black }]}>
-              <View style={[styles.toggleThumb, { backgroundColor: colors.white }]} />
-            </View>
+            <Pressable onPress={onToggleAccounts} hitSlop={8}>
+              <View style={[styles.toggleTrack, { backgroundColor: showAccounts ? '#8EB41F' : colors.black }]}>
+                <Animated.View style={[styles.toggleThumb, toggleStyle, { backgroundColor: colors.white }]} />
+              </View>
+            </Pressable>
             <AppText
               variant="labelMD"
               color={colors.balanceCard.titleColor}
               style={styles.cardName}
             >
-              MoneyCard
+              {showAccounts ? 'My Accounts' : 'MoneyCard'}
             </AppText>
           </View>
           <View style={styles.currencyChip}>
@@ -85,35 +127,74 @@ const LightCard = memo(function LightCard({
           </View>
         </View>
 
-        {/* Card number strip */}
-        <View style={[styles.cardNumberStrip, { backgroundColor: colors.black + 'D1' }]}>
-          <AppText variant="labelMD" color={colors.white} style={styles.cardDots}>
-            ●●●●  ●●●●  ●●●●  4829
-          </AppText>
-        </View>
-
-        {/* Bottom row: balance + expiry */}
-        <View style={styles.cardBottomRow}>
-          <View>
-            <AppText variant="labelSM" color={colors.balanceCard.labelColor} style={styles.balanceLabel}>
-              Your Balance
-            </AppText>
-            {isLoading ? (
-              <ActivityIndicator size="small" color={colors.balanceCard.balanceColor} style={styles.loader} />
-            ) : (
-              <AppText
-                variant="numericLG"
-                color={colors.balanceCard.balanceColor}
-                style={styles.balanceAmount}
-              >
-                {sym}{formatBalance(totalBalance)}
+        {showAccounts ? (
+          accounts.length === 0 ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 90 }}>
+              <Ionicons name="wallet-outline" size={24} color={colors.balanceCard.titleColor} style={{ opacity: 0.4, marginBottom: 4 }} />
+              <AppText variant="caption" style={{ color: colors.balanceCard.titleColor, opacity: 0.6 }}>
+                No accounts found. Add one to start.
               </AppText>
-            )}
-          </View>
-          <AppText variant="labelMD" color={colors.balanceCard.valueColor}>
-            09/26
-          </AppText>
-        </View>
+            </View>
+          ) : (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 110, marginTop: 12 }}
+              contentContainerStyle={{ gap: 8 }}
+            >
+              {accounts.map((acc, idx) => (
+                <View
+                  key={acc.id}
+                  style={[
+                    styles.accountRow,
+                    idx > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(0,0,0,0.08)', paddingTop: 6 }
+                  ]}
+                >
+                  <View style={[styles.accountIconCircle, { backgroundColor: acc.color + '22' }]}>
+                    <Ionicons name={acc.icon as any} size={13} color={acc.color} />
+                  </View>
+                  <AppText variant="labelMD" style={{ color: colors.balanceCard.titleColor, fontWeight: '600', flex: 1 }}>
+                    {acc.name}
+                  </AppText>
+                  <AppText variant="labelMD" style={{ color: colors.balanceCard.titleColor, fontWeight: '800' }}>
+                    {CURRENCY_SYMBOLS[acc.currency] ?? '$'}{acc.balance.toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                  </AppText>
+                </View>
+              ))}
+            </ScrollView>
+          )
+        ) : (
+          <>
+            {/* Card number strip */}
+            <View style={[styles.cardNumberStrip, { backgroundColor: colors.black + 'D1' }]}>
+              <AppText variant="labelMD" color={colors.white} style={styles.cardDots}>
+                ●●●●  ●●●●  ●●●●  4829
+              </AppText>
+            </View>
+
+            {/* Bottom row: balance + expiry */}
+            <View style={styles.cardBottomRow}>
+              <View>
+                <AppText variant="labelSM" color={colors.balanceCard.labelColor} style={styles.balanceLabel}>
+                  Your Balance
+                </AppText>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color={colors.balanceCard.balanceColor} style={styles.loader} />
+                ) : (
+                  <AppText
+                    variant="numericLG"
+                    color={colors.balanceCard.balanceColor}
+                    style={styles.balanceAmount}
+                  >
+                    {sym}{formatBalance(totalBalance)}
+                  </AppText>
+                )}
+              </View>
+              <AppText variant="labelMD" color={colors.balanceCard.valueColor}>
+                09/26
+              </AppText>
+            </View>
+          </>
+        )}
       </View>
     </View>
   );
@@ -124,9 +205,22 @@ const DarkCard = memo(function DarkCard({
   monthSummary,
   isLoading,
   currency,
-}: BalanceCardProps) {
+  showAccounts,
+  onToggleAccounts,
+}: InternalCardProps) {
   const { colors } = useTheme();
+  const accounts = useAccountStore((s) => s.accounts);
   const sym = CURRENCY_SYMBOLS[currency] ?? '$';
+
+  const toggleX = useSharedValue(showAccounts ? 14 : 0);
+  useEffect(() => {
+    toggleX.value = withSpring(showAccounts ? 14 : 0, { damping: 15, stiffness: 150 });
+  }, [showAccounts]);
+
+  const toggleStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: toggleX.value }],
+  }));
+
   return (
     <View style={[styles.container, darkStyles.container, { shadowColor: colors.brand.primary, borderColor: colors.balanceCard.containerBorder }]}>
       {/* Background gradient base */}
@@ -146,44 +240,96 @@ const DarkCard = memo(function DarkCard({
       <View style={[darkStyles.border, { borderRadius: Radius['2xl'], borderColor: colors.balanceCard.innerBorder }]} />
 
       <View style={styles.content}>
-        <AppText variant="labelMD" color={colors.balanceCard.labelColor} style={darkStyles.label}>
-          TOTAL BALANCE
-        </AppText>
-        {isLoading ? (
-          <ActivityIndicator size="small" color={colors.balanceCard.balanceColor} style={styles.loader} />
-        ) : (
-          <AppText variant="numericLG" color={colors.balanceCard.balanceColor} style={darkStyles.balance}>
-            {sym}{formatBalance(totalBalance)}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <AppText variant="labelMD" color={colors.balanceCard.labelColor} style={darkStyles.label}>
+            {showAccounts ? 'ACCOUNT BALANCES' : 'TOTAL BALANCE'}
           </AppText>
-        )}
-
-        <View style={[darkStyles.divider, { backgroundColor: colors.glass.border }]} />
-
-        <View style={darkStyles.statsRow}>
-          <View style={darkStyles.statItem}>
-            <AppText variant="labelSM" color={colors.balanceCard.labelColor}>INCOME</AppText>
-            <AppText variant="headingSM" color={colors.status.income}>
-              +{sym}{formatBalance(monthSummary.totalIncome)}
-            </AppText>
-          </View>
-          <View style={[darkStyles.statDivider, { backgroundColor: colors.glass.border }]} />
-          <View style={darkStyles.statItem}>
-            <AppText variant="labelSM" color={colors.balanceCard.labelColor}>EXPENSES</AppText>
-            <AppText variant="headingSM" color={colors.status.expense}>
-              -{sym}{formatBalance(monthSummary.totalExpense)}
-            </AppText>
-          </View>
-          <View style={[darkStyles.statDivider, { backgroundColor: colors.glass.border }]} />
-          <View style={darkStyles.statItem}>
-            <AppText variant="labelSM" color={colors.balanceCard.labelColor}>SAVINGS</AppText>
-            <AppText
-              variant="headingSM"
-              color={monthSummary.netSavings >= 0 ? colors.status.income : colors.status.expense}
-            >
-              {monthSummary.netSavings >= 0 ? '+' : '-'}{sym}{formatBalance(Math.abs(monthSummary.netSavings))}
-            </AppText>
-          </View>
+          <Pressable onPress={onToggleAccounts} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <AppText variant="labelSM" style={{ color: colors.brand.primary, fontWeight: '700', fontSize: 10 }}>ACCOUNTS</AppText>
+            <View style={[styles.toggleTrack, { width: 30, height: 16, paddingHorizontal: 2, borderRadius: 8, backgroundColor: showAccounts ? colors.brand.primary : colors.glass.borderStrong }]}>
+              <Animated.View style={[styles.toggleThumb, { width: 12, height: 12, borderRadius: 6 }, toggleStyle, { backgroundColor: colors.white }]} />
+            </View>
+          </Pressable>
         </View>
+
+        {showAccounts ? (
+          <>
+            <View style={[darkStyles.divider, { backgroundColor: colors.glass.border, marginVertical: 8 }]} />
+            {accounts.length === 0 ? (
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 90 }}>
+                <Ionicons name="wallet-outline" size={24} color={colors.text.secondary} style={{ opacity: 0.4, marginBottom: 4 }} />
+                <AppText variant="caption" style={{ color: colors.text.secondary, opacity: 0.6 }}>
+                  No accounts found. Add one to start.
+                </AppText>
+              </View>
+            ) : (
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={{ maxHeight: 110 }}
+                contentContainerStyle={{ gap: 2 }}
+              >
+                {accounts.map((acc, idx) => (
+                  <View
+                    key={acc.id}
+                    style={[
+                      styles.accountRow,
+                      { paddingVertical: 6 },
+                      idx > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.glass.border, paddingTop: 6 }
+                    ]}
+                  >
+                    <View style={[styles.accountIconCircle, { backgroundColor: acc.color + '22', width: 28, height: 28, borderRadius: 8 }]}>
+                      <Ionicons name={acc.icon as any} size={14} color={acc.color} />
+                    </View>
+                    <AppText variant="labelMD" style={{ color: colors.text.primary, fontWeight: '600', flex: 1 }}>
+                      {acc.name}
+                    </AppText>
+                    <AppText variant="labelMD" style={{ color: acc.color, fontWeight: '800' }}>
+                      {CURRENCY_SYMBOLS[acc.currency] ?? '$'}{acc.balance.toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                    </AppText>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </>
+        ) : (
+          <>
+            {isLoading ? (
+              <ActivityIndicator size="small" color={colors.balanceCard.balanceColor} style={styles.loader} />
+            ) : (
+              <AppText variant="numericLG" color={colors.balanceCard.balanceColor} style={darkStyles.balance}>
+                {sym}{formatBalance(totalBalance)}
+              </AppText>
+            )}
+
+            <View style={[darkStyles.divider, { backgroundColor: colors.glass.border }]} />
+
+            <View style={darkStyles.statsRow}>
+              <View style={darkStyles.statItem}>
+                <AppText variant="labelSM" color={colors.balanceCard.labelColor}>INCOME</AppText>
+                <AppText variant="headingSM" color={colors.status.income}>
+                  +{sym}{formatBalance(monthSummary.totalIncome)}
+                </AppText>
+              </View>
+              <View style={[darkStyles.statDivider, { backgroundColor: colors.glass.border }]} />
+              <View style={darkStyles.statItem}>
+                <AppText variant="labelSM" color={colors.balanceCard.labelColor}>EXPENSES</AppText>
+                <AppText variant="headingSM" color={colors.status.expense}>
+                  -{sym}{formatBalance(monthSummary.totalExpense)}
+                </AppText>
+              </View>
+              <View style={[darkStyles.statDivider, { backgroundColor: colors.glass.border }]} />
+              <View style={darkStyles.statItem}>
+                <AppText variant="labelSM" color={colors.balanceCard.labelColor}>SAVINGS</AppText>
+                <AppText
+                  variant="headingSM"
+                  color={monthSummary.netSavings >= 0 ? colors.status.income : colors.status.expense}
+                >
+                  {monthSummary.netSavings >= 0 ? '+' : '-'}{sym}{formatBalance(Math.abs(monthSummary.netSavings))}
+                </AppText>
+              </View>
+            </View>
+          </>
+        )}
       </View>
     </View>
   );
@@ -221,7 +367,7 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    alignSelf: 'flex-end',
+    alignSelf: 'flex-start',
   },
   cardName: {
     fontWeight: '700',
@@ -274,6 +420,19 @@ const styles = StyleSheet.create({
     bottom: -30,
     fontSize: 100,
     lineHeight: 110,
+  },
+  accountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 2,
+  },
+  accountIconCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
