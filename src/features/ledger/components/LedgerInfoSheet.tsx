@@ -30,6 +30,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
+import { useAccountStore } from '@store/accountStore';
 import { Radius, Spacing } from '@constants/Dimensions';
 import type { LedgerEntry } from '@store/ledgerStore';
 
@@ -47,6 +48,7 @@ interface Props {
 export function LedgerInfoSheet({ entry, onClose, onPartialReturn, onSettle }: Props) {
   const { colors, isDark } = useTheme();
   const { symbol }         = useFormatCurrency();
+  const account = useAccountStore((s) => s.accounts.find((a) => a.id === entry?.accountId));
 
   const translateY  = useSharedValue(600);
   const backdropOp  = useSharedValue(0);
@@ -164,9 +166,17 @@ export function LedgerInfoSheet({ entry, onClose, onPartialReturn, onSettle }: P
           </View>
         )}
 
-        {/* Note / due date */}
-        {(entry.note || entry.dueDate) && (
+        {/* Note / due date / account */}
+        {(entry.note || entry.dueDate || account) && (
           <View style={s.meta}>
+            {account && (
+              <View style={s.metaRow}>
+                <Ionicons name={(account.icon as any) || "wallet-outline"} size={13} color={account.color} />
+                <AppText variant="caption" color={colors.text.secondary}>
+                  Account: <AppText variant="caption" style={{ color: account.color, fontWeight: '600' }}>{account.name}</AppText>
+                </AppText>
+              </View>
+            )}
             {entry.note && (
               <View style={s.metaRow}>
                 <Ionicons name="chatbubble-outline" size={13} color={colors.text.tertiary} />

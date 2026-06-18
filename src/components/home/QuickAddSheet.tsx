@@ -250,41 +250,37 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
                 </Pressable>
                   </ScrollView>
 
-                  {/* Account (only when >1) */}
-                  {accounts.length > 1 && (
-                    <>
-                      <AppText variant="labelSM" style={[s.sectionLabel, { color: colors.text.tertiary }]}>ACCOUNT</AppText>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.accountScroll}>
-                        {accounts.map((acc) => {
-                          const active = accountId === acc.id;
-                          return (
-                            <Pressable
-                              key={acc.id}
-                              onPress={() => setAccountId(acc.id)}
-                              style={[
-                                s.accountChip,
-                                {
-                                  backgroundColor: active ? acc.color + '1A' : inputBg,
-                                  borderColor: active ? acc.color + '55' : 'transparent',
-                                  borderWidth: 1.5,
-                                },
-                              ]}
-                            >
-                              <View style={[s.accountIcon, { backgroundColor: acc.color + '22' }]}>
-                                <Ionicons name={acc.icon as IoniconName} size={14} color={acc.color} />
-                              </View>
-                              <AppText
-                                variant="labelSM"
-                                style={{ color: active ? acc.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
-                              >
-                                {acc.name}
-                              </AppText>
-                            </Pressable>
-                          );
-                        })}
-                      </ScrollView>
-                    </>
-                  )}
+                  {/* Account */}
+                  <AppText variant="labelSM" style={[s.sectionLabel, { color: colors.text.tertiary }]}>ACCOUNT</AppText>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.accountScroll}>
+                    {accounts.map((acc) => {
+                      const active = accountId === acc.id;
+                      return (
+                        <Pressable
+                          key={acc.id}
+                          onPress={() => setAccountId(acc.id)}
+                          style={[
+                            s.accountChip,
+                            {
+                              backgroundColor: active ? acc.color + '1A' : inputBg,
+                              borderColor: active ? acc.color + '55' : 'transparent',
+                              borderWidth: 1.5,
+                            },
+                          ]}
+                        >
+                          <View style={[s.accountIcon, { backgroundColor: acc.color + '22' }]}>
+                            <Ionicons name={acc.icon as IoniconName} size={14} color={acc.color} />
+                          </View>
+                          <AppText
+                            variant="labelSM"
+                            style={{ color: active ? acc.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
+                          >
+                            {acc.name}
+                          </AppText>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
 
                   {/* Note */}
                   <TextInput

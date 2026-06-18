@@ -56,7 +56,30 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
           <AppText variant="caption" color={colors.text.tertiary}>
             {subtitle}
           </AppText>
-          {account && (
+          {transaction.type === 'transfer' ? (
+            (() => {
+              const toAccount = transaction.toAccountId ? accounts.find((a) => a.id === transaction.toAccountId) : null;
+              return (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  {account && (
+                    <View style={[styles.accountBadge, { backgroundColor: isDark ? account.color + '22' : account.color + '15', borderColor: isDark ? account.color + '44' : account.color + '30' }]}>
+                      <Ionicons name={(account.icon || 'wallet-outline') as any} size={9} color={account.color} />
+                      <AppText style={[styles.accountBadgeText, { color: account.color }]}>{account.name}</AppText>
+                    </View>
+                  )}
+                  {toAccount && (
+                    <>
+                      <Ionicons name="arrow-forward" size={9} color={colors.text.tertiary} />
+                      <View style={[styles.accountBadge, { backgroundColor: isDark ? toAccount.color + '22' : toAccount.color + '15', borderColor: isDark ? toAccount.color + '44' : toAccount.color + '30' }]}>
+                        <Ionicons name={(toAccount.icon || 'wallet-outline') as any} size={9} color={toAccount.color} />
+                        <AppText style={[styles.accountBadgeText, { color: toAccount.color }]}>{toAccount.name}</AppText>
+                      </View>
+                    </>
+                  )}
+                </View>
+              );
+            })()
+          ) : account ? (
             <View
               style={[
                 styles.accountBadge,
@@ -71,7 +94,7 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
                 {account.name}
               </AppText>
             </View>
-          )}
+          ) : null}
         </View>
       </View>
       <AmountText

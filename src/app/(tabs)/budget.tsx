@@ -150,8 +150,8 @@ export default function BudgetScreen() {
       <AddPaymentSheet
         visible={addSheet.isVisible}
         onClose={addSheet.close}
-        onSubmit={({ title, amount, dueDate, category }) =>
-          addPayment({ title, amount, dueDate, category, isRecurring: false })
+        onSubmit={({ title, amount, dueDate, category, accountId }) =>
+          addPayment({ title, amount, dueDate, category, accountId, isRecurring: false })
         }
       />
 

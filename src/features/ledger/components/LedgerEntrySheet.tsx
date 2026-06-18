@@ -7,6 +7,7 @@ import {
   Platform,
   Modal,
   TouchableWithoutFeedback,
+  ScrollView,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -17,10 +18,12 @@ import Animated, {
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { AppText } from '@components/AppText';
 import { DatePickerField } from '@components/DatePickerField';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
+import { useAccountStore } from '@store/accountStore';
 import { Radius, Spacing } from '@constants/Dimensions';
 import type { LedgerDirection, LedgerEntry } from '@store/ledgerStore';
 
@@ -40,8 +43,9 @@ interface LedgerEntrySheetProps {
     currency:   string;
     note?:      string;
     dueDate?:   string;
+    accountId:  string;
   }) => void;
-  onPartialReturn: (entryId: string, amount: number, note?: string) => void;
+  onPartialReturn: (entryId: string, amount: number, accountId: string, note?: string) => void;
 }
 
 // ─── Sheet ────────────────────────────────────────────────────────────────────
@@ -56,12 +60,14 @@ export function LedgerEntrySheet({
 }: LedgerEntrySheetProps) {
   const { colors, isDark } = useTheme();
   const { currency: userCurrency } = useFormatCurrency();
+  const accounts = useAccountStore((s) => s.accounts);
 
   const [personName,  setPersonName]  = useState('');
   const [amount,      setAmount]      = useState('');
   const [direction,   setDirection]   = useState<LedgerDirection>('OWED_TO_ME');
   const [note,        setNote]        = useState('');
   const [dueDate,     setDueDate]     = useState('');
+  const [accountId,   setAccountId]   = useState('');
 
   const translateY  = useSharedValue(600);
   const backdropOp  = useSharedValue(0);
@@ -80,11 +86,15 @@ export function LedgerEntrySheet({
     if (visible && mode === 'add') {
       setPersonName(''); setAmount(''); setNote(''); setDueDate('');
       setDirection('OWED_TO_ME');
+      const defaultId = (accounts.find((a) => a.isDefault) ?? accounts[0])?.id ?? '';
+      setAccountId(defaultId);
     }
     if (visible && mode === 'partial') {
       setAmount(''); setNote('');
+      const defaultId = editEntry?.accountId ?? (accounts.find((a) => a.isDefault) ?? accounts[0])?.id ?? '';
+      setAccountId(defaultId);
     }
-  }, [visible, mode]);
+  }, [visible, mode, editEntry, accounts]);
 
   const sheetStyle    = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOp.value }));
@@ -97,6 +107,7 @@ export function LedgerEntrySheet({
   const handleSubmit = () => {
     const parsed = parseFloat(amount);
     if (isNaN(parsed) || parsed <= 0) return;
+    if (!accountId) return;
 
     if (mode === 'add') {
       if (!personName.trim()) return;
@@ -107,9 +118,10 @@ export function LedgerEntrySheet({
         currency:   userCurrency,
         note:       note.trim() || undefined,
         dueDate:    dueDate.trim() || undefined,
+        accountId,
       });
     } else if (mode === 'partial' && editEntry) {
-      onPartialReturn(editEntry.id, parsed, note.trim() || undefined);
+      onPartialReturn(editEntry.id, parsed, accountId, note.trim() || undefined);
     }
     onClose();
   };
@@ -233,6 +245,40 @@ export function LedgerEntrySheet({
                 keyboardType="decimal-pad"
               />
             </Field>
+
+            {/* Account Selector */}
+            <AppText variant="labelSM" color={colors.text.secondary} style={styles.fieldLabel}>
+              Account
+            </AppText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountScroll}>
+              {accounts.map((acc) => {
+                const active = accountId === acc.id;
+                return (
+                  <Pressable
+                    key={acc.id}
+                    onPress={() => { setAccountId(acc.id); Haptics.selectionAsync().catch(() => {}); }}
+                    style={[
+                      styles.accountChip,
+                      {
+                        backgroundColor: active ? acc.color + '1A' : colors.surface.input,
+                        borderColor: active ? acc.color + '55' : colors.glass.border,
+                        borderWidth: active ? 1.5 : 1,
+                      },
+                    ]}
+                  >
+                    <View style={[styles.accountIcon, { backgroundColor: acc.color + '22' }]}>
+                      <Ionicons name={acc.icon as any} size={13} color={acc.color} />
+                    </View>
+                    <AppText
+                      variant="labelSM"
+                      style={{ color: active ? acc.color : colors.text.secondary, fontWeight: active ? '700' : '500', fontSize: 12 }}
+                    >
+                      {acc.name}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
 
             <Field label="Note (optional)" icon="chatbubble-outline" colors={colors} isDark={isDark}>
               <TextInput
@@ -370,6 +416,25 @@ const styles = StyleSheet.create({
     height:         44,
     borderRadius:   Radius.lg,
     borderWidth:    1,
+  },
+  accountScroll: {
+    gap: 8,
+    paddingVertical: 4,
+  },
+  accountChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: Radius.full,
+  },
+  accountIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   submitBtn: {
     height:         54,

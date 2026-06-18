@@ -4,6 +4,10 @@ import { zustandStorage } from './storage';
 import { addMonths, addWeeks, addYears, format, differenceInDays, parseISO, isBefore } from 'date-fns';
 import type { TransactionCategory } from '@store/types';
 
+import { useTransactionStore } from './transactionStore';
+import { useAccountStore } from './accountStore';
+import { toast } from './toastStore';
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type PaymentStatus = 'UPCOMING' | 'OVERDUE' | 'SETTLED';
@@ -15,6 +19,7 @@ export interface PlannedPayment {
   amount:            number;
   dueDate:           string;
   category:          TransactionCategory;
+  accountId:         string; // Associated bank/cash account
   status:            PaymentStatus;
   isRecurring:       boolean;
   recurringInterval?: RecurringInterval;
@@ -63,14 +68,49 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>()(
       },
 
       settlePayment: (paymentId) => {
+        const payment = usePlannedPaymentsStore.getState().payments.find((p) => p.id === paymentId);
+        
+        if (payment && payment.status !== 'SETTLED') {
+          // Record a transaction in transaction store (ledger)
+          const { addTransaction } = useTransactionStore.getState();
+          const { updateAccount, accounts } = useAccountStore.getState();
+          
+          const account = accounts.find((a) => a.id === payment.accountId);
+          const now = new Date().toISOString();
+          
+          const newTx = {
+            id: `tx-settled-${payment.id}-${Date.now()}`,
+            userId: 'user-1',
+            type: 'expense' as const,
+            category: payment.category,
+            amount: payment.amount,
+            currency: account?.currency ?? 'USD',
+            description: payment.title,
+            note: `Sattled planned payment`,
+            date: now,
+            accountId: payment.accountId,
+            createdAt: now,
+            updatedAt: now,
+          };
+          
+          addTransaction(newTx);
+          
+          if (account) {
+            updateAccount(payment.accountId, { balance: account.balance - payment.amount });
+            toast.success(`"${payment.title}" settled & recorded in ${account.name}!`);
+          } else {
+            toast.success(`"${payment.title}" settled!`);
+          }
+        }
+
         set((s) => ({
           payments: s.payments.map((p) => {
             if (p.id !== paymentId) return p;
             return { ...p, status: 'SETTLED' as PaymentStatus, settledAt: format(new Date(), 'yyyy-MM-dd') };
           }),
         }));
+
         // Spawn next occurrence for recurring
-        const payment = usePlannedPaymentsStore.getState().payments.find((p) => p.id === paymentId);
         if (payment?.isRecurring && payment.recurringInterval) {
           const nextDue =
             payment.recurringInterval === 'weekly'  ? addWeeks(parseISO(payment.dueDate), 1)  :

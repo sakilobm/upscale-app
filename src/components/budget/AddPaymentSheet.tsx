@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file AddPaymentSheet.tsx
  * @architecture Presentation Layer — UI Component
  * @description Modal sheet for adding a new planned payment.
@@ -25,7 +25,7 @@ import { Spacing, Radius } from '@constants/index';
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (data: { title: string; amount: number; dueDate: string; category: string }) => void;
+  onSubmit: (data: { title: string; amount: number; dueDate: string; category: string; accountId: string }) => void;
 }
 
 export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
@@ -38,6 +38,8 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
     amount, setAmount,
     dueDate, setDueDate,
     category, setCategory,
+    accountId, setAccountId,
+    accounts,
     cats,
     handleSubmit,
   } = usePlannedPaymentForm(onSubmit, onClose);
@@ -169,6 +171,40 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
                           style={{ color: active ? cat.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
                         >
                           {cat.label}
+                        </AppText>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+
+              {/* Pay From Account */}
+              <View style={s.fieldGroup}>
+                <AppText style={[s.fieldLabel, { color: colors.text.tertiary }]}>PAY FROM ACCOUNT</AppText>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catRow}>
+                  {accounts.map((acc) => {
+                    const active = acc.id === accountId;
+                    return (
+                      <Pressable
+                        key={acc.id}
+                        onPress={() => setAccountId(acc.id)}
+                        style={[
+                          s.catChip,
+                          {
+                            backgroundColor: active ? acc.color + '18' : inputBg,
+                            borderColor: active ? acc.color + '55' : 'transparent',
+                            borderWidth: 1.5,
+                          },
+                        ]}
+                      >
+                        <View style={[s.catIconBox, { backgroundColor: acc.color + '22' }]}>
+                          <Ionicons name={acc.icon as any} size={13} color={acc.color} />
+                        </View>
+                        <AppText
+                          variant="caption"
+                          style={{ color: active ? acc.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
+                        >
+                          {acc.name}
                         </AppText>
                       </Pressable>
                     );

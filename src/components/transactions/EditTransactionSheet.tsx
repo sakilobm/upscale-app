@@ -27,6 +27,8 @@ import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Radius, Spacing } from '@constants/index';
 import { CURRENCY_SYMBOLS } from '@store/types';
 import type { Transaction } from '@store/types';
+import { router } from 'expo-router';
+import { useTransactionStore } from '@store/transactionStore';
 
 const { height: SH } = Dimensions.get('window');
 
@@ -257,6 +259,79 @@ export function EditTransactionSheet({ visible, transaction, onClose }: Props) {
                 />
               </View>
 
+              {/* Related Actions (Ledger & Budget) */}
+              <View style={s.shortcutsSection}>
+                <AppText variant="labelSM" style={[s.sectionLabel, { color: colors.text.tertiary, marginBottom: 8 }]}>
+                  RELATED ACTIONS
+                </AppText>
+                <View style={s.shortcutsRow}>
+                  {/* Ledger Shortcut */}
+                  <Pressable
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      useTransactionStore.getState().setFilters({
+                        accountId: transaction.accountId,
+                        type: 'all',
+                        category: 'all',
+                      });
+                      onClose();
+                      setTimeout(() => {
+                        router.push('/(tabs)/transactions');
+                      }, 100);
+                    }}
+                    style={({ pressed }) => [
+                      s.shortcutBtn,
+                      {
+                        backgroundColor: isDark ? colors.glass.background : colors.background.primary,
+                        borderColor: colors.glass.border,
+                        opacity: pressed ? 0.75 : 1,
+                      }
+                    ]}
+                  >
+                    <Ionicons name="receipt-outline" size={16} color={colors.brand.primary} />
+                    <View style={{ flex: 1, gap: 1 }}>
+                      <AppText variant="labelSM" style={{ color: colors.text.primary, fontWeight: '700' }}>
+                        View Account Ledger
+                      </AppText>
+                      <AppText variant="caption" style={{ color: colors.text.tertiary, fontSize: 10 }}>
+                        Transactions for this account
+                      </AppText>
+                    </View>
+                    <Ionicons name="chevron-forward" size={14} color={colors.text.tertiary} />
+                  </Pressable>
+
+                  {/* Budget Shortcut */}
+                  <Pressable
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      onClose();
+                      setTimeout(() => {
+                        router.push('/(tabs)/budget');
+                      }, 100);
+                    }}
+                    style={({ pressed }) => [
+                      s.shortcutBtn,
+                      {
+                        backgroundColor: isDark ? colors.glass.background : colors.background.primary,
+                        borderColor: colors.glass.border,
+                        opacity: pressed ? 0.75 : 1,
+                      }
+                    ]}
+                  >
+                    <Ionicons name="pie-chart-outline" size={16} color={colors.status.warning} />
+                    <View style={{ flex: 1, gap: 1 }}>
+                      <AppText variant="labelSM" style={{ color: colors.text.primary, fontWeight: '700' }}>
+                        View Budgets
+                      </AppText>
+                      <AppText variant="caption" style={{ color: colors.text.tertiary, fontSize: 10 }}>
+                        Monthly limits & progress
+                      </AppText>
+                    </View>
+                    <Ionicons name="chevron-forward" size={14} color={colors.text.tertiary} />
+                  </Pressable>
+                </View>
+              </View>
+
               {/* Save button */}
               <Pressable
                 onPress={handleSave}
@@ -312,4 +387,7 @@ const s = StyleSheet.create({
   noteInput: { height: 48, borderRadius: Radius.lg, paddingHorizontal: 14, fontSize: 14, borderWidth: 1 },
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 54, borderRadius: Radius.lg, marginTop: 12 },
   addBtnText: { fontWeight: '700', fontSize: 16 },
+  shortcutsSection: { marginTop: 8, marginBottom: 8 },
+  shortcutsRow: { gap: 8 },
+  shortcutBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: Radius.lg, borderWidth: 1 },
 });

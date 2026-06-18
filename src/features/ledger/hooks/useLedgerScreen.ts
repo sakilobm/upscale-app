@@ -101,6 +101,7 @@ export function useLedgerScreen() {
     currency:    string;
     note?:       string;
     dueDate?:    string;
+    accountId:   string;
   }) => {
     addEntry({
       ...data,
