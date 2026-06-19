@@ -27,6 +27,10 @@ export const TransactionListItem = memo(function TransactionListItem({
     ? date
     : `${transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)} · ${date}`;
 
+  const txSource = transaction.source || 
+    (transaction.id.startsWith('tx-ledger-') ? 'ledger' : 
+     transaction.id.startsWith('tx-settled-') ? 'budget' : 'general');
+
   return (
     <Pressable
       onPress={() => onPress(transaction)}
@@ -43,7 +47,7 @@ export const TransactionListItem = memo(function TransactionListItem({
         },
       ]}
     >
-      <CategoryIcon category={transaction.category} size={46} />
+      <CategoryIcon category={transaction.category} size={46} source={txSource} />
 
       <View style={styles.details}>
         <AppText variant="labelLG" color={colors.text.primary} numberOfLines={1}>
@@ -103,23 +107,35 @@ export const TransactionListItem = memo(function TransactionListItem({
           variant="labelLG"
           showSign
         />
-        <View
-          style={[
-            styles.badge,
-            {
-              backgroundColor: isIncome
-                ? colors.status.income + '18'
-                : colors.status.expense + '18',
-            },
-          ]}
-        >
-          <AppText
-            variant="caption"
-            color={isIncome ? colors.status.income : colors.status.expense}
-          >
-            {transaction.type}
-          </AppText>
-        </View>
+        {(() => {
+          const badgeLabel =
+            txSource === 'ledger' ? 'ledger' :
+            txSource === 'budget' ? 'budget' :
+            transaction.type;
+
+          const badgeColor =
+            txSource === 'ledger' ? '#8B5CF6' :
+            txSource === 'budget' ? '#10B981' :
+            (isIncome ? colors.status.income : colors.status.expense);
+
+          return (
+            <View
+              style={[
+                styles.badge,
+                {
+                  backgroundColor: badgeColor + '18',
+                },
+              ]}
+            >
+              <AppText
+                variant="caption"
+                style={{ color: badgeColor, fontWeight: '700', textTransform: 'capitalize' }}
+              >
+                {badgeLabel}
+              </AppText>
+            </View>
+          );
+        })()}
       </View>
     </Pressable>
   );

@@ -89,6 +89,7 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>()(
             note: `Sattled planned payment`,
             date: now,
             accountId: payment.accountId,
+            source: 'budget' as const,
             createdAt: now,
             updatedAt: now,
           };

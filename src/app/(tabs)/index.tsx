@@ -163,18 +163,72 @@ export default function HomeScreen() {
               </View>
             )}
 
-            {data && data.recentTransactions.length > 0 && (
-              <View style={s.section}>
-                <SectionTitle title="Recent Activity" action="See all" onAction={() => router.push('/(tabs)/transactions')} />
-                <GlassCard padding={0}>
-                  {data.recentTransactions.map((tx, idx) => (
-                    <View key={tx.id} style={[s.txRow, { borderBottomColor: colors.glass.border }, idx === data.recentTransactions.length - 1 && s.txRowLast]}>
-                      <RecentTransactionRow transaction={tx} onPress={handleTransactionPress} />
+            {data && data.recentTransactions.length > 0 && (() => {
+              const getSource = (tx: any) => tx.source || 
+                (tx.id.startsWith('tx-ledger-') ? 'ledger' : 
+                 tx.id.startsWith('tx-settled-') ? 'budget' : 'general');
+
+              const ledgerTx = data.recentTransactions.filter(tx => getSource(tx) === 'ledger').slice(0, 5);
+              const budgetTx = data.recentTransactions.filter(tx => getSource(tx) === 'budget').slice(0, 5);
+              const generalTx = data.recentTransactions.filter(tx => getSource(tx) === 'general').slice(0, 5);
+
+              return (
+                <View style={s.section}>
+                  <SectionTitle title="Recent Activity" action="See all" onAction={() => router.push('/(tabs)/transactions')} />
+
+                  {generalTx.length > 0 && (
+                    <View style={{ marginBottom: Spacing['4'] }}>
+                      <AppText variant="labelSM" color={colors.text.tertiary} style={s.subSectionTitle}>
+                        GENERAL SPENDING
+                      </AppText>
+                      <GlassCard padding={0}>
+                        {generalTx.map((tx, idx) => (
+                          <View key={tx.id} style={[s.txRow, { borderBottomColor: colors.glass.border }, idx === generalTx.length - 1 && s.txRowLast]}>
+                            <RecentTransactionRow transaction={tx} onPress={handleTransactionPress} />
+                          </View>
+                        ))}
+                      </GlassCard>
                     </View>
-                  ))}
-                </GlassCard>
-              </View>
-            )}
+                  )}
+
+                  {budgetTx.length > 0 && (
+                    <View style={{ marginBottom: Spacing['4'] }}>
+                      <View style={s.subSectionHeader}>
+                        <Ionicons name="receipt-outline" size={12} color={colors.status.income} />
+                        <AppText variant="labelSM" style={{ color: colors.status.income, fontWeight: '700', fontSize: 10, letterSpacing: 0.8 }}>
+                          BUDGET SETTLEMENTS
+                        </AppText>
+                      </View>
+                      <GlassCard padding={0} style={{ borderColor: colors.status.income + '30', borderWidth: 1 }}>
+                        {budgetTx.map((tx, idx) => (
+                          <View key={tx.id} style={[s.txRow, { borderBottomColor: colors.glass.border }, idx === budgetTx.length - 1 && s.txRowLast]}>
+                            <RecentTransactionRow transaction={tx} onPress={handleTransactionPress} />
+                          </View>
+                        ))}
+                      </GlassCard>
+                    </View>
+                  )}
+
+                  {ledgerTx.length > 0 && (
+                    <View style={{ marginBottom: Spacing['4'] }}>
+                      <View style={s.subSectionHeader}>
+                        <Ionicons name="people-outline" size={12} color="#8B5CF6" />
+                        <AppText variant="labelSM" style={{ color: '#8B5CF6', fontWeight: '700', fontSize: 10, letterSpacing: 0.8 }}>
+                          LEDGER DEBTS & LOANS
+                        </AppText>
+                      </View>
+                      <GlassCard padding={0} style={{ borderColor: '#8B5CF6' + '30', borderWidth: 1 }}>
+                        {ledgerTx.map((tx, idx) => (
+                          <View key={tx.id} style={[s.txRow, { borderBottomColor: colors.glass.border }, idx === ledgerTx.length - 1 && s.txRowLast]}>
+                            <RecentTransactionRow transaction={tx} onPress={handleTransactionPress} />
+                          </View>
+                        ))}
+                      </GlassCard>
+                    </View>
+                  )}
+                </View>
+              );
+            })()}
           </>
         )}
       </ScrollView>
@@ -212,4 +266,18 @@ const s = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: Spacing['3'] },
   txRow: { borderBottomWidth: StyleSheet.hairlineWidth },
   txRowLast: { borderBottomWidth: 0 },
+  subSectionTitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    marginBottom: Spacing['2'],
+    marginLeft: 2,
+  },
+  subSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: Spacing['2'],
+    marginLeft: 2,
+  },
 });

@@ -101,6 +101,7 @@ export const useLedgerStore = create<LedgerState>()(
               note: draft.note || (isOwed ? `Lent money to ${draft.personName}` : `Borrowed money from ${draft.personName}`),
               date: now,
               accountId: draft.accountId,
+              source: 'ledger' as const,
               createdAt: now,
               updatedAt: now,
             };
@@ -159,6 +160,7 @@ export const useLedgerStore = create<LedgerState>()(
                 note: note || (isOwed ? `Partial return from ${entry.personName}` : `Partial payment to ${entry.personName}`),
                 date: now,
                 accountId,
+                source: 'ledger' as const,
                 createdAt: now,
                 updatedAt: now,
               };
@@ -176,49 +178,51 @@ export const useLedgerStore = create<LedgerState>()(
 
       settleEntry: (entryId) => {
         set((s) => {
+          const oldEntry = s.entries.find((e) => e.id === entryId);
+          if (!oldEntry) return {};
+
+          const targetAccountId = oldEntry.accountId ?? (useAccountStore.getState().accounts.find((a) => a.isDefault) ?? useAccountStore.getState().accounts[0])?.id;
           let updatedEntry: LedgerEntry | null = null;
+
           const nextEntries = s.entries.map((e) => {
             if (e.id !== entryId) return e;
-            updatedEntry = { ...e, amountReturned: e.totalAmount, status: 'SETTLED' };
+            updatedEntry = { ...e, amountReturned: e.totalAmount, status: 'SETTLED', accountId: targetAccountId };
             return updatedEntry;
           });
 
-          if (updatedEntry) {
-            const oldEntry = s.entries.find((e) => e.id === entryId);
-            if (oldEntry && oldEntry.status !== 'SETTLED') {
-              const remAmount = oldEntry.totalAmount - oldEntry.amountReturned;
-              const targetAccountId = oldEntry.accountId ?? (useAccountStore.getState().accounts.find((a) => a.isDefault) ?? useAccountStore.getState().accounts[0])?.id;
+          if (updatedEntry && oldEntry.status !== 'SETTLED') {
+            const remAmount = oldEntry.totalAmount - oldEntry.amountReturned;
 
-              if (remAmount > 0 && targetAccountId) {
-                const { accounts, updateAccount } = useAccountStore.getState();
-                const { addTransaction } = useTransactionStore.getState();
-                const account = accounts.find((a) => a.id === targetAccountId);
+            if (remAmount > 0 && targetAccountId) {
+              const { accounts, updateAccount } = useAccountStore.getState();
+              const { addTransaction } = useTransactionStore.getState();
+              const account = accounts.find((a) => a.id === targetAccountId);
 
-                if (account) {
-                  const now = new Date().toISOString();
-                  const isOwed = oldEntry.direction === 'OWED_TO_ME';
-                  const type = isOwed ? 'income' as const : 'expense' as const;
+              if (account) {
+                const now = new Date().toISOString();
+                const isOwed = oldEntry.direction === 'OWED_TO_ME';
+                const type = isOwed ? 'income' as const : 'expense' as const;
 
-                  const newTx = {
-                    id: `tx-ledger-settle-${oldEntry.id}-${Date.now()}`,
-                    userId: 'user-1',
-                    type,
-                    category: 'other',
-                    amount: remAmount,
-                    currency: account.currency,
-                    description: isOwed ? `Settle: ${oldEntry.personName}` : `Settle: Paid ${oldEntry.personName}`,
-                    note: `Settled remaining balance of ${remAmount}`,
-                    date: now,
-                    accountId: targetAccountId,
-                    createdAt: now,
-                    updatedAt: now,
-                  };
+                const newTx = {
+                  id: `tx-ledger-settle-${oldEntry.id}-${Date.now()}`,
+                  userId: 'user-1',
+                  type,
+                  category: 'other',
+                  amount: remAmount,
+                  currency: account.currency,
+                  description: isOwed ? `Settle: ${oldEntry.personName}` : `Settle: Paid ${oldEntry.personName}`,
+                  note: `Settled remaining balance of ${remAmount}`,
+                  date: now,
+                  accountId: targetAccountId,
+                  source: 'ledger' as const,
+                  createdAt: now,
+                  updatedAt: now,
+                };
 
-                  addTransaction(newTx);
-                  const nextBalance = isOwed ? account.balance + remAmount : account.balance - remAmount;
-                  updateAccount(targetAccountId, { balance: nextBalance });
-                  toast.success(`Settled remaining ${remAmount} to ${account.name}`);
-                }
+                addTransaction(newTx);
+                const nextBalance = isOwed ? account.balance + remAmount : account.balance - remAmount;
+                updateAccount(targetAccountId, { balance: nextBalance });
+                toast.success(`Settled remaining ${remAmount} to ${account.name}`);
               }
             }
           }

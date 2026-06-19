@@ -29,6 +29,10 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
     ? formattedDate
     : `${transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)} · ${formattedDate}`;
 
+  const txSource = transaction.source || 
+    (transaction.id.startsWith('tx-ledger-') ? 'ledger' : 
+     transaction.id.startsWith('tx-settled-') ? 'budget' : 'general');
+
   return (
     <Pressable
       onPress={() => onPress(transaction)}
@@ -42,7 +46,7 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
         },
       ]}
     >
-      <CategoryIcon category={transaction.category} size={44} />
+      <CategoryIcon category={transaction.category} size={44} source={txSource} />
       <View style={styles.details}>
         <AppText
           variant="labelMD"
@@ -113,7 +117,8 @@ const styles = StyleSheet.create({
     flexDirection:  'row',
     alignItems:     'center',
     gap:            Spacing['3'],
-    height:         68,
+    minHeight:      68,
+    paddingVertical: Spacing['3'],
     paddingHorizontal: Spacing['4'],
     borderBottomWidth: StyleSheet.hairlineWidth,
   },

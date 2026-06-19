@@ -22,7 +22,7 @@ export function useDashboardData(): UseDashboardDataReturn {
     const spendingByCategory = computeSpendingByCategory(transactions);
     const recentTransactions = [...transactions]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 5);
+      .slice(0, 15);
 
     return { totalBalance, monthSummary, spendingByCategory, recentTransactions, accounts };
   }, [transactions, accounts]);

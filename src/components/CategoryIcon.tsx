@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { View, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius } from '@constants/index';
@@ -9,15 +9,39 @@ type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 interface CategoryIconProps {
   category: string;
   size?: number;
+  source?: 'ledger' | 'budget' | 'general';
 }
 
 export const CategoryIcon = memo(function CategoryIcon({
   category,
   size = 44,
+  source,
 }: CategoryIconProps) {
   const categories = useCategoryStore((s) => s.categories);
-  const def: CategoryDef =
-    categories.find((c) => c.id === category) ?? getCategoryById(category);
+
+  const def: CategoryDef = useMemo(() => {
+    if (source === 'ledger') {
+      return {
+        id: 'ledger',
+        label: 'Ledger',
+        icon: 'people-outline',
+        color: '#8B5CF6',
+        isCustom: false,
+        applicableTo: 'both',
+      };
+    }
+    if (source === 'budget') {
+      return {
+        id: 'budget',
+        label: 'Budget',
+        icon: 'receipt-outline',
+        color: '#10B981',
+        isCustom: false,
+        applicableTo: 'both',
+      };
+    }
+    return categories.find((c) => c.id === category) ?? getCategoryById(category);
+  }, [category, categories, source]);
 
   const containerStyle: ViewStyle = {
     width: size,
