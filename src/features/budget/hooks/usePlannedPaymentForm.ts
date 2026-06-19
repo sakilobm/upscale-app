@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useCategoryStore } from '@store/categoryStore';
 import { useAccountStore } from '@store/accountStore';
-import { toast } from '@store/toastStore';
 
 export interface PlannedPaymentFormData {
   title:    string;
@@ -18,28 +17,37 @@ export function usePlannedPaymentForm(
   const allCategories = useCategoryStore((s) => s.categories);
   const accounts = useAccountStore((s) => s.accounts);
 
-  const [title,    setTitle]    = useState('');
-  const [amount,   setAmount]   = useState('');
-  const [dueDate,  setDueDate]  = useState('');
-  const [category, setCategory] = useState('other');
-  const [accountId, setAccountId] = useState('');
+  const [title,    setTitleState]    = useState('');
+  const [amount,   setAmountState]   = useState('');
+  const [dueDate,  setDueDateState]  = useState('');
+  const [category, setCategoryState] = useState('other');
+  const [accountId, setAccountIdState] = useState('');
+  const [error,     setError]         = useState<string | null>(null);
+
+  const setTitle = useCallback((val: string) => { setTitleState(val); setError(null); }, [error]);
+  const setAmount = useCallback((val: string) => { setAmountState(val); setError(null); }, [error]);
+  const setDueDate = useCallback((val: string) => { setDueDateState(val); setError(null); }, [error]);
+  const setCategory = useCallback((val: string) => { setCategoryState(val); setError(null); }, [error]);
+  const setAccountId = useCallback((val: string) => { setAccountIdState(val); setError(null); }, [error]);
 
   const reset = useCallback(() => {
     const accounts_ = useAccountStore.getState().accounts;
     const defaultId = (accounts_.find((a) => a.isDefault) ?? accounts_[0])?.id ?? '';
-    setTitle('');
-    setAmount('');
-    setDueDate('');
-    setCategory('other');
-    setAccountId(defaultId);
+    setTitleState('');
+    setAmountState('');
+    setDueDateState('');
+    setCategoryState('other');
+    setAccountIdState(defaultId);
+    setError(null);
   }, []);
 
   const handleSubmit = useCallback(() => {
+    setError(null);
     const parsed = parseFloat(amount);
-    if (!title.trim())                       { toast.error('Title is required');       return; }
-    if (!parsed || parsed <= 0)              { toast.error('Enter a valid amount');    return; }
-    if (!dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) { toast.error('Please select a due date');   return; }
-    if (!accountId)                          { toast.error('Select an account');       return; }
+    if (!title.trim())                       { setError('Title is required');       return; }
+    if (!parsed || parsed <= 0)              { setError('Enter a valid amount');    return; }
+    if (!dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) { setError('Please select a due date');   return; }
+    if (!accountId)                          { setError('Select an account');       return; }
 
     onSubmit({ title: title.trim(), amount: parsed, dueDate, category, accountId });
     reset();
@@ -60,5 +68,6 @@ export function usePlannedPaymentForm(
     cats,
     handleSubmit,
     reset,
+    error,
   };
 }

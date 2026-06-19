@@ -42,6 +42,7 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
     accounts,
     cats,
     handleSubmit,
+    error,
   } = usePlannedPaymentForm(onSubmit, onClose);
 
   const scale = useSharedValue(0.86);
@@ -103,6 +104,13 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
                 </Pressable>
               }
             >
+              {error && (
+                <View style={[s.errorBanner, { backgroundColor: colors.status.expense + '12', borderColor: colors.status.expense + '30' }]}>
+                  <Ionicons name="alert-circle-outline" size={16} color={colors.status.expense} />
+                  <AppText style={[s.errorText, { color: colors.status.expense }]}>{error}</AppText>
+                </View>
+              )}
+
               {/* Title */}
               <View style={s.fieldGroup}>
                 <AppText style={[s.fieldLabel, { color: colors.text.tertiary }]}>TITLE</AppText>
@@ -285,5 +293,20 @@ const s = StyleSheet.create({
   submitBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, height: 54, borderRadius: Radius.xl,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginBottom: 4,
+  },
+  errorText: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
   },
 });

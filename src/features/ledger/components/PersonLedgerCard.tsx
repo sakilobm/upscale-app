@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
+import { useAccountStore } from '@store/accountStore';
 import { Radius, Spacing } from '@constants/Dimensions';
 import { NudgeButton } from './NudgeButton';
 import type { LedgerEntry } from '@store/ledgerStore';
@@ -117,6 +118,7 @@ interface PersonLedgerCardProps {
 export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonLedgerCardProps) {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
+  const account = useAccountStore((s) => s.accounts.find((a) => a.id === entry.accountId));
 
   const translateX = useSharedValue(0);
   const rowHeight = useSharedValue(80);
@@ -231,10 +233,23 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
                 </AppText>
               </View>
 
-              {entry.note && (
-                <AppText variant="caption" color={colors.text.tertiary} numberOfLines={1} style={styles.note}>
-                  {entry.note}
-                </AppText>
+              {/* Note & Account badge */}
+              {(entry.note || account) && (
+                <View style={styles.metaRow}>
+                  {account && (
+                    <View style={[styles.accountBadge, { backgroundColor: account.color + '15' }]}>
+                      <Ionicons name={account.icon as any} size={9} color={account.color} />
+                      <AppText style={[styles.accountLabel, { color: account.color }]}>
+                        {account.name}
+                      </AppText>
+                    </View>
+                  )}
+                  {entry.note && (
+                    <AppText variant="caption" color={colors.text.tertiary} numberOfLines={1} style={styles.note}>
+                      {account ? `· ${entry.note}` : entry.note}
+                    </AppText>
+                  )}
+                </View>
               )}
 
               {/* Progress bar */}
@@ -349,7 +364,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   note: {
-    marginTop: 1,
+    marginTop: 0,
+    flex: 1,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+  },
+  accountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+  },
+  accountLabel: {
+    fontSize: 9,
+    fontWeight: '700',
   },
   progressTrack: {
     height: 3,

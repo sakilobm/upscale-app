@@ -68,6 +68,7 @@ export function LedgerEntrySheet({
   const [note,        setNote]        = useState('');
   const [dueDate,     setDueDate]     = useState('');
   const [accountId,   setAccountId]   = useState('');
+  const [error,       setError]       = useState<string | null>(null);
 
   const translateY  = useSharedValue(600);
   const backdropOp  = useSharedValue(0);
@@ -88,11 +89,13 @@ export function LedgerEntrySheet({
       setDirection('OWED_TO_ME');
       const defaultId = (accounts.find((a) => a.isDefault) ?? accounts[0])?.id ?? '';
       setAccountId(defaultId);
+      setError(null);
     }
     if (visible && mode === 'partial') {
       setAmount(''); setNote('');
       const defaultId = editEntry?.accountId ?? (accounts.find((a) => a.isDefault) ?? accounts[0])?.id ?? '';
       setAccountId(defaultId);
+      setError(null);
     }
   }, [visible, mode, editEntry, accounts]);
 
@@ -105,12 +108,15 @@ export function LedgerEntrySheet({
   ];
 
   const handleSubmit = () => {
+    setError(null);
     const parsed = parseFloat(amount);
-    if (isNaN(parsed) || parsed <= 0) return;
-    if (!accountId) return;
+    if (mode === 'add') {
+      if (!personName.trim()) { setError('Person name is required'); return; }
+    }
+    if (isNaN(parsed) || parsed <= 0) { setError('Enter a valid amount'); return; }
+    if (!accountId) { setError('Select an account'); return; }
 
     if (mode === 'add') {
-      if (!personName.trim()) return;
       onAdd({
         personName: personName.trim(),
         direction,
@@ -169,13 +175,20 @@ export function LedgerEntrySheet({
 
           {/* Form */}
           <View style={styles.form}>
+            {error && (
+              <View style={[styles.errorBanner, { backgroundColor: colors.status.expense + '12', borderColor: colors.status.expense + '30' }]}>
+                <Ionicons name="alert-circle-outline" size={16} color={colors.status.expense} />
+                <AppText style={[styles.errorText, { color: colors.status.expense }]}>{error}</AppText>
+              </View>
+            )}
+
             {mode === 'add' && (
               <>
                 <Field label="Person Name" icon="person-outline" colors={colors} isDark={isDark}>
                   <TextInput
                     style={[styles.input, { color: colors.text.primary }]}
                     value={personName}
-                    onChangeText={setPersonName}
+                    onChangeText={(val) => { setPersonName(val); setError(null); }}
                     placeholder="e.g. Marcus Chen"
                     placeholderTextColor={colors.text.tertiary}
                     autoCapitalize="words"
@@ -190,7 +203,7 @@ export function LedgerEntrySheet({
                   {(['OWED_TO_ME', 'I_OWE'] as LedgerDirection[]).map((d) => (
                     <Pressable
                       key={d}
-                      onPress={() => setDirection(d)}
+                      onPress={() => { setDirection(d); setError(null); }}
                       style={[
                         styles.dirBtn,
                         {
@@ -229,7 +242,7 @@ export function LedgerEntrySheet({
                 <DatePickerField
                   label="Due Date (optional)"
                   value={dueDate}
-                  onChange={setDueDate}
+                  onChange={(val) => { setDueDate(val); setError(null); }}
                   placeholder="Pick a due date"
                 />
               </>
@@ -239,7 +252,7 @@ export function LedgerEntrySheet({
               <TextInput
                 style={[styles.input, { color: colors.text.primary }]}
                 value={amount}
-                onChangeText={setAmount}
+                onChangeText={(val) => { setAmount(val); setError(null); }}
                 placeholder="0.00"
                 placeholderTextColor={colors.text.tertiary}
                 keyboardType="decimal-pad"
@@ -256,7 +269,7 @@ export function LedgerEntrySheet({
                 return (
                   <Pressable
                     key={acc.id}
-                    onPress={() => { setAccountId(acc.id); Haptics.selectionAsync().catch(() => {}); }}
+                    onPress={() => { setAccountId(acc.id); setError(null); Haptics.selectionAsync().catch(() => {}); }}
                     style={[
                       styles.accountChip,
                       {
@@ -284,7 +297,7 @@ export function LedgerEntrySheet({
               <TextInput
                 style={[styles.input, { color: colors.text.primary }]}
                 value={note}
-                onChangeText={setNote}
+                onChangeText={(val) => { setNote(val); setError(null); }}
                 placeholder="e.g. Dinner split"
                 placeholderTextColor={colors.text.tertiary}
                 autoCapitalize="sentences"
@@ -442,5 +455,20 @@ const styles = StyleSheet.create({
     alignItems:     'center',
     justifyContent: 'center',
     marginTop:      Spacing['5'],
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginBottom: 4,
+  },
+  errorText: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
   },
 });

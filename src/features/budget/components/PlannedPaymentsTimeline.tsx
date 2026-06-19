@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
+import { useAccountStore } from '@store/accountStore';
 import { Spacing, Radius } from '@constants/Dimensions';
 import { daysUntilDue, isUrgent } from '@store/plannedPaymentsStore';
 import type { PlannedPayment } from '@store/plannedPaymentsStore';
@@ -60,6 +61,7 @@ interface PaymentRowProps {
 function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
+  const account = useAccountStore((s) => s.accounts.find((a) => a.id === payment.accountId));
 
   const translateX = useSharedValue(0);
   const rowOpacity = useSharedValue(1);
@@ -261,6 +263,15 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
                 {payment.title}
               </AppText>
               <View style={styles.subtitleRow}>
+                {account && (
+                  <View style={[styles.accountBadge, { backgroundColor: account.color + '15' }]}>
+                    <Ionicons name={account.icon as any} size={9} color={account.color} />
+                    <AppText style={[styles.accountLabel, { color: account.color }]}>
+                      {account.name}
+                    </AppText>
+                  </View>
+                )}
+
                 <AppText variant="caption" color={colors.text.tertiary}>
                   {payment.status === 'SETTLED'
                     ? '✓ Settled'
@@ -456,6 +467,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+  },
+  accountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+  },
+  accountLabel: {
+    fontSize: 9,
+    fontWeight: '700',
   },
   right: { alignItems: 'flex-end', flexShrink: 0 },
   amount: { fontSize: 14, fontWeight: '700' },
