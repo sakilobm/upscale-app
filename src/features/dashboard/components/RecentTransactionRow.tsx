@@ -8,6 +8,7 @@ import { useTheme } from '@hooks/useTheme';
 import { format } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
 import { useAccountStore } from '@store/accountStore';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import type { Transaction } from '@store/types';
 
 interface RecentTransactionRowProps {
@@ -20,6 +21,7 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
   onPress,
 }: RecentTransactionRowProps) {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
   const accounts = useAccountStore((s) => s.accounts);
   const account = accounts.find((a) => a.id === transaction.accountId);
   const formattedDate = format(new Date(transaction.date), 'MMM d');
@@ -101,13 +103,27 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
           ) : null}
         </View>
       </View>
-      <AmountText
-        amount={transaction.amount}
-        currency={transaction.currency}
-        type={transaction.type === 'transfer' ? 'income' : transaction.type}
-        variant="labelLG"
-        showSign
-      />
+      {txSource === 'budget' ? (
+        <View style={{ alignItems: 'flex-end', gap: 2 }}>
+          <AppText variant="labelLG" color={colors.text.primary} style={{ fontWeight: '600' }}>
+            {symbol}{transaction.amount.toFixed(2)}
+          </AppText>
+          <View style={[styles.settledBadge, { backgroundColor: colors.status.income + '12' }]}>
+            <Ionicons name="checkmark-circle" size={10} color={colors.status.income} />
+            <AppText variant="caption" style={{ color: colors.status.income, fontWeight: '700', fontSize: 9 }}>
+              Paid
+            </AppText>
+          </View>
+        </View>
+      ) : (
+        <AmountText
+          amount={transaction.amount}
+          currency={transaction.currency}
+          type={transaction.type === 'transfer' ? 'income' : transaction.type}
+          variant="labelLG"
+          showSign
+        />
+      )}
     </Pressable>
   );
 });
@@ -146,5 +162,13 @@ const styles = StyleSheet.create({
   },
   description: {
     fontWeight: '600',
+  },
+  settledBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 999,
   },
 });

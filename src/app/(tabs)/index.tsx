@@ -34,13 +34,97 @@ import { AppText } from '@components/AppText';
 import { EmptyState } from '@components/EmptyState';
 import { useTheme } from '@hooks/useTheme';
 import { Spacing, Layout } from '@constants/index';
+import { useLedgerStore, type LedgerEntry } from '@store/ledgerStore';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import type { ComponentProps } from 'react';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
+function DashboardLedgerRow({ entry }: { entry: LedgerEntry }) {
+  const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
+  const remaining = entry.totalAmount - entry.amountReturned;
+  const progressPct = entry.totalAmount > 0 ? entry.amountReturned / entry.totalAmount : 0;
+  
+  const isOwed = entry.direction === 'OWED_TO_ME';
+  const labelText = entry.status === 'SETTLED' 
+    ? 'Settled' 
+    : isOwed ? 'Lent (They owe)' : 'Borrowed (You owe)';
+  const labelColor = entry.status === 'SETTLED'
+    ? colors.text.tertiary
+    : '#8B5CF6';
+
+  const amountColor = entry.status === 'SETTLED'
+    ? colors.text.tertiary
+    : colors.text.primary;
+
+  return (
+    <Pressable
+      onPress={() => {
+        router.push('/(tabs)/ledger');
+      }}
+      style={({ pressed }) => [
+        s.ledgerRowContainer,
+        {
+          opacity: pressed ? 0.75 : 1,
+        }
+      ]}
+    >
+      {/* Avatar with Initials */}
+      <View style={[s.ledgerAvatar, { backgroundColor: entry.personColor + '18', borderColor: entry.personColor + '30' }]}>
+        <AppText style={[s.ledgerAvatarText, { color: entry.personColor }]}>
+          {entry.personInitials}
+        </AppText>
+      </View>
+
+      {/* Details */}
+      <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <AppText variant="labelMD" color={colors.text.primary} style={{ fontWeight: '600' }}>
+            {entry.personName}
+          </AppText>
+          <AppText variant="labelMD" style={{ color: amountColor, fontWeight: '700' }}>
+            {symbol}{remaining.toFixed(2)}
+          </AppText>
+        </View>
+
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Ionicons 
+              name={entry.status === 'SETTLED' ? 'checkmark-circle' : isOwed ? 'arrow-up-circle' : 'arrow-down-circle'} 
+              size={11} 
+              color={labelColor} 
+            />
+            <AppText variant="caption" style={{ color: labelColor, fontSize: 10, fontWeight: '600' }}>
+              {labelText}
+            </AppText>
+          </View>
+          {entry.status !== 'SETTLED' && (
+            <AppText variant="caption" color={colors.text.tertiary} style={{ fontSize: 9 }}>
+              of {symbol}{entry.totalAmount.toFixed(0)}
+            </AppText>
+          )}
+        </View>
+
+        {/* Mini progress bar if active and partially returned */}
+        {entry.status !== 'SETTLED' && progressPct > 0 && (
+          <View style={[s.miniProgressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}>
+            <View style={[s.miniProgressFill, { width: `${progressPct * 100}%`, backgroundColor: entry.personColor }]} />
+          </View>
+        )}
+      </View>
+    </Pressable>
+  );
+}
+
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
   const { dashboard, user, addSheet, transferSheet, quickActions, handleTransactionPress, editingTransaction, setEditingTransaction } = useHomeScreen();
+  const ledgerEntries = useLedgerStore((s) => s.entries);
+  const activeLedgerEntries = ledgerEntries.filter(entry => entry.status !== 'SETTLED');
+  const settledLedgerEntries = ledgerEntries.filter(entry => entry.status === 'SETTLED');
+  const displayLedgerEntries = [...activeLedgerEntries, ...settledLedgerEntries].slice(0, 5);
+
   const unreadCount = useNotificationStore((s) => s.notifications.filter((n) => !n.isRead).length);
   const { data, isLoading, isError, isEmpty, refresh } = dashboard;
   const avatar = getAvatar(user.avatarId);
@@ -209,7 +293,7 @@ export default function HomeScreen() {
                     </View>
                   )}
 
-                  {ledgerTx.length > 0 && (
+                  {displayLedgerEntries.length > 0 && (
                     <View style={{ marginBottom: Spacing['4'] }}>
                       <View style={s.subSectionHeader}>
                         <Ionicons name="people-outline" size={12} color="#8B5CF6" />
@@ -218,9 +302,9 @@ export default function HomeScreen() {
                         </AppText>
                       </View>
                       <GlassCard padding={0} style={{ borderColor: '#8B5CF6' + '30', borderWidth: 1 }}>
-                        {ledgerTx.map((tx, idx) => (
-                          <View key={tx.id} style={[s.txRow, { borderBottomColor: colors.glass.border }, idx === ledgerTx.length - 1 && s.txRowLast]}>
-                            <RecentTransactionRow transaction={tx} onPress={handleTransactionPress} />
+                        {displayLedgerEntries.map((entry, idx) => (
+                          <View key={entry.id} style={[s.txRow, { borderBottomColor: colors.glass.border }, idx === displayLedgerEntries.length - 1 && s.txRowLast]}>
+                            <DashboardLedgerRow entry={entry} />
                           </View>
                         ))}
                       </GlassCard>
@@ -279,5 +363,35 @@ const s = StyleSheet.create({
     gap: 6,
     marginBottom: Spacing['2'],
     marginLeft: 2,
+  },
+  ledgerRowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['3'],
+    paddingVertical: Spacing['3'],
+    paddingHorizontal: Spacing['4'],
+    minHeight: 68,
+  },
+  ledgerAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  ledgerAvatarText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  miniProgressTrack: {
+    height: 3,
+    borderRadius: 1.5,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  miniProgressFill: {
+    height: 3,
+    borderRadius: 1.5,
   },
 });

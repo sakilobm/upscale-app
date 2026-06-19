@@ -9,6 +9,7 @@ import { useTheme } from '@hooks/useTheme';
 import { format } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
 import { useAccountStore } from '@store/accountStore';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import type { TransactionListItemProps } from '../types';
 
 export const TransactionListItem = memo(function TransactionListItem({
@@ -17,6 +18,7 @@ export const TransactionListItem = memo(function TransactionListItem({
   onLongPress,
 }: TransactionListItemProps) {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
   const accounts = useAccountStore((s) => s.accounts);
   const account = accounts.find((a) => a.id === transaction.accountId);
   const date = format(new Date(transaction.date), 'h:mm a');
@@ -100,13 +102,19 @@ export const TransactionListItem = memo(function TransactionListItem({
       </View>
 
       <View style={styles.right}>
-        <AmountText
-          amount={transaction.amount}
-          currency={transaction.currency}
-          type={transaction.type === 'transfer' ? 'income' : transaction.type}
-          variant="labelLG"
-          showSign
-        />
+        {txSource === 'budget' || txSource === 'ledger' ? (
+          <AppText variant="labelLG" color={colors.text.primary} style={{ fontWeight: '600' }}>
+            {symbol}{transaction.amount.toFixed(2)}
+          </AppText>
+        ) : (
+          <AmountText
+            amount={transaction.amount}
+            currency={transaction.currency}
+            type={transaction.type === 'transfer' ? 'income' : transaction.type}
+            variant="labelLG"
+            showSign
+          />
+        )}
         {(() => {
           const badgeLabel =
             txSource === 'ledger' ? 'ledger' :
