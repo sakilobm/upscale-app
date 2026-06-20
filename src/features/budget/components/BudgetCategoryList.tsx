@@ -1,239 +1,393 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import {
   View,
   StyleSheet,
   Pressable,
   Platform,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
-import {
-  GestureDetector,
-  Gesture,
-} from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
-import { GlassCard } from '@components/GlassCard';
 import { CategoryIcon } from '@components/CategoryIcon';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Radius, Spacing } from '@constants/Dimensions';
-import type { Budget } from '@store/types';
+import type { SpendingStats } from '../hooks/useBudgets';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const SWIPE_THRESHOLD = -50;
-const DELETE_ZONE_WIDTH = 68;
-
-// ─── Single Category Row ──────────────────────────────────────────────────────
-interface CategoryRowProps {
-  budget: Budget;
-  onDelete: (id: string) => void;
-  onPress?: (budget: Budget) => void;
+// ─── Single Grid Card Component ───────────────────────────────────────────────
+interface CategoryCardProps {
+  item: SpendingStats;
+  onDeleteLimit: (id: string) => void;
+  onSetLimit: (category: string) => void;
 }
 
-function CategoryRow({ budget, onDelete, onPress }: CategoryRowProps) {
-  const { colors } = useTheme();
+function CategoryCard({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
+  const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
 
-  const translateX = useSharedValue(0);
-  const swipedRef = useRef(false);
+  const pct = item.hasLimit ? item.percent / 100 : 0;
+  const isOver = item.hasLimit && item.spent > item.limit;
+  const isWarning = item.hasLimit && item.spent >= item.limit * 0.85 && item.spent <= item.limit;
+  const remaining = item.hasLimit ? Math.max(item.limit - item.spent, 0) : 0;
 
-  const pct = budget.limit > 0 ? budget.spent / budget.limit : 0;
-  const isOver = pct > 1;
-  const isWarning = pct >= 0.85 && pct <= 1;
-  const remaining = Math.max(budget.limit - budget.spent, 0);
+  // Status colors based on limit state
+  const statusColor = item.hasLimit
+    ? (isOver
+      ? colors.status.expense
+      : isWarning
+        ? colors.status.warning
+        : colors.status.income)
+    : colors.text.secondary;
 
-  const statusColor = isOver
-    ? colors.status.expense
-    : isWarning
-      ? colors.status.warning
-      : colors.status.income;
+  // Progress calculations
+  const totalProjected = item.spent + item.scheduled;
+  const progressPct = item.hasLimit
+    ? Math.min(pct, 1)
+    : (totalProjected > 0 ? item.spent / totalProjected : 0);
 
-  const statusBg = statusColor + '18';
-
-  const handleDelete = () => {
-    onDelete(budget.id);
-  };
-
-  const panGesture = Gesture.Pan()
-    .runOnJS(true)
-    .activeOffsetX([-12, 12000])
-    .failOffsetY([-10, 10])
-    .onBegin(() => {
-      swipedRef.current = false;
-    })
-    .onUpdate((e) => {
-      if (e.translationX < -6) swipedRef.current = true;
-      if (e.translationX < 0) {
-        translateX.value = Math.max(e.translationX, -(DELETE_ZONE_WIDTH + 12));
-      } else {
-        translateX.value = Math.min(e.translationX * 0.15, 5);
-      }
-    })
-    .onEnd((e) => {
-      if (e.translationX < SWIPE_THRESHOLD) {
-        translateX.value = withSpring(-DELETE_ZONE_WIDTH, { damping: 20, stiffness: 180 });
-      } else {
-        translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
-        setTimeout(() => {
-          swipedRef.current = false;
-        }, 150);
-      }
-    });
-
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  const label = budget.category.charAt(0).toUpperCase() + budget.category.slice(1);
+  const progressBarColor = item.hasLimit
+    ? statusColor
+    : item.color;
 
   return (
-    <View style={styles.swipeContainer}>
-      {/* Swipe actions (revealed on swipe left) */}
-      <View style={styles.actions}>
-        <Pressable
-          onPress={handleDelete}
-          style={[styles.actionBtn, { backgroundColor: colors.status.expense }]}
-        >
-          <Ionicons name="trash-outline" size={18} color={colors.white} />
-        </Pressable>
+    <Pressable
+      onPress={() => {
+        if (!item.hasLimit) {
+          onSetLimit(item.category);
+        }
+      }}
+      style={({ pressed }) => [
+        styles.gridCard,
+        {
+          backgroundColor: colors.surface.sheet,
+          borderColor: item.hasLimit ? statusColor + '40' : colors.glass.border,
+          opacity: pressed && !item.hasLimit ? 0.85 : 1,
+        },
+      ]}
+    >
+      {/* Top Header Row (Icon + Action Button) */}
+      <View style={styles.cardHeader}>
+        <View style={[styles.iconHalo, { shadowColor: item.color }]}>
+          <CategoryIcon category={item.category} size={30} />
+        </View>
+
+        {item.hasLimit ? (
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              onDeleteLimit(item.budgetId!);
+            }}
+            style={({ pressed }) => [
+              styles.trashBtn,
+              {
+                backgroundColor: colors.glass.backgroundMid,
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="trash-outline" size={11} color={colors.status.expense} />
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={() => onSetLimit(item.category)}
+            style={({ pressed }) => [
+              styles.inlineSetBtn,
+              {
+                backgroundColor: colors.brand.primary,
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="add" size={9} color={colors.brand.onPrimary} />
+            <AppText variant="caption" style={[styles.inlineSetBtnText, { color: colors.brand.onPrimary }]}>
+              Limit
+            </AppText>
+          </Pressable>
+        )}
       </View>
 
-      {/* Main Budget Card */}
-      <GestureDetector gesture={panGesture}>
-        <Animated.View
-          style={[
-            styles.card,
-            cardStyle,
-            {
-              backgroundColor: colors.surface.sheet,
-              borderColor: colors.glass.background,
-              shadowColor: colors.black,
-            },
-          ]}
-        >
-          <Pressable
-            onPress={() => {
-              if (swipedRef.current) {
-                translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
-                setTimeout(() => {
-                  swipedRef.current = false;
-                }, 150);
-              } else {
-                onPress?.(budget);
-              }
+      {/* Middle Information Stack */}
+      <View style={styles.bodyStack}>
+        <AppText variant="labelSM" color={colors.text.tertiary} numberOfLines={1} style={styles.nameText}>
+          {item.label}
+        </AppText>
+        <AppText variant="labelLG" color={colors.text.primary} style={styles.spentText}>
+          {symbol}{item.spent.toFixed(0)}
+          {item.hasLimit && (
+            <AppText style={{ fontSize: 10, color: statusColor, fontWeight: '700' }}>
+              {' '}({Math.round(item.percent)}%)
+            </AppText>
+          )}
+        </AppText>
+      </View>
+
+      {/* Bottom Information Details */}
+      <View style={styles.footerRow}>
+        {item.hasLimit ? (
+          <AppText
+            variant="caption"
+            numberOfLines={1}
+            style={{
+              color: isOver ? colors.status.expense : colors.text.secondary,
+              fontWeight: '600',
+              fontSize: 9.5,
             }}
-            style={styles.cardContent}
-            android_ripple={{ color: colors.glass.backgroundMid }}
           >
-            {/* Category Icon */}
-            <CategoryIcon category={budget.category} size={42} />
+            {isOver
+              ? `${symbol}${(item.spent - item.limit).toFixed(0)} over`
+              : `${symbol}${remaining.toFixed(0)} left`}
+          </AppText>
+        ) : (
+          <AppText variant="caption" color={colors.text.tertiary} numberOfLines={1} style={{ fontSize: 9.5 }}>
+            {item.scheduled > 0
+              ? `Sched: ${symbol}${item.scheduled.toFixed(0)}`
+              : 'No bills'}
+          </AppText>
+        )}
+      </View>
 
-            {/* Content Body */}
-            <View style={styles.body}>
-              <View style={styles.topRow}>
-                <View style={styles.nameRow}>
-                  <AppText variant="labelMD" color={colors.text.primary} style={styles.name}>
-                    {label}
-                  </AppText>
-                  <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
-                    <AppText
-                      variant="caption"
-                      style={{ color: statusColor, fontSize: 9, fontWeight: '700' }}
-                    >
-                      {isOver
-                        ? 'Exceeded'
-                        : isWarning
-                          ? 'Warning'
-                          : `${Math.round(pct * 100)}% Spent`}
-                    </AppText>
-                  </View>
-                </View>
-                <AppText variant="labelMD" color={colors.text.primary} style={styles.spentText}>
-                  {symbol}{budget.spent.toFixed(0)}
-                  <AppText variant="caption" color={colors.text.tertiary}>
-                    {' '}of {symbol}{budget.limit.toFixed(0)}
-                  </AppText>
-                </AppText>
-              </View>
-
-              {/* Progress Bar */}
-              <View style={[styles.progressTrack, { backgroundColor: colors.glass.backgroundMid }]}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${Math.min(pct * 100, 100)}%` as any,
-                      backgroundColor: statusColor,
-                    },
-                  ]}
-                />
-              </View>
-
-              {/* Bottom Row info */}
-              <View style={styles.bottomRow}>
-                <AppText variant="caption" color={colors.text.tertiary}>
-                  Monthly Budget Limit
-                </AppText>
-                <AppText
-                  variant="caption"
-                  style={{
-                    color: isOver ? colors.status.expense : colors.text.secondary,
-                    fontWeight: '600',
-                  }}
-                >
-                  {isOver
-                    ? `${symbol}${(budget.spent - budget.limit).toFixed(0)} over limit`
-                    : `${symbol}${remaining.toFixed(0)} remaining`}
-                </AppText>
-              </View>
-            </View>
-          </Pressable>
-        </Animated.View>
-      </GestureDetector>
-    </View>
+      {/* Bottom Glowing Laser Progress Line */}
+      {(item.hasLimit || totalProjected > 0) && (
+        <View style={[styles.progressTrack, { backgroundColor: colors.glass.backgroundMid }]}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                width: `${Math.min(progressPct * 100, 100)}%` as any,
+                backgroundColor: progressBarColor,
+                shadowColor: progressBarColor,
+              },
+            ]}
+          />
+        </View>
+      )}
+    </Pressable>
   );
 }
 
-// ─── Category List ────────────────────────────────────────────────────────────
-interface BudgetCategoryListProps {
-  budgets: Budget[];
-  onDeleteBudget: (id: string) => void;
-  onPressBudget?: (budget: Budget) => void;
+// ─── Single Category Capsule Row Component ───────────────────────────────────
+function CategoryCapsule({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
+  const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
+
+  const pct = item.hasLimit ? item.percent / 100 : 0;
+  const isOver = item.hasLimit && item.spent > item.limit;
+  const isWarning = item.hasLimit && item.spent >= item.limit * 0.85 && item.spent <= item.limit;
+  const remaining = item.hasLimit ? Math.max(item.limit - item.spent, 0) : 0;
+
+  // Status colors based on limit state
+  const statusColor = item.hasLimit
+    ? (isOver
+      ? colors.status.expense
+      : isWarning
+        ? colors.status.warning
+        : colors.status.income)
+    : colors.text.secondary;
+
+  // Progress calculations
+  const totalProjected = item.spent + item.scheduled;
+  const progressPct = item.hasLimit
+    ? Math.min(pct, 1)
+    : (totalProjected > 0 ? item.spent / totalProjected : 0);
+
+  const fillBg = item.hasLimit
+    ? statusColor + '1C'
+    : item.color + '1C'; // Use beautiful category color tint instead of muddy grey
+
+  return (
+    <Pressable
+      onPress={() => {
+        if (!item.hasLimit) {
+          onSetLimit(item.category);
+        }
+      }}
+      style={({ pressed }) => [
+        styles.capsule,
+        {
+          backgroundColor: colors.surface.sheet, // Solid background prevents shadow show-through
+          borderColor: item.hasLimit ? statusColor + '40' : colors.glass.border,
+          opacity: pressed && !item.hasLimit ? 0.85 : 1,
+        },
+      ]}
+    >
+      {/* 1. Liquid Progress Fill Background */}
+      {(item.hasLimit || totalProjected > 0) && (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.capsuleProgressFill,
+            {
+              width: `${Math.min(progressPct * 100, 100)}%` as any,
+              backgroundColor: fillBg,
+            },
+          ]}
+        >
+          {/* Glowing neon curved end indicator */}
+          <View
+            style={[
+              styles.neonIndicator,
+              {
+                borderRightColor: item.hasLimit ? statusColor : item.color,
+                shadowColor: item.hasLimit ? statusColor : item.color,
+              },
+            ]}
+          />
+        </View>
+      )}
+
+      {/* 2. Front Content Layer */}
+      <View style={styles.contentRow}>
+        {/* Category Icon with Halo */}
+        <View style={[styles.iconHalo, { shadowColor: item.color }]}>
+          <CategoryIcon category={item.category} size={36} />
+        </View>
+
+        {/* Text Details Stack */}
+        <View style={styles.bodyStackCapsule}>
+          <View style={styles.topLabelRow}>
+            <AppText variant="labelMD" color={colors.text.primary} style={styles.nameTextCapsule}>
+              {item.label}
+            </AppText>
+            {item.hasLimit && (
+              <AppText variant="caption" style={{ color: statusColor, fontSize: 9.5, fontWeight: '700' }}>
+                {Math.round(item.percent)}% limit
+              </AppText>
+            )}
+          </View>
+
+          <AppText variant="caption" color={colors.text.secondary} style={styles.subtextCapsule}>
+            {item.hasLimit
+              ? `${symbol}${item.spent.toFixed(0)} spent of ${symbol}${item.limit.toFixed(0)}`
+              : `${symbol}${item.spent.toFixed(0)} spent · ${item.scheduled > 0 ? `${symbol}${item.scheduled.toFixed(0)} scheduled` : 'no bills'}`}
+          </AppText>
+        </View>
+
+        {/* Right Action / Balance Info */}
+        <View style={styles.rightSide}>
+          {item.hasLimit ? (
+            <View style={styles.limitInfoCol}>
+              <AppText
+                variant="caption"
+                style={{
+                  color: isOver ? colors.status.expense : colors.status.income,
+                  fontWeight: '700',
+                  fontSize: 11,
+                }}
+              >
+                {isOver
+                  ? `+${symbol}${(item.spent - item.limit).toFixed(0)}`
+                  : `${symbol}${remaining.toFixed(0)} remaining`}
+              </AppText>
+
+              <Pressable
+                onPress={() => onDeleteLimit(item.budgetId!)}
+                style={({ pressed }) => [
+                  styles.trashBtn,
+                  {
+                    backgroundColor: colors.glass.backgroundMid,
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+              >
+                <Ionicons name="trash-outline" size={12} color={colors.status.expense} />
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable
+              onPress={() => onSetLimit(item.category)}
+              style={({ pressed }) => [
+                styles.inlineSetBtn,
+                {
+                  backgroundColor: colors.brand.primary,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <Ionicons name="add" size={11} color={colors.brand.onPrimary} />
+              <AppText variant="caption" style={[styles.inlineSetBtnText, { color: colors.brand.onPrimary }]}>
+                Set Limit
+              </AppText>
+            </Pressable>
+          )}
+        </View>
+      </View>
+    </Pressable>
+  );
 }
 
-export function BudgetCategoryList({ budgets, onDeleteBudget, onPressBudget }: BudgetCategoryListProps) {
+// ─── Main Component Container ────────────────────────────────────────────────
+interface BudgetCategoryListProps {
+  breakdown: SpendingStats[];
+  viewMode: 'grid' | 'capsules';
+  onToggleViewMode: () => void;
+  onDeleteBudget: (id: string) => void;
+  onSetBudgetLimit: (category: string) => void;
+}
+
+export function BudgetCategoryList({
+  breakdown,
+  viewMode,
+  onToggleViewMode,
+  onDeleteBudget,
+  onSetBudgetLimit,
+}: BudgetCategoryListProps) {
   const { colors } = useTheme();
 
-  if (!budgets.length) return null;
+  if (!breakdown.length) return null;
 
   return (
     <View style={styles.container}>
       <View style={styles.titleRow}>
-        <AppText variant="headingSM" color={colors.text.primary}>
-          Category Budgets
+        <AppText variant="headingSM" color={colors.text.primary} style={styles.titleText}>
+          Category Spent
         </AppText>
-        <View style={[styles.hint, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
-          <Ionicons name="arrow-back-outline" size={10} color={colors.text.tertiary} />
-          <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '500', fontSize: 9 }}>
-            Swipe left to remove limit
+
+        {/* Dynamic, Space-optimized layout toggler */}
+        <Pressable
+          onPress={onToggleViewMode}
+          style={({ pressed }) => [
+            styles.hintToggle,
+            {
+              backgroundColor: colors.glass.background,
+              borderColor: colors.glass.border,
+              opacity: pressed ? 0.75 : 1,
+            }
+          ]}
+        >
+          <Ionicons
+            name={viewMode === 'grid' ? 'list-outline' : 'grid-outline'}
+            size={12}
+            color={colors.brand.primary}
+          />
+          <AppText variant="caption" style={{ color: colors.brand.primary, fontWeight: '700', fontSize: 9.5 }}>
+            {viewMode === 'grid' ? 'List' : 'Grid'}
           </AppText>
-        </View>
+        </Pressable>
       </View>
 
-      <View style={styles.list}>
-        {budgets.map((b) => (
-          <CategoryRow
-            key={b.id}
-            budget={b}
-            onDelete={onDeleteBudget}
-            onPress={onPressBudget}
-          />
-        ))}
-      </View>
+      {/* Render selected viewMode */}
+      {viewMode === 'grid' ? (
+        <View style={styles.gridStack}>
+          {breakdown.map((item) => (
+            <CategoryCard
+              key={item.category}
+              item={item}
+              onDeleteLimit={onDeleteBudget}
+              onSetLimit={onSetBudgetLimit}
+            />
+          ))}
+        </View>
+      ) : (
+        <View style={styles.listStack}>
+          {breakdown.map((item) => (
+            <CategoryCapsule
+              key={item.category}
+              item={item}
+              onDeleteLimit={onDeleteBudget}
+              onSetLimit={onSetBudgetLimit}
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -247,99 +401,207 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 2,
+    gap: 8,
   },
-  hint: {
+  titleText: {
+    flexShrink: 1,
+  },
+  hintToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: Radius.full,
     borderWidth: 1,
   },
-  list: {
-    gap: Spacing['2'],
-  },
-  swipeContainer: {
-    position: 'relative',
-    marginBottom: Spacing['1'],
-  },
-  actions: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
+  gridStack: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: 6,
-    zIndex: 0,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 10,
   },
-  actionBtn: {
-    width: DELETE_ZONE_WIDTH - 12,
-    height: 48,
-    borderRadius: Radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
+  listStack: {
+    gap: 10,
   },
-  card: {
+  gridCard: {
+    width: '48.5%',
+    height: 106,
     borderRadius: Radius.xl,
     borderWidth: 1,
+    padding: 10,
+    justifyContent: 'space-between',
     overflow: 'hidden',
-    zIndex: 1,
+    position: 'relative',
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0, 0, 0, 0.04)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  iconHalo: {
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 6,
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
       },
-      android: { elevation: 1 },
+      android: {
+        elevation: 2,
+      },
     }),
   },
-  cardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing['4'],
-    paddingVertical: Spacing['3'],
-    gap: Spacing['3'],
+  bodyStack: {
+    gap: 1.5,
+    marginTop: 4,
   },
-  body: {
-    flex: 1,
-    gap: 4,
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  name: {
+  nameText: {
     fontWeight: '700',
-  },
-  statusBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
+    fontSize: 10.5,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
   },
   spentText: {
-    fontWeight: '700',
+    fontWeight: '800',
+    fontSize: 15,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
   },
   progressTrack: {
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginVertical: 2,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3.5,
   },
   progressFill: {
     height: '100%',
-    borderRadius: 3,
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 3,
+      },
+    }),
   },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  trashBtn: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.12)',
+  },
+  inlineSetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 1.5,
+    paddingHorizontal: 7,
+    paddingVertical: 3.5,
+    borderRadius: 10,
+  },
+  inlineSetBtnText: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+
+  // Capsule Styles
+  capsule: {
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0, 0, 0, 0.04)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
+  },
+  capsuleProgressFill: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 28,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    overflow: 'hidden', // Clips the children to the rounded right-side curve
+  },
+  neonIndicator: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 3.5,
+    borderColor: 'transparent',
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 4,
+      },
+    }),
+  },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: '100%',
+    paddingLeft: 14,
+    paddingRight: Spacing['4'],
+    zIndex: 1,
+  },
+  bodyStackCapsule: {
+    flex: 1,
+    marginLeft: Spacing['3'],
+    justifyContent: 'center',
+    gap: 1.5,
+  },
+  nameTextCapsule: {
+    fontWeight: '700',
+    fontSize: 13.5,
+  },
+  subtextCapsule: {
+    fontSize: 10.5,
+  },
+  rightSide: {
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    height: '100%',
+  },
+  limitInfoCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  topLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
   },
 });

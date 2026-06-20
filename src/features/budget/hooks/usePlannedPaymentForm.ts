@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useCategoryStore } from '@store/categoryStore';
 import { useAccountStore } from '@store/accountStore';
 
@@ -23,6 +23,13 @@ export function usePlannedPaymentForm(
   const [category, setCategoryState] = useState('other');
   const [accountId, setAccountIdState] = useState('');
   const [error,     setError]         = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!accountId && accounts.length > 0) {
+      const defaultId = (accounts.find((a) => a.isDefault) ?? accounts[0])?.id ?? '';
+      setAccountIdState(defaultId);
+    }
+  }, [accounts, accountId]);
 
   const setTitle = useCallback((val: string) => { setTitleState(val); setError(null); }, [error]);
   const setAmount = useCallback((val: string) => { setAmountState(val); setError(null); }, [error]);

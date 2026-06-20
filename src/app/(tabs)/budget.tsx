@@ -55,12 +55,14 @@ export default function BudgetScreen() {
   const {
     budgets, isLoading, refresh, summary,
     payments, settlePayment, deletePayment, addPayment, payPartial, deleteBudget,
-    addSheet,
+    spendingBreakdown, addSheet,
   } = useBudgetScreen();
 
   const [activePartialPayment, setActivePartialPayment] = useState<PlannedPayment | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [addBudgetVisible, setAddBudgetVisible] = useState(false);
+  const [limitCategory, setLimitCategory] = useState<string | undefined>(undefined);
+  const [viewMode, setViewMode] = useState<'grid' | 'capsules'>('grid');
 
   const percent   = summary ? summary.percentUsed : 0;
   const isOver    = percent > 100;
@@ -92,17 +94,43 @@ export default function BudgetScreen() {
   const animatedProgressStyle = useAnimatedStyle(() => ({ width: `${progressShared.value * 100}%` }));
   const remaining = summary ? summary.totalLimit - summary.totalSpent : 0;
 
-  // Filter lists based on horizontal category tabs selection
-  const filteredBudgets = selectedCategory === 'all'
-    ? budgets
-    : budgets.filter((b) => b.category === selectedCategory);
-
+  // Filter planned payments based on horizontal category tabs selection
   const filteredPayments = selectedCategory === 'all'
     ? payments
     : payments.filter((p) => p.category === selectedCategory);
 
-  // If BOTH are completely empty (no limits set globally AND no scheduled/planned payments at all)
-  const isScreenEmpty = budgets.length === 0 && payments.length === 0;
+  // Filter or build the spending breakdown based on selection
+  let filteredBreakdown = selectedCategory === 'all'
+    ? spendingBreakdown
+    : spendingBreakdown.filter((b) => b.category === selectedCategory);
+
+  // Synthesize a $0 default entry if a specific category is selected but has no active stats yet
+  if (selectedCategory !== 'all' && filteredBreakdown.length === 0) {
+    const catDef = FILTER_CATEGORIES.find((c) => c.id === selectedCategory);
+    if (catDef) {
+      filteredBreakdown = [{
+        category: selectedCategory,
+        label: catDef.label,
+        icon: catDef.icon,
+        color: catDef.color,
+        spent: 0,
+        scheduled: filteredPayments.reduce((sum, p) => sum + (p.amount - (p.amountPaid ?? 0)), 0),
+        limit: 0,
+        remaining: 0,
+        percent: 0,
+        hasLimit: false,
+        budgetId: null
+      }];
+    }
+  }
+
+  // If BOTH are completely empty (no active spending, limits, or planned payments at all)
+  const isScreenEmpty = spendingBreakdown.length === 0 && payments.length === 0;
+
+  const handleSetLimit = (category: string) => {
+    setLimitCategory(category);
+    setAddBudgetVisible(true);
+  };
 
   return (
     <SafeAreaView style={[s.safeArea, { backgroundColor: colors.background.primary }]} edges={['top']}>
@@ -169,14 +197,27 @@ export default function BudgetScreen() {
         )}
 
         {/* 2. Main content states */}
-        {isLoading && !budgets.length && !payments.length ? (
+        {isLoading && !spendingBreakdown.length && !payments.length ? (
           <ActivityIndicator color={colors.brand.primary} style={s.loader} />
         ) : isScreenEmpty ? (
-          <BudgetEmptyState onSetBudget={() => setAddBudgetVisible(true)} />
+          <BudgetEmptyState onSetBudget={() => handleSetLimit('food')} />
         ) : (
           <View style={{ gap: Spacing['4'] }}>
-            {/* Category Filter Scroll View */}
-            <View>
+            {/* 1. Category Spending Breakdown and Budget Limits List */}
+            {filteredBreakdown.length > 0 && (
+              <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120).delay(100)}>
+                <BudgetCategoryList
+                  breakdown={filteredBreakdown}
+                  viewMode={viewMode}
+                  onToggleViewMode={() => setViewMode(viewMode === 'grid' ? 'capsules' : 'grid')}
+                  onDeleteBudget={deleteBudget}
+                  onSetBudgetLimit={handleSetLimit}
+                />
+              </Animated.View>
+            )}
+
+            {/* 2. Category Filter Scroll View */}
+            <View style={{ marginTop: Spacing['1'] }}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -217,54 +258,7 @@ export default function BudgetScreen() {
               </ScrollView>
             </View>
 
-            {/* Category Budgets Visual List */}
-            {budgets.length === 0 ? (
-              <GlassCard padding={Spacing['4']} borderRadius={Radius.xl} style={s.compactCTA}>
-                <View style={s.compactCTALeft}>
-                  <View style={[s.iconCircle, { backgroundColor: colors.status.warning + '18' }]}>
-                    <Ionicons name="pie-chart-outline" size={20} color={colors.status.warning} />
-                  </View>
-                  <View style={{ flex: 1, gap: 1 }}>
-                    <AppText variant="labelMD" color={colors.text.primary}>Set Spending Limits</AppText>
-                    <AppText variant="caption" color={colors.text.secondary} style={{ fontSize: 10 }}>Establish monthly budgets to track your limits.</AppText>
-                  </View>
-                </View>
-                <Pressable
-                  onPress={() => setAddBudgetVisible(true)}
-                  style={({ pressed }) => [s.compactCTAButton, { backgroundColor: colors.brand.primary, opacity: pressed ? 0.8 : 1 }]}
-                >
-                  <Ionicons name="add" size={14} color={colors.brand.onPrimary} />
-                  <AppText style={{ color: colors.brand.onPrimary, fontSize: 11, fontWeight: '700' }}>Set Budget</AppText>
-                </Pressable>
-              </GlassCard>
-            ) : filteredBudgets.length === 0 ? (
-              <GlassCard padding={Spacing['4']} borderRadius={Radius.xl} style={s.compactCTA}>
-                <View style={s.compactCTALeft}>
-                  <View style={[s.iconCircle, { backgroundColor: colors.text.tertiary + '15' }]}>
-                    <Ionicons name="wallet-outline" size={20} color={colors.text.tertiary} />
-                  </View>
-                  <View style={{ flex: 1, gap: 1 }}>
-                    <AppText variant="labelMD" color={colors.text.primary}>
-                      No limit for {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}
-                    </AppText>
-                    <AppText variant="caption" color={colors.text.secondary} style={{ fontSize: 10 }}>Set a spending budget to monitor progress.</AppText>
-                  </View>
-                </View>
-                <Pressable
-                  onPress={() => setAddBudgetVisible(true)}
-                  style={({ pressed }) => [s.compactCTAButton, { backgroundColor: colors.brand.primary, opacity: pressed ? 0.8 : 1 }]}
-                >
-                  <Ionicons name="add" size={14} color={colors.brand.onPrimary} />
-                  <AppText style={{ color: colors.brand.onPrimary, fontSize: 11, fontWeight: '700' }}>Set Limit</AppText>
-                </Pressable>
-              </GlassCard>
-            ) : (
-              <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120).delay(100)}>
-                <BudgetCategoryList budgets={filteredBudgets} onDeleteBudget={deleteBudget} />
-              </Animated.View>
-            )}
-
-            {/* Planned Payments Timeline */}
+            {/* 3. Planned Payments Timeline */}
             <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120).delay(200)}>
               <PlannedPaymentsTimeline
                 payments={filteredPayments}
@@ -288,7 +282,11 @@ export default function BudgetScreen() {
 
       <AddBudgetLimitSheet
         visible={addBudgetVisible}
-        onClose={() => setAddBudgetVisible(false)}
+        defaultCategory={limitCategory}
+        onClose={() => {
+          setAddBudgetVisible(false);
+          setLimitCategory(undefined);
+        }}
       />
 
       <PayPartialSheet
@@ -336,34 +334,5 @@ const s = StyleSheet.create({
   categoryTabText: {
     fontSize: 12,
     fontWeight: '700',
-  },
-  compactCTA: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: Spacing['4'],
-    borderRadius: Radius.xl,
-    gap: Spacing['3'],
-  },
-  compactCTALeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing['3'],
-  },
-  iconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  compactCTAButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radius.lg,
   },
 });

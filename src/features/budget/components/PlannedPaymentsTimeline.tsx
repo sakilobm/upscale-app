@@ -78,6 +78,7 @@ function PaymentRow({ payment, onSettle, onDelete, onPress }: PaymentRowProps) {
 
   const days = daysUntilDue(payment.dueDate);
   const urgent = isUrgent(payment.dueDate);
+  const isSettled = payment.status === 'SETTLED';
 
   const dotColor =
     payment.status === 'SETTLED' ? colors.status.income :
@@ -246,9 +247,14 @@ function PaymentRow({ payment, onSettle, onDelete, onPress }: PaymentRowProps) {
               rowStyle,
               {
                 backgroundColor: cardBg,
-                borderColor: colors.glass.background,
+                borderColor: isSettled ? colors.glass.border + '18' : colors.glass.border,
                 shadowColor: colors.black,
+                opacity: isSettled ? 0.62 : 1,
               },
+              isSettled && {
+                shadowOpacity: 0,
+                elevation: 0,
+              }
             ]}
           >
             {/* Timeline dot */}
@@ -365,13 +371,15 @@ interface PlannedPaymentsTimelineProps {
 export function PlannedPaymentsTimeline({ payments, onSettle, onDelete, onPress }: PlannedPaymentsTimelineProps) {
   const { colors } = useTheme();
 
-  const sorted = [...payments].sort((a, b) => {
-    if (a.status === 'SETTLED' && b.status !== 'SETTLED') return 1;
-    if (b.status === 'SETTLED' && a.status !== 'SETTLED') return -1;
-    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-  });
+  const activePayments = payments
+    .filter((p) => p.status !== 'SETTLED')
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
-  if (!sorted.length) return null;
+  const settledPayments = payments
+    .filter((p) => p.status === 'SETTLED')
+    .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+
+  if (!payments.length) return null;
 
   return (
     <View style={styles.container}>
@@ -390,11 +398,33 @@ export function PlannedPaymentsTimeline({ payments, onSettle, onDelete, onPress 
         </View>
       </View>
 
-      <View style={styles.list}>
-        {sorted.map((p) => (
-          <PaymentRow key={p.id} payment={p} onSettle={onSettle} onDelete={onDelete} onPress={onPress} />
-        ))}
-      </View>
+      {/* Active Section */}
+      {activePayments.length > 0 && (
+        <View style={styles.section}>
+          <AppText variant="labelSM" color={colors.text.tertiary} style={styles.sectionTitle}>
+            UPCOMING ({activePayments.length})
+          </AppText>
+          <View style={styles.list}>
+            {activePayments.map((p) => (
+              <PaymentRow key={p.id} payment={p} onSettle={onSettle} onDelete={onDelete} onPress={onPress} />
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Settled Section */}
+      {settledPayments.length > 0 && (
+        <View style={[styles.section, activePayments.length > 0 && { marginTop: Spacing['4'] }]}>
+          <AppText variant="labelSM" color={colors.text.tertiary} style={styles.sectionTitle}>
+            SETTLED & COMPLETED ({settledPayments.length})
+          </AppText>
+          <View style={styles.list}>
+            {settledPayments.map((p) => (
+              <PaymentRow key={p.id} payment={p} onSettle={onSettle} onDelete={onDelete} onPress={onPress} />
+            ))}
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -423,6 +453,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   list: { gap: Spacing['2'] },
+  section: { gap: Spacing['2'] },
+  sectionTitle: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    marginBottom: Spacing['1'],
+  },
 
   // ── Underlays ──────────────────────────────────────────────────────────────
 

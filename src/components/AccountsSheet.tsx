@@ -399,7 +399,13 @@ export function AccountsSheet({ visible, onClose }: AccountsSheetProps) {
                 styles.view,
                 styles.formOverlay,
                 formStyle,
-                { backgroundColor: colors.background.primary },
+                {
+                  backgroundColor: colors.background.primary,
+                  top:             Spacing['3'],
+                  left:            Spacing['5'],
+                  right:           Spacing['5'],
+                  bottom:          Math.max(insets.bottom, Spacing['5']),
+                },
               ]}
             >
               <KeyboardAvoidingView
@@ -645,10 +651,6 @@ const styles = StyleSheet.create({
   },
   formOverlay: {
     position: 'absolute',
-    top:      0,
-    left:     0,
-    right:    0,
-    bottom:   0,
   },
   sheetHeader: {
     flexDirection:  'row',
@@ -720,7 +722,7 @@ const styles = StyleSheet.create({
   // Form
   formContent: {
     gap:           Spacing['4'],
-    paddingBottom: Spacing['6'],
+    paddingBottom: 40,
   },
   previewCard: {
     flexDirection:  'row',

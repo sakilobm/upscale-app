@@ -94,14 +94,45 @@ export function useOnboardingScreen() {
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const userId = `user-${Date.now()}`;
     setUser({
-      id:        `user-${Date.now()}`,
+      id:        userId,
       email:     '',
       fullName:  trimmed,
       avatarUrl: avatarId,
       currency,
       createdAt: new Date().toISOString(),
     });
+
+    // Seed default accounts if empty
+    const { accounts, addAccount } = require('@store/accountStore').useAccountStore.getState();
+    if (accounts.length === 0) {
+      addAccount({
+        id: `acc-cash-${Date.now()}`,
+        userId,
+        name: 'Cash Wallet',
+        type: 'cash',
+        balance: 0,
+        currency,
+        color: '#10B981',
+        icon: 'cash-outline',
+        isDefault: true,
+        createdAt: new Date().toISOString(),
+      });
+      addAccount({
+        id: `acc-card-${Date.now() + 1}`,
+        userId,
+        name: 'Main Card',
+        type: 'checking',
+        balance: 0,
+        currency,
+        color: '#6C63FF',
+        icon: 'card-outline',
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
     router.replace('/(tabs)');
   };
 

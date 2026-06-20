@@ -17,6 +17,7 @@ import { toast } from '@store/toastStore';
 interface Props {
   visible: boolean;
   onClose: () => void;
+  defaultCategory?: string;
 }
 
 const CATEGORIES = [
@@ -31,7 +32,7 @@ const CATEGORIES = [
   { id: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline', color: '#6B7280' },
 ];
 
-export function AddBudgetLimitSheet({ visible, onClose }: Props) {
+export function AddBudgetLimitSheet({ visible, onClose, defaultCategory }: Props) {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
   const addBudget = useBudgetStore((s) => s.addBudget);
@@ -40,6 +41,14 @@ export function AddBudgetLimitSheet({ visible, onClose }: Props) {
   const [category, setCategory] = useState('food');
   const [limit, setLimit] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (visible) {
+      setCategory(defaultCategory || 'food');
+      setLimit('');
+      setError(null);
+    }
+  }, [visible, defaultCategory]);
 
   const scale = useSharedValue(0.86);
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }], opacity: scale.value }));

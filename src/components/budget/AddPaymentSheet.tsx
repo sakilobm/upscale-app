@@ -5,7 +5,7 @@
  * @associatedFiles src/features/budget/hooks/usePlannedPaymentForm.ts, src/app/(tabs)/budget.tsx
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, StyleSheet, Modal, TextInput,
   Platform, Pressable, ScrollView,
@@ -17,6 +17,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-na
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { CategoryFormSheet } from '@components/CategoryFormSheet';
+import { AccountsSheet } from '@components/AccountsSheet';
 import { usePlannedPaymentForm } from '@features/budget/hooks/usePlannedPaymentForm';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
@@ -32,6 +33,7 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
   const [createVisible, setCreateVisible] = useState(false);
+  const [accountsVisible, setAccountsVisible] = useState(false);
 
   const {
     title, setTitle,
@@ -42,8 +44,15 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
     accounts,
     cats,
     handleSubmit,
+    reset,
     error,
   } = usePlannedPaymentForm(onSubmit, onClose);
+
+  useEffect(() => {
+    if (visible) {
+      reset();
+    }
+  }, [visible, reset]);
 
   const scale = useSharedValue(0.86);
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }], opacity: scale.value }));
@@ -189,35 +198,54 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
               {/* Pay From Account */}
               <View style={s.fieldGroup}>
                 <AppText style={[s.fieldLabel, { color: colors.text.tertiary }]}>PAY FROM ACCOUNT</AppText>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catRow}>
-                  {accounts.map((acc) => {
-                    const active = acc.id === accountId;
-                    return (
-                      <Pressable
-                        key={acc.id}
-                        onPress={() => setAccountId(acc.id)}
-                        style={[
-                          s.catChip,
-                          {
-                            backgroundColor: active ? acc.color + '18' : inputBg,
-                            borderColor: active ? acc.color + '55' : 'transparent',
-                            borderWidth: 1.5,
-                          },
-                        ]}
-                      >
-                        <View style={[s.catIconBox, { backgroundColor: acc.color + '22' }]}>
-                          <Ionicons name={acc.icon as any} size={13} color={acc.color} />
-                        </View>
-                        <AppText
-                          variant="caption"
-                          style={{ color: active ? acc.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
+                {accounts.length === 0 ? (
+                  <Pressable
+                    onPress={() => setAccountsVisible(true)}
+                    style={({ pressed }) => [
+                      s.emptyAccountBtn,
+                      {
+                        backgroundColor: colors.brand.primary + '12',
+                        borderColor: colors.brand.primary + '30',
+                        opacity: pressed ? 0.8 : 1,
+                      },
+                    ]}
+                  >
+                    <Ionicons name="add-circle-outline" size={16} color={colors.brand.primary} />
+                    <AppText style={{ color: colors.brand.primary, fontSize: 13, fontWeight: '600' }}>
+                      + Create Account
+                    </AppText>
+                  </Pressable>
+                ) : (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catRow}>
+                    {accounts.map((acc) => {
+                      const active = acc.id === accountId;
+                      return (
+                        <Pressable
+                          key={acc.id}
+                          onPress={() => setAccountId(acc.id)}
+                          style={[
+                            s.catChip,
+                            {
+                              backgroundColor: active ? acc.color + '18' : inputBg,
+                              borderColor: active ? acc.color + '55' : 'transparent',
+                              borderWidth: 1.5,
+                            },
+                          ]}
                         >
-                          {acc.name}
-                        </AppText>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
+                          <View style={[s.catIconBox, { backgroundColor: acc.color + '22' }]}>
+                            <Ionicons name={acc.icon as any} size={13} color={acc.color} />
+                          </View>
+                          <AppText
+                            variant="caption"
+                            style={{ color: active ? acc.color : colors.text.secondary, fontWeight: active ? '700' : '500' }}
+                          >
+                            {acc.name}
+                          </AppText>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                )}
               </View>
             </KeyboardAvoidingSheet>
 
@@ -229,6 +257,11 @@ export function AddPaymentSheet({ visible, onClose, onSubmit }: Props) {
         visible={createVisible}
         onClose={() => setCreateVisible(false)}
         onSaved={(id) => setCategory(id)}
+      />
+
+      <AccountsSheet
+        visible={accountsVisible}
+        onClose={() => setAccountsVisible(false)}
       />
     </>
   );
@@ -308,5 +341,16 @@ const s = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     flex: 1,
+  },
+  emptyAccountBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    marginTop: 2,
   },
 });
