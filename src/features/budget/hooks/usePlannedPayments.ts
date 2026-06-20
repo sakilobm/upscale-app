@@ -9,6 +9,8 @@ export function usePlannedPayments() {
   const storeDelete  = usePlannedPaymentsStore((s) => s.deletePayment);
   const storeAdd     = usePlannedPaymentsStore((s) => s.addPayment);
 
+  const storePayPartial = usePlannedPaymentsStore((s) => s.payPartial);
+
   const settlePayment = useCallback((id: string) => {
     storeSettle(id);
   }, [storeSettle]);
@@ -17,13 +19,17 @@ export function usePlannedPayments() {
     storeDelete(id);
   }, [storeDelete]);
 
+  const payPartial = useCallback((id: string, amount: number, accountId: string, note?: string) => {
+    storePayPartial(id, amount, accountId, note);
+  }, [storePayPartial]);
+
   const addPayment = useCallback(
-    (data: Omit<PlannedPayment, 'id' | 'status' | 'settledAt'>) => {
+    (data: Omit<PlannedPayment, 'id' | 'status' | 'settledAt' | 'amountPaid'>) => {
       storeAdd(data);
       toast.success(`"${data.title}" added to planned payments`);
     },
     [storeAdd],
   );
 
-  return { payments, settlePayment, deletePayment, addPayment };
+  return { payments, settlePayment, deletePayment, addPayment, payPartial };
 }

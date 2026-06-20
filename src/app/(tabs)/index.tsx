@@ -35,6 +35,7 @@ import { EmptyState } from '@components/EmptyState';
 import { useTheme } from '@hooks/useTheme';
 import { Spacing, Layout } from '@constants/index';
 import { useLedgerStore, type LedgerEntry } from '@store/ledgerStore';
+import { usePlannedPaymentsStore, type PlannedPayment } from '@store/plannedPaymentsStore';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import type { ComponentProps } from 'react';
 
@@ -117,6 +118,104 @@ function DashboardLedgerRow({ entry }: { entry: LedgerEntry }) {
   );
 }
 
+const BUDGET_CATEGORY_ICON: Record<string, IoniconName> = {
+  housing: 'home-outline',
+  food: 'restaurant-outline',
+  transport: 'car-outline',
+  health: 'fitness-outline',
+  entertainment: 'film-outline',
+  shopping: 'bag-handle-outline',
+  education: 'school-outline',
+  savings: 'wallet-outline',
+  other: 'ellipsis-horizontal-outline',
+};
+
+function DashboardBudgetRow({ payment }: { payment: PlannedPayment }) {
+  const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
+  
+  const paid = payment.amountPaid ?? 0;
+  const progressPct = payment.amount > 0 ? paid / payment.amount : 0;
+  const isPaid = payment.status === 'SETTLED';
+
+  const dotColor = isPaid 
+    ? colors.status.income 
+    : payment.status === 'OVERDUE' 
+      ? colors.status.expense 
+      : '#10B981';
+
+  return (
+    <Pressable
+      onPress={() => {
+        router.push('/(tabs)/budget');
+      }}
+      style={({ pressed }) => [
+        s.budgetRowContainer,
+        {
+          opacity: pressed ? 0.75 : 1,
+        }
+      ]}
+    >
+      {/* Dynamic colored category circle */}
+      <View style={[s.budgetCategoryIcon, { backgroundColor: dotColor + '18', borderColor: dotColor + '30' }]}>
+        <Ionicons
+          name={BUDGET_CATEGORY_ICON[payment.category] ?? 'ellipsis-horizontal-outline'}
+          size={16}
+          color={dotColor}
+        />
+      </View>
+
+      {/* Details */}
+      <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <AppText variant="labelMD" color={colors.text.primary} style={{ fontWeight: '600' }}>
+            {payment.title}
+          </AppText>
+          <AppText variant="labelMD" style={{ color: colors.text.primary, fontWeight: '700' }}>
+            {symbol}{payment.amount.toFixed(2)}
+          </AppText>
+        </View>
+
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            {isPaid ? (
+              <>
+                <Ionicons name="checkmark-circle" size={11} color={colors.status.income} />
+                <AppText variant="caption" style={{ color: colors.status.income, fontSize: 10, fontWeight: '600' }}>
+                  Paid
+                </AppText>
+              </>
+            ) : (
+              <>
+                <Ionicons 
+                  name={payment.status === 'OVERDUE' ? 'alert-circle' : 'time-outline'} 
+                  size={11} 
+                  color={dotColor} 
+                />
+                <AppText variant="caption" style={{ color: dotColor, fontSize: 10, fontWeight: '600' }}>
+                  {payment.status === 'OVERDUE' ? 'Overdue' : 'Upcoming'}
+                </AppText>
+              </>
+            )}
+          </View>
+          {paid > 0 && !isPaid && (
+            <AppText variant="caption" color={colors.text.tertiary} style={{ fontSize: 9 }}>
+              Spent {symbol}{paid.toFixed(0)} of {symbol}{payment.amount.toFixed(0)}
+            </AppText>
+          )}
+        </View>
+
+        {/* Mini progress bar if active and partially paid */}
+        {paid > 0 && !isPaid && (
+          <View style={[s.miniProgressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}>
+            <View style={[s.miniProgressFill, { width: `${progressPct * 100}%`, backgroundColor: '#10B981' }]} />
+          </View>
+        )}
+      </View>
+    </Pressable>
+  );
+}
+
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
   const { dashboard, user, addSheet, transferSheet, quickActions, handleTransactionPress, editingTransaction, setEditingTransaction } = useHomeScreen();
@@ -124,6 +223,11 @@ export default function HomeScreen() {
   const activeLedgerEntries = ledgerEntries.filter(entry => entry.status !== 'SETTLED');
   const settledLedgerEntries = ledgerEntries.filter(entry => entry.status === 'SETTLED');
   const displayLedgerEntries = [...activeLedgerEntries, ...settledLedgerEntries].slice(0, 5);
+
+  const plannedPayments = usePlannedPaymentsStore((s) => s.payments);
+  const upcomingPayments = plannedPayments.filter(p => p.status !== 'SETTLED');
+  const settledPayments = plannedPayments.filter(p => p.status === 'SETTLED');
+  const displayPayments = [...upcomingPayments, ...settledPayments].slice(0, 5);
 
   const unreadCount = useNotificationStore((s) => s.notifications.filter((n) => !n.isRead).length);
   const { data, isLoading, isError, isEmpty, refresh } = dashboard;
@@ -275,18 +379,18 @@ export default function HomeScreen() {
                     </View>
                   )}
 
-                  {budgetTx.length > 0 && (
+                  {displayPayments.length > 0 && (
                     <View style={{ marginBottom: Spacing['4'] }}>
                       <View style={s.subSectionHeader}>
-                        <Ionicons name="receipt-outline" size={12} color={colors.status.income} />
-                        <AppText variant="labelSM" style={{ color: colors.status.income, fontWeight: '700', fontSize: 10, letterSpacing: 0.8 }}>
-                          BUDGET SETTLEMENTS
+                        <Ionicons name="receipt-outline" size={12} color="#10B981" />
+                        <AppText variant="labelSM" style={{ color: '#10B981', fontWeight: '700', fontSize: 10, letterSpacing: 0.8 }}>
+                          BUDGETS & PLANNED PAYMENTS
                         </AppText>
                       </View>
-                      <GlassCard padding={0} style={{ borderColor: colors.status.income + '30', borderWidth: 1 }}>
-                        {budgetTx.map((tx, idx) => (
-                          <View key={tx.id} style={[s.txRow, { borderBottomColor: colors.glass.border }, idx === budgetTx.length - 1 && s.txRowLast]}>
-                            <RecentTransactionRow transaction={tx} onPress={handleTransactionPress} />
+                      <GlassCard padding={0} style={{ borderColor: '#10B981' + '30', borderWidth: 1 }}>
+                        {displayPayments.map((payment, idx) => (
+                          <View key={payment.id} style={[s.txRow, { borderBottomColor: colors.glass.border }, idx === displayPayments.length - 1 && s.txRowLast]}>
+                            <DashboardBudgetRow payment={payment} />
                           </View>
                         ))}
                       </GlassCard>
@@ -393,5 +497,21 @@ const s = StyleSheet.create({
   miniProgressFill: {
     height: 3,
     borderRadius: 1.5,
+  },
+  budgetRowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['3'],
+    paddingVertical: Spacing['3'],
+    paddingHorizontal: Spacing['4'],
+    minHeight: 68,
+  },
+  budgetCategoryIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
 });

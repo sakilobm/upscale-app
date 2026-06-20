@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, Pressable } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,7 +22,7 @@ const FEATURES: { icon: 'pie-chart-outline' | 'bar-chart-outline' | 'notificatio
   { icon: 'notifications-outline', colorKey: 'expense', text: 'Alerts before you overspend'         },
 ];
 
-export function BudgetEmptyState() {
+export function BudgetEmptyState({ onSetBudget }: { onSetBudget?: () => void }) {
   const { colors } = useTheme();
   const accentHex = colors.status.warning;
 
@@ -51,6 +51,25 @@ export function BudgetEmptyState() {
         <AppText variant="bodySM" color={colors.text.secondary} align="center" style={s.subtitle}>
           Set monthly limits per category to stay on track and build better money habits.
         </AppText>
+        
+        {onSetBudget && (
+          <Pressable
+            onPress={onSetBudget}
+            style={({ pressed }) => [
+              s.addBtn,
+              {
+                backgroundColor: colors.brand.primary,
+                opacity: pressed ? 0.8 : 1,
+                marginTop: 8,
+              },
+            ]}
+          >
+            <Ionicons name="add-circle" size={15} color={colors.brand.onPrimary} />
+            <AppText style={{ color: colors.brand.onPrimary, fontWeight: '700', fontSize: 12 }}>
+              Set spending limits
+            </AppText>
+          </Pressable>
+        )}
       </Animated.View>
 
       {/* ── Feature rows ─── */}
@@ -112,5 +131,13 @@ const s = StyleSheet.create({
   hint: {
     alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center',
     gap: Spacing['2'], padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
+  },
+  addBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: Radius.lg,
   },
 });

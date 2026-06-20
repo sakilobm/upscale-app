@@ -56,12 +56,17 @@ interface PaymentRowProps {
   payment: PlannedPayment;
   onSettle: (id: string) => void;
   onDelete: (id: string) => void;
+  onPress: (payment: PlannedPayment) => void;
 }
 
-function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
+function PaymentRow({ payment, onSettle, onDelete, onPress }: PaymentRowProps) {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
   const account = useAccountStore((s) => s.accounts.find((a) => a.id === payment.accountId));
+
+  const paid = payment.amountPaid ?? 0;
+  const remaining = payment.amount - paid;
+  const progressPct = payment.amount > 0 ? paid / payment.amount : 0;
 
   const translateX = useSharedValue(0);
   const rowOpacity = useSharedValue(1);
@@ -229,6 +234,8 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
             // If row is open (swiped left), tap card to close
             if (translateX.value < -8) {
               translateX.value = withSpring(0, { damping: 20, stiffness: 260 });
+            } else {
+              onPress(payment);
             }
           }}
           style={{ zIndex: 1 }}
@@ -238,7 +245,6 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
               styles.row,
               rowStyle,
               {
-                height: ROW_HEIGHT,
                 backgroundColor: cardBg,
                 borderColor: colors.glass.background,
                 shadowColor: colors.black,
@@ -300,6 +306,21 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
                   </View>
                 )}
               </View>
+
+              {/* Progress bar inside body */}
+              {paid > 0 && payment.status !== 'SETTLED' && (
+                <View style={[styles.progressTrack, { backgroundColor: colors.glass.backgroundMid }]}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${progressPct * 100}%` as any,
+                        backgroundColor: dotColor,
+                      },
+                    ]}
+                  />
+                </View>
+              )}
             </View>
 
             {/* Amount */}
@@ -317,8 +338,13 @@ function PaymentRow({ payment, onSettle, onDelete }: PaymentRowProps) {
                   },
                 ]}
               >
-                {symbol}{payment.amount.toFixed(2)}
+                {symbol}{remaining.toFixed(2)}
               </AppText>
+              {paid > 0 && payment.status !== 'SETTLED' && (
+                <AppText variant="caption" color={colors.text.tertiary} style={{ fontSize: 9, marginTop: 2 }}>
+                  of {symbol}{payment.amount.toFixed(0)}
+                </AppText>
+              )}
             </View>
           </Animated.View>
         </Pressable>
@@ -333,9 +359,10 @@ interface PlannedPaymentsTimelineProps {
   payments: PlannedPayment[];
   onSettle: (id: string) => void;
   onDelete: (id: string) => void;
+  onPress: (payment: PlannedPayment) => void;
 }
 
-export function PlannedPaymentsTimeline({ payments, onSettle, onDelete }: PlannedPaymentsTimelineProps) {
+export function PlannedPaymentsTimeline({ payments, onSettle, onDelete, onPress }: PlannedPaymentsTimelineProps) {
   const { colors } = useTheme();
 
   const sorted = [...payments].sort((a, b) => {
@@ -365,7 +392,7 @@ export function PlannedPaymentsTimeline({ payments, onSettle, onDelete }: Planne
 
       <View style={styles.list}>
         {sorted.map((p) => (
-          <PaymentRow key={p.id} payment={p} onSettle={onSettle} onDelete={onDelete} />
+          <PaymentRow key={p.id} payment={p} onSettle={onSettle} onDelete={onDelete} onPress={onPress} />
         ))}
       </View>
     </View>
@@ -446,8 +473,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing['3'],
     paddingHorizontal: Spacing['4'],
+    paddingVertical: Spacing['3'],
     borderRadius: Radius.xl,
     borderWidth: 1,
+    minHeight: ROW_HEIGHT,
     ...Platform.select({
       ios: { shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
       android: { elevation: 1 },
@@ -479,6 +508,16 @@ const styles = StyleSheet.create({
   accountLabel: {
     fontSize: 9,
     fontWeight: '700',
+  },
+  progressTrack: {
+    height: 3,
+    borderRadius: 1.5,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 3,
+    borderRadius: 1.5,
   },
   right: { alignItems: 'flex-end', flexShrink: 0 },
   amount: { fontSize: 14, fontWeight: '700' },

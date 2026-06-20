@@ -12,15 +12,15 @@ import { useBudgets } from './useBudgets';
 import { usePlannedPayments } from './usePlannedPayments';
 
 export function useBudgetScreen() {
-  const { data: budgetsData, isLoading, isEmpty, refresh, summary } = useBudgets();
-  const { payments, settlePayment, deletePayment, addPayment } = usePlannedPayments();
+  const { data: budgetsData, isLoading, isEmpty, refresh, summary, deleteBudget } = useBudgets();
+  const { payments, settlePayment, deletePayment, addPayment, payPartial } = usePlannedPayments();
 
   const [addVisible, setAddVisible] = useState(false);
 
   return {
     budgets:   budgetsData ?? [],
     isLoading, isEmpty, refresh, summary,
-    payments,  settlePayment, deletePayment, addPayment,
+    payments,  settlePayment, deletePayment, addPayment, payPartial, deleteBudget,
     addSheet: {
       isVisible: addVisible,
       open:      () => setAddVisible(true),
