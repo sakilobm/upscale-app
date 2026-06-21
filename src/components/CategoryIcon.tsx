@@ -9,7 +9,7 @@ type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 interface CategoryIconProps {
   category: string;
   size?: number;
-  source?: 'ledger' | 'budget' | 'general';
+  source?: 'ledger' | 'budget' | 'general' | 'loan';
 }
 
 export const CategoryIcon = memo(function CategoryIcon({
@@ -36,6 +36,16 @@ export const CategoryIcon = memo(function CategoryIcon({
         label: 'Budget',
         icon: 'receipt-outline',
         color: '#10B981',
+        isCustom: false,
+        applicableTo: 'both',
+      };
+    }
+    if (source === 'loan' || category === 'Loan Payment' || category === 'Loan Principal') {
+      return {
+        id: 'loan',
+        label: category === 'Loan Principal' ? 'Loan Principal' : 'Loan Payment',
+        icon: category === 'Loan Principal' ? 'cash-outline' : 'repeat-outline',
+        color: '#3B82F6',
         isCustom: false,
         applicableTo: 'both',
       };

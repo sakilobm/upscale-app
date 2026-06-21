@@ -15,6 +15,7 @@ import { useLedger } from './useLedger';
 import { useLoans }  from './useLoans';
 import type { LedgerEntry, LedgerDirection } from '@store/ledgerStore';
 import type { LedgerTab } from '../types';
+import type { Loan } from '@store/loansStore';
 
 // ─── Internal types ───────────────────────────────────────────────────────────
 
@@ -40,6 +41,11 @@ export function useLedgerScreen() {
   // ── Detail info sheet ──────────────────────────────────────────────────────
   const [infoEntry, setInfoEntry] = useState<LedgerEntry | undefined>();
 
+  // ── Loan detail/edit sheets ────────────────────────────────────────────────
+  const [loanSheetVisible, setLoanSheetVisible] = useState(false);
+  const [infoLoanId, setInfoLoanId]             = useState<string | null>(null);
+  const [editLoan, setEditLoan]                 = useState<Loan | undefined>();
+
   // ── Data layers ────────────────────────────────────────────────────────────
   const {
     entries: allEntries,
@@ -51,7 +57,18 @@ export function useLedgerScreen() {
     deleteEntry,
   } = useLedger();
 
-  const { loans, recordPayment } = useLoans();
+  const {
+    loans,
+    recordPayment,
+    addLoan,
+    deleteLoan,
+    updateLoan,
+    toggleLoanReminder,
+  } = useLoans();
+
+  const infoLoan = useMemo(() => {
+    return loans.find((l) => l.id === infoLoanId);
+  }, [loans, infoLoanId]);
 
   // ── Derived data (memoised — no filtering logic in the view shell) ─────────
 
@@ -86,6 +103,41 @@ export function useLedgerScreen() {
   const closeSheet     = useCallback(() => setSheetVisible(false), []);
   const openInfoSheet  = useCallback((entry: LedgerEntry) => setInfoEntry(entry), []);
   const closeInfoSheet = useCallback(() => setInfoEntry(undefined), []);
+
+  const openLoanSheet = useCallback(() => {
+    setEditLoan(undefined);
+    setLoanSheetVisible(true);
+  }, []);
+
+  const closeLoanSheet = useCallback(() => {
+    setLoanSheetVisible(false);
+    setEditLoan(undefined);
+  }, []);
+
+  const openLoanInfoSheet = useCallback((loan: Loan) => {
+    setInfoLoanId(loan.id);
+  }, []);
+
+  const closeLoanInfoSheet = useCallback(() => {
+    setInfoLoanId(null);
+  }, []);
+
+  const openEditLoanSheet = useCallback((loan: Loan) => {
+    setEditLoan(loan);
+    setLoanSheetVisible(true);
+  }, []);
+
+  const handleAddLoan = useCallback((loanDraft: any, postPrincipal?: boolean) => {
+    addLoan(loanDraft, postPrincipal);
+  }, [addLoan]);
+
+  const handleEditLoan = useCallback((loanId: string, updates: Partial<Loan>) => {
+    updateLoan(loanId, updates);
+  }, [updateLoan]);
+
+  const handleToggleReminder = useCallback(async (loanId: string, enabled: boolean, time: string) => {
+    await toggleLoanReminder(loanId, enabled, time);
+  }, [toggleLoanReminder]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -126,6 +178,9 @@ export function useLedgerScreen() {
     sheetMode,
     sheetEntry,
     infoEntry,
+    loanSheetVisible,
+    infoLoan,
+    editLoan,
     // Data
     totalOwedToMe,
     totalIOwe,
@@ -139,10 +194,19 @@ export function useLedgerScreen() {
     closeSheet,
     openInfoSheet,
     closeInfoSheet,
+    openLoanSheet,
+    closeLoanSheet,
+    openLoanInfoSheet,
+    closeLoanInfoSheet,
+    openEditLoanSheet,
     handleAddEntry,
     handleSettle,
     deleteEntry,
     addPartialReturn,
     recordPayment,
+    handleAddLoan,
+    handleEditLoan,
+    deleteLoan,
+    handleToggleReminder,
   } as const;
 }

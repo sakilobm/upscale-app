@@ -8,6 +8,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
+import { ToastContainer } from '@components/Toast';
 import { KeyboardAvoidingSheet } from '@components/KeyboardAvoidingSheet';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -268,6 +269,7 @@ export function CategoryFormSheet({
             ))}
 
           </KeyboardAvoidingSheet>
+          <ToastContainer isModal />
         </Animated.View>
       </View>
     </Modal>

@@ -352,26 +352,20 @@ export default function HomeScreen() {
             )}
 
             {data && data.recentTransactions.length > 0 && (() => {
-              const getSource = (tx: any) => tx.source || 
-                (tx.id.startsWith('tx-ledger-') ? 'ledger' : 
-                 tx.id.startsWith('tx-settled-') ? 'budget' : 'general');
-
-              const ledgerTx = data.recentTransactions.filter(tx => getSource(tx) === 'ledger').slice(0, 5);
-              const budgetTx = data.recentTransactions.filter(tx => getSource(tx) === 'budget').slice(0, 5);
-              const generalTx = data.recentTransactions.filter(tx => getSource(tx) === 'general').slice(0, 5);
+              const recentTxs = data.recentTransactions.slice(0, 5);
 
               return (
                 <View style={s.section}>
                   <SectionTitle title="Recent Activity" action="See all" onAction={() => router.push('/(tabs)/transactions')} />
 
-                  {generalTx.length > 0 && (
+                  {recentTxs.length > 0 && (
                     <View style={{ marginBottom: Spacing['4'] }}>
                       <AppText variant="labelSM" color={colors.text.tertiary} style={s.subSectionTitle}>
-                        GENERAL SPENDING
+                        RECENT TRANSACTIONS
                       </AppText>
                       <GlassCard padding={0}>
-                        {generalTx.map((tx, idx) => (
-                          <View key={tx.id} style={[s.txRow, { borderBottomColor: colors.glass.border }, idx === generalTx.length - 1 && s.txRowLast]}>
+                        {recentTxs.map((tx, idx) => (
+                          <View key={tx.id} style={[s.txRow, { borderBottomColor: colors.glass.border }, idx === recentTxs.length - 1 && s.txRowLast]}>
                             <RecentTransactionRow
                               transaction={tx}
                               onPress={handleTransactionPress}

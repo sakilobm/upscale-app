@@ -30,9 +30,11 @@ const CARD_HEIGHT  = 182;
 function LoanCard({
   loan,
   onRecord,
+  onPress,
 }: {
   loan:     Loan;
   onRecord: (id: string) => void;
+  onPress:  () => void;
 }) {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
@@ -63,7 +65,10 @@ function LoanCard({
 
   return (
     /* Shadow wrapper — separate from overflow:hidden so iOS shadow renders */
-    <View style={[styles.cardShadow, { shadowColor: loan.color }]}>
+    <Pressable
+      onPress={onPress}
+      style={[styles.cardShadow, { shadowColor: loan.color }]}
+    >
       {/* Clip container — clips LinearGradient + glowBlob to rounded corners */}
       <View style={styles.cardClip}>
         <LinearGradient
@@ -133,7 +138,7 @@ function LoanCard({
           </View>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -142,9 +147,10 @@ function LoanCard({
 interface DebtHorizonStackProps {
   loans:           Loan[];
   onRecordPayment: (loanId: string) => void;
+  onPressCard:     (loan: Loan) => void;
 }
 
-export function DebtHorizonStack({ loans, onRecordPayment }: DebtHorizonStackProps) {
+export function DebtHorizonStack({ loans, onRecordPayment, onPressCard }: DebtHorizonStackProps) {
   const { colors } = useTheme();
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
@@ -187,7 +193,7 @@ export function DebtHorizonStack({ loans, onRecordPayment }: DebtHorizonStackPro
               idx < loans.length - 1 && { marginRight: CARD_GAP },
             ]}
           >
-            <LoanCard loan={loan} onRecord={onRecordPayment} />
+            <LoanCard loan={loan} onRecord={onRecordPayment} onPress={() => onPressCard(loan)} />
           </View>
         ))}
       </ScrollView>

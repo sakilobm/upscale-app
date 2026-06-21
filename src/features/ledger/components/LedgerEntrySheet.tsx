@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
 } from 'react-native';
+import { ToastContainer } from '@components/Toast';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -322,6 +323,7 @@ export function LedgerEntrySheet({
               {mode === 'add' ? 'Save Entry' : 'Record Return'}
             </AppText>
           </Pressable>
+          <ToastContainer isModal />
         </Animated.View>
       </View>
     </Modal>

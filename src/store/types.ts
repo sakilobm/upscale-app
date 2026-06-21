@@ -39,7 +39,7 @@ export interface Transaction {
   date: string;           // ISO 8601
   accountId: string;
   toAccountId?: string; // Destination account for transfers
-  source?: 'ledger' | 'budget' | 'general';
+  source?: 'ledger' | 'budget' | 'general' | 'loan';
   createdAt: string;
   updatedAt: string;
 }

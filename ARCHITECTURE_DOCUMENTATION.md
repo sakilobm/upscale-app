@@ -102,3 +102,11 @@ Feature-specific logical units are isolated under the `src/features/` directory:
 To support displaying chronological running balances in both Dashboard and Activity features without overloading layout components or introducing state synchronization bugs:
 - **Headless Utility Layer**: The business logic is isolated in a standalone utility function `calculateRunningBalances` inside [balanceCalculator.ts](file:///c:/Users/sowbh/Desktop/MoneyApp/src/features/transactions/utils/balanceCalculator.ts). This tracks transactions chronologically (ascending date) per account, performs mock balances passes starting from zero, offsets the result to match the current balance, and returns a Map of transaction ID to post-transaction running balance.
 - **State Flow**: Calculations are memoized at the hook level (`useTransactions` and `useDashboardData`) and exposed directly via screen view models, maintaining lean UI components that consume `balanceAfter` as a standard React prop.
+
+### 4. Loan Repayment Flow, Reminders, and Multi-Store Coordination
+To support advanced full-featured loan tracking, EMI installments, and local notification reminders:
+- **Unified Action Wrapper**: The custom hook `useLoans` under `src/features/ledger/hooks/useLoans.ts` orchestrates interactions across three domains:
+  1. **Loans Store (`loansStore.ts`)**: Updates amortization details, increments installment counts, and computes `nextPaymentDate`.
+  2. **Transaction Ledger (`transactionStore.ts` & `accountStore.ts`)**: Automatically builds and posts standard ledger transactions (Category: `"Loan Payment"` or `"Loan Principal"`, Source: `'loan'`) and updates corresponding account balances dynamically.
+  3. **Notification Service (`notificationService.ts` via Expo Notifications)**: Dynamically requests user permissions, schedules high-priority local reminder alerts on the due dates, and dynamically reschedules/invalidates alerts when installments are checked off or loans are deleted.
+  4. **Loan Details Modal (`LoanInfoSheet.tsx`)**: Exposes full CRUD settings, visual progress bars, linked account identifiers, and interactive toggles for notification alarms.

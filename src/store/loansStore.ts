@@ -21,12 +21,16 @@ export interface Loan {
   totalPayments:     number;
   completedPayments: number;
   color:             string;
+  remindersEnabled?: boolean;
+  reminderTime?:     string;
+  reminderExpoId?:   string | null;
+  accountId?:        string;
 }
 
 interface LoansState {
   loans:         Loan[];
   isLoading:     boolean;
-  addLoan:       (loan: Omit<Loan, 'id' | 'amountPaid' | 'completedPayments'>) => void;
+  addLoan:       (loan: Omit<Loan, 'id' | 'amountPaid' | 'completedPayments'> & Partial<Pick<Loan, 'id' | 'amountPaid' | 'completedPayments'>>) => void;
   recordPayment: (loanId: string) => void;
   deleteLoan:    (loanId: string) => void;
   updateLoan:    (loanId: string, updates: Partial<Loan>) => void;
@@ -52,7 +56,16 @@ export const useLoansStore = create<LoansState>()(
       isLoading: false,
 
       addLoan: (draft) => {
-        const loan: Loan = { ...draft, id: `loan-${Date.now()}`, amountPaid: 0, completedPayments: 0 };
+        const loan: Loan = {
+          id: draft.id || `loan-${Date.now()}`,
+          amountPaid: draft.amountPaid || 0,
+          completedPayments: draft.completedPayments || 0,
+          remindersEnabled: draft.remindersEnabled ?? false,
+          reminderTime: draft.reminderTime ?? '09:00',
+          reminderExpoId: draft.reminderExpoId ?? null,
+          accountId: draft.accountId ?? '',
+          ...draft,
+        };
         set((s) => ({ loans: [loan, ...s.loans] }));
       },
 

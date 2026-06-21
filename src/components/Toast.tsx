@@ -109,14 +109,16 @@ const ToastChip = memo(function ToastChip({ item, onDismiss }: ChipProps) {
 
 // ─── Container ────────────────────────────────────────────────────────────────
 
-export function ToastContainer() {
+export function ToastContainer({ isModal = false }: { isModal?: boolean }) {
   const toasts = useToastStore((s) => s.toasts);
   const hide   = useToastStore((s) => s.hide);
   const insets = useSafeAreaInsets();
 
   if (!toasts.length) return null;
 
-  const bottomOffset = Layout.tabBarHeight + insets.bottom + Spacing['3'];
+  const bottomOffset = isModal
+    ? insets.bottom + Spacing['4']
+    : Layout.tabBarHeight + insets.bottom + Spacing['3'];
 
   return (
     <View

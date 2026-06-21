@@ -25,6 +25,8 @@ import { SettleUpHero }     from '@features/ledger/components/SettleUpHero';
 import { PersonLedgerCard } from '@features/ledger/components/PersonLedgerCard';
 import { DebtHorizonStack } from '@features/ledger/components/DebtHorizonStack';
 import { LedgerEntrySheet } from '@features/ledger/components/LedgerEntrySheet';
+import { AddLoanSheet } from '@features/ledger/components/AddLoanSheet';
+import { LoanInfoSheet } from '@features/ledger/components/LoanInfoSheet';
 import { LedgerInfoSheet }  from '@features/ledger/components/LedgerInfoSheet';
 import { LedgerEmptyState } from '@features/ledger/components/LedgerEmptyState';
 import type { LedgerTab }   from '@features/ledger/types';
@@ -45,13 +47,15 @@ export default function LedgerScreen() {
   const {
     activeTab, setActiveTab,
     sheetVisible, sheetMode, sheetEntry,
-    infoEntry,
+    infoEntry, loanSheetVisible, infoLoan, editLoan,
     totalOwedToMe, totalIOwe,
     loans, sections, activeEntries,
     openAddSheet, openPartialSheet, closeSheet,
-    openInfoSheet, closeInfoSheet,
-    handleAddEntry, handleSettle,
-    deleteEntry, addPartialReturn, recordPayment,
+    openInfoSheet, closeInfoSheet, openLoanSheet, closeLoanSheet,
+    openLoanInfoSheet, closeLoanInfoSheet, openEditLoanSheet,
+    handleAddEntry, handleSettle, handleAddLoan, handleEditLoan,
+    deleteEntry, addPartialReturn, recordPayment, deleteLoan,
+    handleToggleReminder,
   } = useLedgerScreen();
 
   return (
@@ -91,7 +95,13 @@ export default function LedgerScreen() {
           <View style={s.loansSection}>
             {loans.length === 0
               ? <LedgerEmptyState variant="loans" />
-              : <DebtHorizonStack loans={loans} onRecordPayment={recordPayment} />
+              : (
+                <DebtHorizonStack
+                  loans={loans}
+                  onRecordPayment={recordPayment}
+                  onPressCard={openLoanInfoSheet}
+                />
+              )
             }
           </View>
         ) : sections.length === 0 ? (
@@ -129,6 +139,15 @@ export default function LedgerScreen() {
         onPartialReturn={addPartialReturn}
       />
 
+      {/* Add loan sheet */}
+      <AddLoanSheet
+        visible={loanSheetVisible}
+        onClose={closeLoanSheet}
+        onAdd={handleAddLoan}
+        editLoan={editLoan}
+        onEdit={handleEditLoan}
+      />
+
       {/* Detail info sheet */}
       <LedgerInfoSheet
         entry={infoEntry}
@@ -137,7 +156,21 @@ export default function LedgerScreen() {
         onSettle={handleSettle}
       />
 
-      <FAB icon="add" label="Add Entry" onPress={openAddSheet} />
+      {/* Loan detail info sheet */}
+      <LoanInfoSheet
+        loan={infoLoan}
+        onClose={closeLoanInfoSheet}
+        onRecordPayment={recordPayment}
+        onDelete={deleteLoan}
+        onEdit={openEditLoanSheet}
+        onToggleReminder={handleToggleReminder}
+      />
+
+      <FAB
+        icon="add"
+        label={activeTab === 'loans' ? "Add Loan" : "Add Entry"}
+        onPress={activeTab === 'loans' ? openLoanSheet : openAddSheet}
+      />
     </SafeAreaView>
   );
 }
