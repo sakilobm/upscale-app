@@ -46,7 +46,7 @@ export function useEditTransaction(
       setCategory(transaction.category);
       setAccountId(transaction.accountId);
       setNote(transaction.note ?? '');
-      setDateStr(transaction.date.slice(0, 10)); // Extract YYYY-MM-DD from ISO string
+      setDateStr(transaction.date); // Keep full ISO string
     }
   }, [transaction]);
 
@@ -65,12 +65,8 @@ export function useEditTransaction(
       return;
     }
 
-    // 1. Formulate ISO date string
-    // Keep the original time part if we are editing the same day, otherwise use noon UTC
-    const originalTime = transaction.date.slice(10);
-    const newDateIso = dateStr === transaction.date.slice(0, 10)
-      ? `${dateStr}${originalTime}`
-      : `${dateStr}T12:00:00.000Z`;
+    // 1. Use the selected ISO date string directly
+    const newDateIso = dateStr;
 
     // 2. Update accounts balance (Correcting the difference)
     const oldAccountId = transaction.accountId;

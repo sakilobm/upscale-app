@@ -7,6 +7,7 @@ import { useKeyboardHeight } from '@hooks/useKeyboardHeight';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, Easing,
+  withRepeat, withSequence, FadeIn, FadeOut, ZoomIn,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,10 +40,12 @@ export function TransferSheet({ visible, onClose }: Props) {
     note, setNote,
     accounts, amountDisplay,
     swapAccounts, handleSave, reset,
+    status,
   } = useTransferFunds(onClose);
 
   const slideY = useSharedValue(SH * 0.9);
   const swapRotation = useSharedValue(0);
+  const pulseScale = useSharedValue(1);
 
   useEffect(() => {
     if (visible) {
@@ -53,10 +56,30 @@ export function TransferSheet({ visible, onClose }: Props) {
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (status === 'processing') {
+      pulseScale.value = withRepeat(
+        withSequence(
+          withTiming(1.35, { duration: 750, easing: Easing.out(Easing.ease) }),
+          withTiming(1.0, { duration: 750, easing: Easing.in(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+    } else {
+      pulseScale.value = 1;
+    }
+  }, [status]);
+
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: slideY.value }] }));
   
   const swapIconStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${swapRotation.value}deg` }],
+  }));
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+    opacity: withTiming(status === 'processing' ? 1 : 0, { duration: 250 }),
   }));
 
   const handleSwapPress = () => {
@@ -91,6 +114,65 @@ export function TransferSheet({ visible, onClose }: Props) {
         >
           <Animated.View style={[s.sheet, { backgroundColor: sheetBg, shadowColor: colors.black, paddingBottom: insets.bottom + 8, marginBottom: Platform.OS === 'android' ? kbH : 0 }, sheetStyle]}>
             <View style={[s.handle, { backgroundColor: colors.text.tertiary + '40' }]} />
+
+            {/* Premium Asynchronous Feedback Overlay */}
+            {status !== 'idle' && (
+              <Animated.View
+                entering={FadeIn.duration(300)}
+                exiting={FadeOut.duration(250)}
+                style={[s.feedbackOverlay, { backgroundColor: sheetBg }]}
+              >
+                {status === 'processing' ? (
+                  <Animated.View entering={ZoomIn.duration(400)} style={s.feedbackContent}>
+                    <View style={s.spinnerContainer}>
+                      <Animated.View style={[s.pulseCircle, { borderColor: brandColor + '40' }, pulseStyle]} />
+                      <Ionicons name="swap-horizontal" size={32} color={brandColor} />
+                    </View>
+                    <AppText variant="headingSM" style={{ color: colors.text.primary, fontWeight: '800', marginTop: 20 }}>
+                      Processing Transfer
+                    </AppText>
+                    <AppText variant="caption" style={{ color: colors.text.tertiary, marginTop: 6, fontSize: 13 }}>
+                      Moving your funds securely...
+                    </AppText>
+                  </Animated.View>
+                ) : (
+                  <Animated.View entering={ZoomIn.duration(400).springify()} style={s.feedbackContent}>
+                    <View style={[s.successCircle, { backgroundColor: colors.status.income + '18', borderColor: colors.status.income + '40' }]}>
+                      <Ionicons name="checkmark" size={36} color={colors.status.income} />
+                    </View>
+                    
+                    <AppText variant="headingSM" style={{ color: colors.text.primary, fontWeight: '800', marginTop: 20 }}>
+                      Transfer Successful!
+                    </AppText>
+                    
+                    <View style={[s.receiptCard, { backgroundColor: isDark ? colors.glass.background : colors.background.primary, borderColor: colors.glass.border }]}>
+                      <View style={s.receiptRow}>
+                        <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '600' }}>Amount</AppText>
+                        <AppText variant="labelMD" style={{ color: colors.text.primary, fontWeight: '800' }}>
+                          {activeSymbol}{amountDisplay}
+                        </AppText>
+                      </View>
+                      
+                      <View style={[s.receiptDivider, { backgroundColor: colors.glass.border }]} />
+                      
+                      <View style={s.receiptRow}>
+                        <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '600' }}>From</AppText>
+                        <AppText variant="labelMD" style={{ color: colors.text.secondary, fontWeight: '700' }}>
+                          {fromAccount?.name}
+                        </AppText>
+                      </View>
+
+                      <View style={s.receiptRow}>
+                        <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '600' }}>To</AppText>
+                        <AppText variant="labelMD" style={{ color: colors.text.secondary, fontWeight: '700' }}>
+                          {toAccount?.name}
+                        </AppText>
+                      </View>
+                    </View>
+                  </Animated.View>
+                )}
+              </Animated.View>
+            )}
 
             {accounts.length < 2 ? (
               <View style={s.emptyContainer}>
@@ -341,6 +423,8 @@ const s = StyleSheet.create({
   sheet: {
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
     paddingTop: 8, paddingHorizontal: 16,
+    position: 'relative',
+    overflow: 'hidden',
     ...Platform.select({
       ios: { shadowOpacity: 0.25, shadowRadius: 20, shadowOffset: { width: 0, height: -6 } },
       android: { elevation: 20 },
@@ -410,4 +494,61 @@ const s = StyleSheet.create({
     }),
   },
   emptyBtnText: { fontWeight: '700', fontSize: 16 },
+  feedbackOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
+  },
+  feedbackContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  spinnerContainer: {
+    width: 72,
+    height: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  pulseCircle: {
+    position: 'absolute',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 3,
+  },
+  successCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  receiptCard: {
+    width: '100%',
+    padding: 16,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginTop: 24,
+    gap: 12,
+  },
+  receiptRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  receiptDivider: {
+    height: StyleSheet.hairlineWidth,
+    width: '100%',
+  },
 });

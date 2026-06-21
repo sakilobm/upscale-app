@@ -9,6 +9,7 @@ import type { Transaction } from '@store/types';
 /**
  * Headless custom hook for coordinating bank/account fund transfers.
  * Implements atomic updates for both source and target accounts.
+ * Now manages asynchronous processing states for premium UI feedback.
  */
 export function useTransferFunds(onSuccess: () => void) {
   const accounts = useAccountStore((s) => s.accounts);
@@ -19,6 +20,7 @@ export function useTransferFunds(onSuccess: () => void) {
   const [toAccountId, setToAccountId] = useState('');
   const [amountStr, setAmountStr] = useState('0');
   const [note, setNote] = useState('');
+  const [status, setStatus] = useState<'idle' | 'processing' | 'success'>('idle');
 
   const reset = useCallback(() => {
     const accounts_ = useAccountStore.getState().accounts;
@@ -34,6 +36,7 @@ export function useTransferFunds(onSuccess: () => void) {
     }
     setAmountStr('0');
     setNote('');
+    setStatus('idle');
   }, []);
 
   const handleKey = useCallback((key: string) => {
@@ -47,7 +50,7 @@ export function useTransferFunds(onSuccess: () => void) {
     setToAccountId(temp);
   }, [fromAccountId, toAccountId]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     const amount = parseFloat(amountStr);
     if (!amount || amount <= 0) {
       toast.error('Enter a valid amount');
@@ -75,6 +78,14 @@ export function useTransferFunds(onSuccess: () => void) {
       return;
     }
 
+    // 1. Enter processing state and trigger haptic feedback
+    setStatus('processing');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // 2. Simulate transaction network latency (1.5 seconds)
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // 3. Atomically update the stores
     const now = new Date().toISOString();
     const description = `Transfer: ${fromAccount.name} → ${toAccount.name}`;
     const newTx: Transaction = {
@@ -97,9 +108,22 @@ export function useTransferFunds(onSuccess: () => void) {
     updateAccount(fromAccountId, { balance: fromAccount.balance - amount });
     updateAccount(toAccountId, { balance: toAccount.balance + amount });
 
+    // 4. Update status to success and play completion sound/haptics
+    setStatus('success');
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     toast.success('Funds transferred successfully');
+
+    // 5. Allow user to read success receipt (1.5 seconds)
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // 6. Complete and close modal
     onSuccess();
+
+    // 7. Reset status after modal slides down
+    setTimeout(() => {
+      setStatus('idle');
+    }, 400);
+
   }, [amountStr, fromAccountId, toAccountId, note, accounts, addTransaction, updateAccount, onSuccess]);
 
   const amountDisplay = parseFloat(amountStr || '0').toLocaleString('en-US', {
@@ -123,5 +147,6 @@ export function useTransferFunds(onSuccess: () => void) {
     swapAccounts,
     handleSave,
     reset,
+    status,
   };
 }

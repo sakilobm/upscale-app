@@ -146,13 +146,14 @@ export function EditTransactionSheet({ visible, transaction, onClose }: Props) {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.formScroll} keyboardShouldPersistTaps="handled">
-              {/* Date */}
+              {/* Date & Time */}
               <View style={s.fieldGroup}>
                 <DatePickerField
-                  label="TRANSACTION DATE"
+                  label="TRANSACTION DATE & TIME"
                   value={dateStr}
                   onChange={setDateStr}
-                  placeholder="Select Date"
+                  placeholder="Select Date & Time"
+                  showTime
                 />
               </View>
 
