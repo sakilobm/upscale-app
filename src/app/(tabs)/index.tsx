@@ -346,7 +346,17 @@ export default function HomeScreen() {
 
             {data && data.spendingByCategory.length > 0 && (
               <View style={s.section}>
-                <SectionTitle title="Where it went" />
+                <SectionTitle
+                  title="Where it went"
+                  action="See all"
+                  onAction={() => router.push('/(tabs)/transactions')}
+                />
+                <View style={s.subSectionHeader}>
+                  <Ionicons name="pie-chart-outline" size={12} color={colors.status.expense} />
+                  <AppText variant="labelSM" style={{ color: colors.status.expense, fontWeight: '700', fontSize: 10, letterSpacing: 0.8 }}>
+                    SPENDING BY CATEGORY
+                  </AppText>
+                </View>
                 <SpendingChart data={data.spendingByCategory} isLoading={isLoading} />
               </View>
             )}

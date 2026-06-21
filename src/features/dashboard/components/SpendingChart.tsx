@@ -1,10 +1,13 @@
 import React, { memo } from 'react';
-import { View, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Platform, Pressable } from 'react-native';
+import { router } from 'expo-router';
 import { AppText } from '@components/AppText';
 import { ProgressBar } from '@components/ProgressBar';
 import { CategoryIcon } from '@components/CategoryIcon';
+import { GlassCard } from '@components/GlassCard';
 import { getCategoryById } from '@store/categoryStore';
-import { Spacing, Radius } from '@constants/index';
+import { useTransactionStore } from '@store/transactionStore';
+import { Spacing, Radius, FontFamily } from '@constants/index';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import type { SpendingChartProps } from '../types';
@@ -17,28 +20,16 @@ export const SpendingChart = memo(function SpendingChart({
 }: SpendingChartProps) {
   const { colors } = useTheme();
   const { symbol } = useFormatCurrency();
+  const setFilters = useTransactionStore((s) => s.setFilters);
   const items = data.slice(0, MAX_ITEMS);
 
-  return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface.sheet,
-          borderColor:     colors.glass.backgroundMid,
-          shadowColor:     colors.black,
-        },
-      ]}
-    >
-      <View style={styles.header}>
-        <AppText variant="headingSM" color={colors.text.primary}>Spending Breakdown</AppText>
-        <View style={[styles.monthPill, { backgroundColor: colors.brand.primary + '22' }]}>
-          <AppText variant="labelSM" style={{ color: colors.brand.secondary, fontSize: 11 }}>
-            This Month
-          </AppText>
-        </View>
-      </View>
+  const handleCategoryPress = (category: string) => {
+    setFilters({ category, type: 'expense', searchQuery: '' });
+    router.push('/(tabs)/transactions');
+  };
 
+  return (
+    <GlassCard padding={0} style={{ borderColor: colors.status.expense + '30', borderWidth: 1 }}>
       {isLoading ? (
         <ActivityIndicator color={colors.brand.primary} style={styles.loader} />
       ) : items.length === 0 ? (
@@ -48,65 +39,61 @@ export const SpendingChart = memo(function SpendingChart({
       ) : (
         <View style={styles.list}>
           {items.map((item, idx) => {
-            const catColor = getCategoryById(item.category).color;
-            const gradient: [string, string] = [catColor, catColor + '80'];
+            const cat = getCategoryById(item.category);
+            const catColor = cat.color;
+            const catLabel = cat.label;
+            const gradient: [string, string] = [catColor, catColor + '50'];
+
             return (
-              <View key={item.category} style={[styles.row, idx < items.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.glass.background }]}>
-                <CategoryIcon category={item.category} size={38} />
+              <Pressable
+                key={item.category}
+                onPress={() => handleCategoryPress(item.category)}
+                style={({ pressed }) => [
+                  styles.row,
+                  {
+                    borderBottomWidth: idx < items.length - 1 ? 1 : 0,
+                    borderBottomColor: colors.glass.border,
+                    opacity: pressed ? 0.75 : 1,
+                  }
+                ]}
+              >
+                <CategoryIcon category={item.category} size={44} />
                 <View style={styles.rowContent}>
                   <View style={styles.rowHeader}>
-                    <AppText variant="labelMD" color={colors.text.primary}>
-                      {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                    <AppText variant="labelLG" color={colors.text.primary} style={styles.categoryLabel}>
+                      {catLabel}
                     </AppText>
-                    <AppText variant="labelMD" color={colors.text.primary} style={styles.rowAmount}>
-                      {symbol}{item.amount.toFixed(0)}
+                    <AppText variant="labelLG" color={colors.text.primary} style={styles.rowAmount}>
+                      {symbol}{item.amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </AppText>
                   </View>
+
+                  <View style={styles.rowSubHeader}>
+                    <AppText variant="caption" color={colors.text.tertiary}>
+                      {item.transactionCount} {item.transactionCount === 1 ? 'transaction' : 'transactions'}
+                    </AppText>
+                    <AppText variant="caption" color={colors.brand.secondary} style={styles.percentText}>
+                      {item.percentage.toFixed(1)}% of total
+                    </AppText>
+                  </View>
+
                   <ProgressBar
                     progress={item.percentage / 100}
                     gradient={gradient}
-                    height={5}
+                    height={6}
                     style={styles.bar}
                   />
-                  <AppText variant="caption" color={colors.text.tertiary}>
-                    {item.percentage.toFixed(1)}% of total
-                  </AppText>
                 </View>
-              </View>
+              </Pressable>
             );
           })}
         </View>
       )}
-    </View>
+    </GlassCard>
   );
 });
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: Radius.xl,
-    borderWidth:  1,
-    overflow:     'hidden',
-    ...Platform.select({
-      ios: {
-        shadowOffset:  { width: 0, height: 2 },
-        shadowOpacity: 0.07,
-        shadowRadius:  12,
-      },
-      android: { elevation: 2 },
-    }),
-  },
-  header: {
-    flexDirection:  'row',
-    justifyContent: 'space-between',
-    alignItems:     'center',
-    padding:        Spacing['5'],
-    paddingBottom:  Spacing['3'],
-  },
-  monthPill: {
-    paddingHorizontal: 10,
-    paddingVertical:   4,
-    borderRadius:      Radius.full,
-  },
   loader: { marginVertical: Spacing['8'] },
   empty:  { marginVertical: Spacing['8'] },
   list:   {},
@@ -115,15 +102,29 @@ const styles = StyleSheet.create({
     alignItems:     'center',
     gap:            Spacing['3'],
     paddingVertical: Spacing['3'],
-    paddingHorizontal: Spacing['5'],
+    paddingHorizontal: Spacing['4'],
   },
   rowContent: { flex: 1, gap: 4 },
   rowHeader: {
     flexDirection:  'row',
     justifyContent: 'space-between',
+    alignItems:     'center',
+  },
+  categoryLabel: {
+    fontFamily: FontFamily.semiBold,
+    fontSize: 15,
   },
   rowAmount: {
-    fontWeight: '700',
+    fontFamily: FontFamily.bold,
+    fontSize: 15,
+  },
+  rowSubHeader: {
+    flexDirection:  'row',
+    justifyContent: 'space-between',
+    alignItems:     'center',
+  },
+  percentText: {
+    fontWeight: '600',
   },
   bar: { marginVertical: 2 },
 });
