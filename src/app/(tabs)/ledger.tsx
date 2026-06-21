@@ -123,6 +123,7 @@ export default function LedgerScreen() {
         visible={sheetVisible}
         mode={sheetMode}
         editEntry={sheetEntry}
+        defaultDirection={activeTab === 'i_owe' ? 'I_OWE' : 'OWED_TO_ME'}
         onClose={closeSheet}
         onAdd={handleAddEntry}
         onPartialReturn={addPartialReturn}

@@ -35,6 +35,7 @@ interface LedgerEntrySheetProps {
   visible:    boolean;
   mode:       SheetMode;
   editEntry?: LedgerEntry;
+  defaultDirection?: LedgerDirection;
   onClose:    () => void;
   onAdd:      (data: {
     personName: string;
@@ -54,6 +55,7 @@ export function LedgerEntrySheet({
   visible,
   mode,
   editEntry,
+  defaultDirection = 'OWED_TO_ME',
   onClose,
   onAdd,
   onPartialReturn,
@@ -86,7 +88,7 @@ export function LedgerEntrySheet({
   useEffect(() => {
     if (visible && mode === 'add') {
       setPersonName(''); setAmount(''); setNote(''); setDueDate('');
-      setDirection('OWED_TO_ME');
+      setDirection(defaultDirection);
       const defaultId = (accounts.find((a) => a.isDefault) ?? accounts[0])?.id ?? '';
       setAccountId(defaultId);
       setError(null);
