@@ -4,6 +4,7 @@ export interface TransactionListItemProps {
   transaction: Transaction;
   onPress: (transaction: Transaction) => void;
   onLongPress?: (transaction: Transaction) => void;
+  balanceAfter?: number;
 }
 
 export interface FilterBarProps {

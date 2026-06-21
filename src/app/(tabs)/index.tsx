@@ -372,7 +372,11 @@ export default function HomeScreen() {
                       <GlassCard padding={0}>
                         {generalTx.map((tx, idx) => (
                           <View key={tx.id} style={[s.txRow, { borderBottomColor: colors.glass.border }, idx === generalTx.length - 1 && s.txRowLast]}>
-                            <RecentTransactionRow transaction={tx} onPress={handleTransactionPress} />
+                            <RecentTransactionRow
+                              transaction={tx}
+                              onPress={handleTransactionPress}
+                              balanceAfter={data?.runningBalances?.get(tx.id)}
+                            />
                           </View>
                         ))}
                       </GlassCard>

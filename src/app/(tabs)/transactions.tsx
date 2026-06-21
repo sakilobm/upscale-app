@@ -30,7 +30,7 @@ export default function TransactionsScreen() {
   const {
     groups, isLoading, isEmpty, refresh, removeTransaction, formatDateHeader,
     filters, setFilters, selectedAccount, summary, monthLabel, handleTransactionPress,
-    editingTransaction, setEditingTransaction,
+    editingTransaction, setEditingTransaction, runningBalances,
   } = useActivityScreen();
 
   const rawBalanceColor = selectedAccount?.color ?? colors.brand.primary;
@@ -99,6 +99,7 @@ export default function TransactionsScreen() {
                       tx={tx}
                       onPress={handleTransactionPress}
                       onDelete={async () => { try { await removeTransaction(tx.id); } catch { /* no-op */ } }}
+                      balanceAfter={runningBalances.get(tx.id)}
                     />
                     {idx < group.transactions.length - 1 && (
                       <View style={[s.rowDivider, { backgroundColor: dividerColor }]} />

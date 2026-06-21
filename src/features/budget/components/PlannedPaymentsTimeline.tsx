@@ -43,7 +43,7 @@ const CATEGORY_ICON: Record<string, IoniconName> = {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ROW_HEIGHT = 76;
+const ROW_HEIGHT = 82;
 const SWIPE_SETTLE = 80;   // px rightward to trigger settle (after unlock)
 const LOCK_MS = 3000; // auto-lock after 3 s
 const TX_DELETE_W = 84;   // width of the revealed delete zone

@@ -25,9 +25,10 @@ interface Props {
   tx:       Transaction;
   onDelete: () => void;
   onPress:  (tx: Transaction) => void;
+  balanceAfter?: number;
 }
 
-export function SwipeableTransactionRow({ tx, onDelete, onPress }: Props) {
+export function SwipeableTransactionRow({ tx, onDelete, onPress, balanceAfter }: Props) {
   const { colors } = useTheme();
   const cardBg = colors.surface.sheet;
   const translateX = useSharedValue(0);
@@ -84,6 +85,7 @@ export function SwipeableTransactionRow({ tx, onDelete, onPress }: Props) {
                 onPress(t);
               }
             }}
+            balanceAfter={balanceAfter}
           />
         </Animated.View>
       </GestureDetector>

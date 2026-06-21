@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { useTransactionStore } from '@store/transactionStore';
 import { useAccountStore } from '@store/accountStore';
 import { computeMonthSummary, computeSpendingByCategory } from '../services/dashboardService';
+import { calculateRunningBalances } from '../../transactions/utils/balanceCalculator';
 import type { DashboardViewModel } from '../types';
 import type { AsyncState } from '@store/types';
 import { createAsyncState } from '@store/types';
@@ -23,8 +24,9 @@ export function useDashboardData(): UseDashboardDataReturn {
     const recentTransactions = [...transactions]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 15);
+    const runningBalances = calculateRunningBalances(transactions, accounts);
 
-    return { totalBalance, monthSummary, spendingByCategory, recentTransactions, accounts };
+    return { totalBalance, monthSummary, spendingByCategory, recentTransactions, accounts, runningBalances };
   }, [transactions, accounts]);
 
   return {

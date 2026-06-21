@@ -44,23 +44,20 @@ function CategoryCard({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
     ? Math.min(pct, 1)
     : (totalProjected > 0 ? item.spent / totalProjected : 0);
 
-  const progressBarColor = item.hasLimit
-    ? statusColor
-    : item.color;
+  const displayPercent = item.hasLimit ? Math.round(item.percent) : Math.round(progressPct * 100);
+  const progressBarColor = item.hasLimit ? statusColor : item.color;
 
   return (
     <Pressable
       onPress={() => {
-        if (!item.hasLimit) {
-          onSetLimit(item.category);
-        }
+        onSetLimit(item.category);
       }}
       style={({ pressed }) => [
         styles.gridCard,
         {
           backgroundColor: colors.surface.sheet,
           borderColor: item.hasLimit ? statusColor + '40' : colors.glass.border,
-          opacity: pressed && !item.hasLimit ? 0.85 : 1,
+          opacity: pressed ? 0.85 : 1,
         },
       ]}
     >
@@ -112,11 +109,9 @@ function CategoryCard({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
         </AppText>
         <AppText variant="labelLG" color={colors.text.primary} style={styles.spentText}>
           {symbol}{item.spent.toFixed(0)}
-          {item.hasLimit && (
-            <AppText style={{ fontSize: 10, color: statusColor, fontWeight: '700' }}>
-              {' '}({Math.round(item.percent)}%)
-            </AppText>
-          )}
+          <AppText style={{ fontSize: 10, color: item.hasLimit ? statusColor : colors.text.secondary, fontWeight: '700' }}>
+            {' '}({displayPercent}%)
+          </AppText>
         </AppText>
       </View>
 
@@ -196,16 +191,14 @@ function CategoryCapsule({ item, onDeleteLimit, onSetLimit }: CategoryCardProps)
   return (
     <Pressable
       onPress={() => {
-        if (!item.hasLimit) {
-          onSetLimit(item.category);
-        }
+        onSetLimit(item.category);
       }}
       style={({ pressed }) => [
         styles.capsule,
         {
           backgroundColor: colors.surface.sheet, // Solid background prevents shadow show-through
           borderColor: item.hasLimit ? statusColor + '40' : colors.glass.border,
-          opacity: pressed && !item.hasLimit ? 0.85 : 1,
+          opacity: pressed ? 0.85 : 1,
         },
       ]}
     >
@@ -427,10 +420,10 @@ const styles = StyleSheet.create({
   },
   gridCard: {
     width: '48.5%',
-    height: 106,
+    minHeight: 116, // Use minHeight for dynamic vertical scalability
     borderRadius: Radius.xl,
     borderWidth: 1,
-    padding: 10,
+    padding: 12, // Increased padding for better breathing room
     justifyContent: 'space-between',
     overflow: 'hidden',
     position: 'relative',

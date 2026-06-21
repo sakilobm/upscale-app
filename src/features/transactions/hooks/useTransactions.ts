@@ -1,6 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { buildTransaction } from '../services/transactionService';
 import { useTransactionStore } from '@store/transactionStore';
+import { useAccountStore } from '@store/accountStore';
+import { calculateRunningBalances } from '../utils/balanceCalculator';
 import type { NewTransaction } from '@store/types';
 import type { TransactionGroupHeader } from '../types';
 import { format, isToday, isYesterday } from 'date-fns';
@@ -59,6 +61,7 @@ interface UseTransactionsReturn {
   addTransaction:    (data: NewTransaction) => Promise<void>;
   removeTransaction: (id: string) => Promise<void>;
   formatDateHeader:  (date: string) => string;
+  runningBalances:   Map<string, number>;
 }
 
 export function useTransactions(): UseTransactionsReturn {
@@ -66,6 +69,7 @@ export function useTransactions(): UseTransactionsReturn {
   const filters           = useTransactionStore((s) => s.filters);
   const storeAdd          = useTransactionStore((s) => s.addTransaction);
   const storeDelete       = useTransactionStore((s) => s.deleteTransaction);
+  const accounts          = useAccountStore((s) => s.accounts);
 
   const addTransaction = useCallback(async (data: NewTransaction) => {
     storeAdd(buildTransaction(data));
@@ -97,6 +101,11 @@ export function useTransactions(): UseTransactionsReturn {
     [storeTransactions, filters.accountId],
   );
 
+  const runningBalances = useMemo(
+    () => calculateRunningBalances(storeTransactions, accounts),
+    [storeTransactions, accounts],
+  );
+
   const grouped = useMemo(
     () => groupTransactionsByDate(filtered, balanceLookup),
     [filtered, balanceLookup],
@@ -112,5 +121,6 @@ export function useTransactions(): UseTransactionsReturn {
     addTransaction,
     removeTransaction,
     formatDateHeader,
+    runningBalances,
   };
 }

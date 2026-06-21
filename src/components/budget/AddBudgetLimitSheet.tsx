@@ -36,6 +36,7 @@ export function AddBudgetLimitSheet({ visible, onClose, defaultCategory }: Props
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
   const addBudget = useBudgetStore((s) => s.addBudget);
+  const updateBudget = useBudgetStore((s) => s.updateBudget);
   const existingBudgets = useBudgetStore((s) => s.budgets);
 
   const [category, setCategory] = useState('food');
@@ -44,11 +45,21 @@ export function AddBudgetLimitSheet({ visible, onClose, defaultCategory }: Props
 
   React.useEffect(() => {
     if (visible) {
-      setCategory(defaultCategory || 'food');
-      setLimit('');
+      const cat = defaultCategory || 'food';
+      setCategory(cat);
+      
+      const existing = existingBudgets.find((b) => b.category === cat);
+      if (existing) {
+        setLimit(existing.limit.toString());
+      } else {
+        setLimit('');
+      }
       setError(null);
     }
-  }, [visible, defaultCategory]);
+  }, [visible, defaultCategory, existingBudgets]);
+
+  const existing = existingBudgets.find((b) => b.category === category);
+  const catInfo = CATEGORIES.find((c) => c.id === category) || CATEGORIES[0];
 
   const scale = useSharedValue(0.86);
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }], opacity: scale.value }));
@@ -63,30 +74,29 @@ export function AddBudgetLimitSheet({ visible, onClose, defaultCategory }: Props
       return;
     }
 
-    if (existingBudgets.some((b) => b.category === category)) {
-      setError(`A budget limit for "${category}" already exists.`);
-      return;
+    if (existing) {
+      updateBudget(existing.id, { limit: val });
+      toast.success(`Monthly limit for ${category} updated to ${symbol}${val}`);
+    } else {
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
+
+      addBudget({
+        id: `b-${Date.now()}`,
+        userId: 'user-1',
+        category,
+        limit: val,
+        spent: 0,
+        currency: 'USD',
+        period: 'monthly',
+        startDate: firstDay,
+        endDate: lastDay,
+        color: catInfo.color,
+      });
+      toast.success(`Monthly limit of ${symbol}${val} set for ${category}`);
     }
 
-    const catInfo = CATEGORIES.find((c) => c.id === category);
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
-
-    addBudget({
-      id: `b-${Date.now()}`,
-      userId: 'user-1',
-      category,
-      limit: val,
-      spent: 0,
-      currency: 'USD',
-      period: 'monthly',
-      startDate: firstDay,
-      endDate: lastDay,
-      color: catInfo?.color ?? '#8B5CF6',
-    });
-
-    toast.success(`Monthly limit of ${symbol}${val} set for ${category}`);
     setLimit('');
     setError(null);
     onClose();
@@ -112,9 +122,11 @@ export function AddBudgetLimitSheet({ visible, onClose, defaultCategory }: Props
 
           <View style={s.header}>
             <View>
-              <AppText variant="headingMD" color={colors.text.primary}>Set Category Budget</AppText>
+              <AppText variant="headingMD" color={colors.text.primary}>
+                {existing ? 'Edit Budget Limit' : 'Set Category Budget'}
+              </AppText>
               <AppText variant="caption" color={colors.text.tertiary} style={{ marginTop: 2 }}>
-                Establish a monthly spending limit
+                {existing ? 'Update your monthly spending limit' : 'Establish a monthly spending limit'}
               </AppText>
             </View>
             <Pressable onPress={onClose} style={[s.closeBtn, { backgroundColor: colors.glass.backgroundMid }]}>
@@ -131,7 +143,9 @@ export function AddBudgetLimitSheet({ visible, onClose, defaultCategory }: Props
                 style={({ pressed }) => [s.submitBtn, { backgroundColor: colors.brand.primary, opacity: pressed ? 0.8 : 1 }]}
               >
                 <Ionicons name="checkmark-circle" size={20} color={colors.brand.onPrimary} />
-                <AppText style={[s.submitBtnText, { color: colors.brand.onPrimary }]}>Set Budget Limit</AppText>
+                <AppText style={[s.submitBtnText, { color: colors.brand.onPrimary }]}>
+                  {existing ? 'Update Limit' : 'Set Budget Limit'}
+                </AppText>
               </Pressable>
             }
           >
@@ -145,6 +159,21 @@ export function AddBudgetLimitSheet({ visible, onClose, defaultCategory }: Props
                 </View>
               )}
 
+              {/* Modern Category Context Banner */}
+              <View style={[s.categoryBanner, { backgroundColor: catInfo.color + '12', borderColor: catInfo.color + '25' }]}>
+                <View style={[s.catBannerIconBox, { backgroundColor: catInfo.color + '22' }]}>
+                  <Ionicons name={catInfo.icon as any} size={20} color={catInfo.color} />
+                </View>
+                <View style={s.catBannerInfo}>
+                  <AppText variant="labelLG" color={colors.text.primary} style={{ textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '700' }}>
+                    {catInfo.label}
+                  </AppText>
+                  <AppText variant="caption" color={colors.text.tertiary}>
+                    {existing ? 'Updating existing budget limit' : 'Setting limit for this category'}
+                  </AppText>
+                </View>
+              </View>
+
               {/* Input Limit */}
               <View style={s.inputGroup}>
                 <AppText variant="labelSM" color={colors.text.secondary}>Monthly Spending Limit</AppText>
@@ -157,41 +186,8 @@ export function AddBudgetLimitSheet({ visible, onClose, defaultCategory }: Props
                     onChangeText={(val) => { setLimit(val); setError(null); }}
                     placeholder="0.00"
                     placeholderTextColor={colors.text.tertiary}
+                    autoFocus
                   />
-                </View>
-              </View>
-
-              {/* Select Category */}
-              <View style={s.inputGroup}>
-                <AppText variant="labelSM" color={colors.text.secondary}>Category</AppText>
-                <View style={s.catList}>
-                  {CATEGORIES.map((cat) => {
-                    const active = category === cat.id;
-                    return (
-                      <Pressable
-                        key={cat.id}
-                        onPress={() => { setCategory(cat.id); setError(null); }}
-                        style={[
-                          s.catItem,
-                          {
-                            borderColor: active ? cat.color : colors.glass.border,
-                            backgroundColor: active ? cat.color + '15' : 'transparent',
-                          },
-                        ]}
-                      >
-                        <Ionicons name={cat.icon as any} size={15} color={active ? cat.color : colors.text.secondary} />
-                        <AppText
-                          variant="caption"
-                          style={{
-                            color: active ? cat.color : colors.text.secondary,
-                            fontWeight: '700',
-                          }}
-                        >
-                          {cat.label}
-                        </AppText>
-                      </Pressable>
-                    );
-                  })}
                 </View>
               </View>
 
@@ -252,14 +248,24 @@ const s = StyleSheet.create({
     gap: 8,
   },
   submitBtnText: { fontSize: 16, fontWeight: '700' },
-  catList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  catItem: {
+  categoryBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radius.lg,
+    gap: 12,
+    padding: 14,
+    borderRadius: Radius.xl,
     borderWidth: 1.5,
+    marginBottom: Spacing['2'],
+  },
+  catBannerIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catBannerInfo: {
+    flex: 1,
+    gap: 2,
   },
 });

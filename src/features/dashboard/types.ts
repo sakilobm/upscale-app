@@ -12,6 +12,7 @@ export interface DashboardViewModel {
   spendingByCategory: SpendingByCategory[];
   recentTransactions: Transaction[];
   accounts: Account[];
+  runningBalances: Map<string, number>;
 }
 
 export interface BalanceCardProps {

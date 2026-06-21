@@ -14,14 +14,16 @@ import type { Transaction } from '@store/types';
 interface RecentTransactionRowProps {
   transaction: Transaction;
   onPress:     (transaction: Transaction) => void;
+  balanceAfter?: number;
 }
 
 export const RecentTransactionRow = memo(function RecentTransactionRow({
   transaction,
   onPress,
+  balanceAfter,
 }: RecentTransactionRowProps) {
   const { colors, isDark } = useTheme();
-  const { symbol } = useFormatCurrency();
+  const { symbol, format: formatCurrencyVal } = useFormatCurrency();
   const accounts = useAccountStore((s) => s.accounts);
   const account = accounts.find((a) => a.id === transaction.accountId);
   const formattedDate = format(new Date(transaction.date), 'MMM d');
@@ -103,27 +105,34 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
           ) : null}
         </View>
       </View>
-      {txSource === 'budget' ? (
-        <View style={{ alignItems: 'flex-end', gap: 2 }}>
+      <View style={styles.rightContainer}>
+        {txSource === 'budget' ? (
           <AppText variant="labelLG" color={colors.text.primary} style={{ fontWeight: '600' }}>
             {symbol}{transaction.amount.toFixed(2)}
           </AppText>
+        ) : (
+          <AmountText
+            amount={transaction.amount}
+            currency={transaction.currency}
+            type={transaction.type === 'transfer' ? 'income' : transaction.type}
+            variant="labelLG"
+            showSign
+          />
+        )}
+        {balanceAfter !== undefined && (
+          <AppText variant="caption" color={colors.text.tertiary} style={styles.balanceText}>
+            Bal: {formatCurrencyVal(balanceAfter, transaction.currency)}
+          </AppText>
+        )}
+        {txSource === 'budget' && (
           <View style={[styles.settledBadge, { backgroundColor: colors.status.income + '12' }]}>
             <Ionicons name="checkmark-circle" size={10} color={colors.status.income} />
             <AppText variant="caption" style={{ color: colors.status.income, fontWeight: '700', fontSize: 9 }}>
               Paid
             </AppText>
           </View>
-        </View>
-      ) : (
-        <AmountText
-          amount={transaction.amount}
-          currency={transaction.currency}
-          type={transaction.type === 'transfer' ? 'income' : transaction.type}
-          variant="labelLG"
-          showSign
-        />
-      )}
+        )}
+      </View>
     </Pressable>
   );
 });
@@ -170,5 +179,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 999,
+  },
+  rightContainer: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  balanceText: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
+    opacity: 0.8,
   },
 });

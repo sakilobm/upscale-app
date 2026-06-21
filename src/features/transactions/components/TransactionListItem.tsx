@@ -16,9 +16,10 @@ export const TransactionListItem = memo(function TransactionListItem({
   transaction,
   onPress,
   onLongPress,
+  balanceAfter,
 }: TransactionListItemProps) {
   const { colors, isDark } = useTheme();
-  const { symbol } = useFormatCurrency();
+  const { symbol, format: formatCurrencyVal } = useFormatCurrency();
   const accounts = useAccountStore((s) => s.accounts);
   const account = accounts.find((a) => a.id === transaction.accountId);
   const date = format(new Date(transaction.date), 'h:mm a');
@@ -115,6 +116,11 @@ export const TransactionListItem = memo(function TransactionListItem({
             showSign
           />
         )}
+        {balanceAfter !== undefined && (
+          <AppText variant="caption" color={colors.text.tertiary} style={styles.balanceText}>
+            Bal: {formatCurrencyVal(balanceAfter, transaction.currency)}
+          </AppText>
+        )}
         {(() => {
           const badgeLabel =
             txSource === 'ledger' ? 'ledger' :
@@ -181,10 +187,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.1,
   },
-  right: { alignItems: 'flex-end', gap: 4 },
+  right: { alignItems: 'flex-end', gap: 2 },
+  balanceText: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
+    opacity: 0.8,
+  },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 999,
+    marginTop: 2,
   },
 });

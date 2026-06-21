@@ -23,7 +23,7 @@ export interface ActivitySummary {
 }
 
 export function useActivityScreen() {
-  const { data: groups, isLoading, isEmpty, refresh, removeTransaction, formatDateHeader } = useTransactions();
+  const { data: groups, isLoading, isEmpty, refresh, removeTransaction, formatDateHeader, runningBalances } = useTransactions();
 
   const accounts   = useAccountStore((s) => s.accounts);
   const filters    = useTransactionStore((s) => s.filters);
@@ -62,5 +62,6 @@ export function useActivityScreen() {
     editingTransaction,
     setEditingTransaction,
     handleTransactionPress,
+    runningBalances,
   };
 }
