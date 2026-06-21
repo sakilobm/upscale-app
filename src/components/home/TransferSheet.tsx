@@ -72,7 +72,7 @@ export function TransferSheet({ visible, onClose }: Props) {
   }, [status]);
 
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: slideY.value }] }));
-  
+
   const swapIconStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${swapRotation.value}deg` }],
   }));
@@ -140,11 +140,11 @@ export function TransferSheet({ visible, onClose }: Props) {
                     <View style={[s.successCircle, { backgroundColor: colors.status.income + '18', borderColor: colors.status.income + '40' }]}>
                       <Ionicons name="checkmark" size={36} color={colors.status.income} />
                     </View>
-                    
+
                     <AppText variant="headingSM" style={{ color: colors.text.primary, fontWeight: '800', marginTop: 20 }}>
                       Transfer Successful!
                     </AppText>
-                    
+
                     <View style={[s.receiptCard, { backgroundColor: isDark ? colors.glass.background : colors.background.primary, borderColor: colors.glass.border }]}>
                       <View style={s.receiptRow}>
                         <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '600' }}>Amount</AppText>
@@ -152,9 +152,9 @@ export function TransferSheet({ visible, onClose }: Props) {
                           {activeSymbol}{amountDisplay}
                         </AppText>
                       </View>
-                      
+
                       <View style={[s.receiptDivider, { backgroundColor: colors.glass.border }]} />
-                      
+
                       <View style={s.receiptRow}>
                         <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '600' }}>From</AppText>
                         <AppText variant="labelMD" style={{ color: colors.text.secondary, fontWeight: '700' }}>
@@ -184,11 +184,11 @@ export function TransferSheet({ visible, onClose }: Props) {
                 >
                   <Ionicons name="swap-horizontal" size={36} color={colors.white} />
                 </LinearGradient>
-                
+
                 <AppText variant="headingSM" style={[s.emptyTitle, { color: colors.text.primary }]}>
                   Two Accounts Required
                 </AppText>
-                
+
                 <AppText variant="bodyMD" style={[s.emptyDesc, { color: colors.text.secondary }]}>
                   You need at least two checking, savings, or cash accounts to transfer funds between them.
                 </AppText>
