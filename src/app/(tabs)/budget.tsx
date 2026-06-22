@@ -139,7 +139,14 @@ export default function BudgetScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} tintColor={colors.brand.primary} />}
       >
-        <AppHeader title="Budget" subtitle="Monthly spending limits" noPadding />
+        <AppHeader
+          title="Budget"
+          subtitle="Monthly spending limits"
+          screenLabel="Spending Planner"
+          chipLabel={budgets.length > 0 ? `${budgets.length} active` : undefined}
+          chipIcon={budgets.length > 0 ? 'shield-checkmark-outline' : undefined}
+          noPadding
+        />
 
         {/* 1. Overview Card (Only when budgets exist) */}
         {summary && (

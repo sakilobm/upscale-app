@@ -16,6 +16,14 @@ interface AppHeaderProps {
   badge?:       number;
   /** Set true when AppHeader is already inside a horizontally-padded container */
   noPadding?:   boolean;
+  /** Small uppercase label above the title (e.g. "Monthly Overview") */
+  screenLabel?: string;
+  /** Chip content shown in the top-right corner (e.g. month/date label) */
+  chipLabel?:   string;
+  /** Icon name for the chip */
+  chipIcon?:    React.ComponentProps<typeof Ionicons>['name'];
+  /** Small caption below the chip */
+  chipCaption?: string;
 }
 
 export function AppHeader({
@@ -25,14 +33,29 @@ export function AppHeader({
   accentLine = true,
   badge,
   noPadding = false,
+  screenLabel,
+  chipLabel,
+  chipIcon,
+  chipCaption,
 }: AppHeaderProps) {
   const { colors, isDark } = useTheme();
+
+  const isBrightColor = !isDark && colors.brand.primary === '#C4F135';
+  const chipTextColor = isBrightColor ? '#2E5403' : colors.brand.primary;
+
+  const hasChip = !!chipLabel;
+  const hasScreenLabel = !!screenLabel;
 
   return (
     <View style={[styles.wrapper, noPadding && styles.wrapperNoPadding]}>
       <View style={styles.row}>
         {/* Left: title + subtitle */}
         <View style={styles.titleBlock}>
+          {hasScreenLabel && (
+            <AppText style={[styles.screenLabel, { color: colors.text.tertiary }]}>
+              {screenLabel}
+            </AppText>
+          )}
           <View style={styles.titleRow}>
             <AppText
               variant="headingLG"
@@ -71,14 +94,30 @@ export function AppHeader({
           )}
         </View>
 
-        {/* Right: action slot */}
-        {rightNode && <View style={styles.rightSlot}>{rightNode}</View>}
+        {/* Right: chip or action slot */}
+        {hasChip ? (
+          <View style={styles.chipBlock}>
+            <View style={[styles.chip, { backgroundColor: colors.brand.primary + '18', borderColor: colors.brand.primary + '30' }]}>
+              {chipIcon && <Ionicons name={chipIcon} size={12} color={chipTextColor} />}
+              <AppText style={{ color: chipTextColor, fontWeight: '700', fontSize: 11.5 }}>
+                {chipLabel}
+              </AppText>
+            </View>
+            {chipCaption && (
+              <AppText style={[styles.chipCaption, { color: colors.text.tertiary }]}>
+                {chipCaption}
+              </AppText>
+            )}
+          </View>
+        ) : rightNode ? (
+          <View style={styles.rightSlot}>{rightNode}</View>
+        ) : null}
       </View>
 
       {/* Gradient accent line */}
       {accentLine && (
         <LinearGradient
-          colors={[colors.brand.primary, colors.brand.primary + '00']}
+          colors={[colors.brand.primary, colors.brand.accent] as [string, string]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.accentLine}
@@ -122,22 +161,29 @@ export function HeaderIconBtn({ icon, onPress }: HeaderIconBtnProps) {
 const styles = StyleSheet.create({
   wrapper: {
     paddingTop:        Spacing['4'],
-    paddingBottom:     Spacing['1'],
+    paddingBottom:     Spacing['3'],
     paddingHorizontal: Spacing['5'],
-    gap:               Spacing['2'],
+    gap:               Spacing['1'],
   },
   wrapperNoPadding: {
     paddingHorizontal: 0,
   },
   row: {
     flexDirection:  'row',
-    alignItems:     'center',
+    alignItems:     'flex-start',
     justifyContent: 'space-between',
-    paddingBottom:  Spacing['2'],
+    paddingBottom:  Spacing['1'],
   },
   titleBlock: {
     flex: 1,
     gap:  2,
+  },
+  screenLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 1,
   },
   titleRow: {
     flexDirection: 'row',
@@ -165,10 +211,30 @@ const styles = StyleSheet.create({
     alignItems:    'center',
     gap:           Spacing['2'],
   },
-  accentLine: {
-    height:       3,
+  chipBlock: {
+    alignItems: 'flex-end',
+    gap: Spacing['1'],
+    paddingTop: 3,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: Radius.full,
-    marginBottom: Spacing['2'],
+    borderWidth: 1,
+  },
+  chipCaption: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  accentLine: {
+    height:           3,
+    borderRadius:     Radius.full,
+    marginBottom:     Spacing['1'],
+    marginHorizontal: -Spacing['2'],
   },
   iconBtn: {
     width:          38,

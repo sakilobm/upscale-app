@@ -1,19 +1,20 @@
 /**
  * @file ActivityHero.tsx
  * @architecture Presentation Layer — UI Component
- * @description Premium unified summary card for the Activity screen. Replaces the
- *   three separate stat boxes with a single glassmorphic card featuring clean
- *   horizontal stat layout, gradient accent, and refined typography.
+ * @description Premium unified summary card for the Activity screen. Uses the shared
+ *   AppHeader for the title row (with screenLabel + month chip) and renders a single
+ *   glassmorphic stats card with horizontal stat layout and gradient accents.
  * @associatedFiles src/features/transactions/hooks/useActivityScreen.ts,
  *   src/app/(tabs)/transactions.tsx
  */
 
 import React, { type ComponentProps } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
+import { AppHeader } from '@components/AppHeader';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Radius } from '@constants/index';
@@ -32,46 +33,27 @@ export function ActivityHero({ summary, monthLabel }: Props) {
   const { symbol } = useFormatCurrency();
   const net = summary.income - summary.expense;
 
-  const isBrightColor = !isDark && colors.brand.primary === '#C4F135';
-  const chipTextColor = isBrightColor ? '#2E5403' : colors.brand.primary;
-
   const incomeColor  = colors.status.income;
   const expenseColor = colors.status.expense;
   const netColor     = net >= 0 ? incomeColor : expenseColor;
   const netIcon: IoniconName = net >= 0 ? 'trending-up' : 'trending-down';
 
-  // Card background — dark: deep glass surface, light: clean white with subtle border
+  // Card background
   const cardBg     = isDark ? colors.background.secondary : colors.background.card;
   const cardBorder = isDark ? colors.glass.borderStrong : colors.glass.borderStrong;
 
+  const countText = `${summary.count} ${summary.count === 1 ? 'transaction' : 'transactions'}`;
+
   return (
-    <Animated.View entering={FadeInDown.springify().damping(18).stiffness(130)}>
-
-      {/* ── Title Row ── */}
-      <View style={s.titleRow}>
-        <View style={s.titleLeft}>
-          <AppText style={[s.screenLabel, { color: colors.text.tertiary }]}>Monthly Overview</AppText>
-          <AppText style={[s.title, { color: colors.text.primary }]}>Activity</AppText>
-        </View>
-        <View style={s.titleRight}>
-          <View style={[s.monthChip, { backgroundColor: colors.brand.primary + '18', borderColor: colors.brand.primary + '30' }]}>
-            <Ionicons name="calendar-outline" size={12} color={chipTextColor} />
-            <AppText style={{ color: chipTextColor, fontWeight: '700', fontSize: 11.5 }}>
-              {monthLabel}
-            </AppText>
-          </View>
-          <AppText style={[s.count, { color: colors.text.tertiary }]}>
-            {summary.count} {summary.count === 1 ? 'transaction' : 'transactions'}
-          </AppText>
-        </View>
-      </View>
-
-      {/* ── Accent Line ── */}
-      <LinearGradient
-        colors={[colors.brand.primary, colors.brand.accent] as [string, string]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={s.accentLine}
+    <View>
+      {/* ── Shared Hero Header ── */}
+      <AppHeader
+        title="Activity"
+        screenLabel="Monthly Overview"
+        chipLabel={monthLabel}
+        chipIcon="calendar-outline"
+        chipCaption={countText}
+        accentLine
       />
 
       {/* ── Unified Summary Card ── */}
@@ -86,7 +68,7 @@ export function ActivityHero({ summary, monthLabel }: Props) {
           },
         ]}
       >
-        {/* Top gradient accent */}
+        {/* Top gradient glow */}
         <LinearGradient
           colors={isDark
             ? [colors.brand.primary + '30', colors.brand.accent + '15', 'transparent']
@@ -153,7 +135,7 @@ export function ActivityHero({ summary, monthLabel }: Props) {
 
         </View>
 
-        {/* Bottom accent strip — thin gradient line */}
+        {/* Bottom accent strip */}
         <LinearGradient
           colors={[incomeColor, expenseColor] as [string, string]}
           start={{ x: 0, y: 0 }}
@@ -161,37 +143,11 @@ export function ActivityHero({ summary, monthLabel }: Props) {
           style={s.bottomStrip}
         />
       </Animated.View>
-
-    </Animated.View>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  titleRow: {
-    flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
-    paddingHorizontal: Spacing['5'], paddingTop: Spacing['5'], marginBottom: Spacing['5'],
-  },
-  titleLeft:  { gap: 2 },
-  titleRight: { alignItems: 'flex-end', gap: Spacing['1'], paddingTop: 3 },
-
-  screenLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 1.2, textTransform: 'uppercase' },
-  title:       { fontSize: 30, fontWeight: '800', letterSpacing: -0.8, lineHeight: 36 },
-
-  monthChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: Radius.full, borderWidth: 1,
-  },
-  count: { fontSize: 11, fontWeight: '500', marginTop: 2 },
-
-  /* ── Accent line ── */
-  accentLine: {
-    height: 3,
-    marginHorizontal: Spacing['5'],
-    borderRadius: 2,
-    marginBottom: Spacing['5'],
-  },
-
   /* ── Unified Card ── */
   card: {
     marginHorizontal: Spacing['5'],

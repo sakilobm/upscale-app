@@ -14,29 +14,29 @@
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { AppText }          from '@components/AppText';
-import { AppHeader }        from '@components/AppHeader';
-import { FAB }              from '@components/FAB';
-import { useTheme }         from '@hooks/useTheme';
+import { AppText } from '@components/AppText';
+import { AppHeader } from '@components/AppHeader';
+import { FAB } from '@components/FAB';
+import { useTheme } from '@hooks/useTheme';
 import { Spacing, Layout, Radius } from '@constants/Dimensions';
-import { useLedgerScreen }  from '@features/ledger/hooks/useLedgerScreen';
+import { useLedgerScreen } from '@features/ledger/hooks/useLedgerScreen';
 import { SegmentedControl } from '@features/ledger/components/SegmentedControl';
-import { SettleUpHero }     from '@features/ledger/components/SettleUpHero';
+import { SettleUpHero } from '@features/ledger/components/SettleUpHero';
 import { PersonLedgerCard } from '@features/ledger/components/PersonLedgerCard';
 import { DebtHorizonStack } from '@features/ledger/components/DebtHorizonStack';
 import { LedgerEntrySheet } from '@features/ledger/components/LedgerEntrySheet';
 import { AddLoanSheet } from '@features/ledger/components/AddLoanSheet';
 import { LoanInfoSheet } from '@features/ledger/components/LoanInfoSheet';
-import { LedgerInfoSheet }  from '@features/ledger/components/LedgerInfoSheet';
+import { LedgerInfoSheet } from '@features/ledger/components/LedgerInfoSheet';
 import { LedgerEmptyState } from '@features/ledger/components/LedgerEmptyState';
-import type { LedgerTab }   from '@features/ledger/types';
+import type { LedgerTab } from '@features/ledger/types';
 
 // ─── Segment definitions ─────────────────────────────────────────────────────
 
 const SEGMENTS: { key: LedgerTab; label: string }[] = [
   { key: 'owed_to_me', label: 'Owed to Me' },
-  { key: 'i_owe',      label: 'I Owe'      },
-  { key: 'loans',      label: 'Loans'      },
+  { key: 'i_owe', label: 'I Owe' },
+  { key: 'loans', label: 'Loans' },
 ];
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -61,12 +61,19 @@ export default function LedgerScreen() {
   return (
     <SafeAreaView style={[s.root, { backgroundColor: colors.background.primary }]} edges={['top']}>
 
-      <AppHeader title="Ledger" subtitle="Hand-to-hand money tracker" />
-
       <ScrollView
         contentContainerStyle={[s.scroll, { paddingBottom: Layout.tabBarHeight + Spacing['20'] }]}
         showsVerticalScrollIndicator={false}
       >
+        <AppHeader
+          title="Ledger"
+          subtitle="Hand-to-hand money tracker"
+          screenLabel="People & Loans"
+          chipLabel={activeEntries.length + loans.length > 0 ? `${activeEntries.length + loans.length} entries` : undefined}
+          chipIcon={activeEntries.length + loans.length > 0 ? 'people-outline' : undefined}
+          noPadding
+        />
+
         <SettleUpHero totalOwedToMe={totalOwedToMe} totalIOwe={totalIOwe} />
 
         <View style={s.segmentWrapper}>
@@ -81,7 +88,7 @@ export default function LedgerScreen() {
         {activeTab !== 'loans' && activeEntries.length > 0 && (
           <View style={[s.swipeHint, {
             backgroundColor: colors.glass.background,
-            borderColor:     colors.glass.border,
+            borderColor: colors.glass.border,
           }]}>
             <Ionicons name="arrow-back-outline" size={13} color={colors.text.tertiary} />
             <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '500', fontSize: 11 }}>
@@ -178,14 +185,14 @@ export default function LedgerScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  root:   { flex: 1 },
+  root: { flex: 1 },
   scroll: { paddingHorizontal: Spacing['5'], paddingTop: Spacing['2'] },
 
   segmentWrapper: { marginBottom: Spacing['5'] },
-  loansSection:   { marginTop: Spacing['2'] },
-  listSection:    { gap: Spacing['4'] },
-  sectionBlock:   { gap: Spacing['2'] },
-  sectionLabel:   { fontSize: 11, letterSpacing: 1, marginBottom: Spacing['1'] },
+  loansSection: { marginTop: Spacing['2'] },
+  listSection: { gap: Spacing['4'] },
+  sectionBlock: { gap: Spacing['2'] },
+  sectionLabel: { fontSize: 11, letterSpacing: 1, marginBottom: Spacing['1'] },
 
   swipeHint: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
