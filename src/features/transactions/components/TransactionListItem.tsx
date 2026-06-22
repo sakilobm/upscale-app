@@ -34,6 +34,16 @@ export const TransactionListItem = memo(function TransactionListItem({
     (transaction.id.startsWith('tx-ledger-') ? 'ledger' : 
      transaction.id.startsWith('tx-settled-') ? 'budget' : 'general');
 
+  const badgeLabel =
+    txSource === 'ledger' ? 'Ledger' :
+    txSource === 'budget' ? 'Budget' :
+    null;
+
+  const badgeColor =
+    txSource === 'ledger' ? '#8B5CF6' :
+    txSource === 'budget' ? '#10B981' :
+    (isIncome ? colors.status.income : colors.status.expense);
+
   return (
     <Pressable
       onPress={() => onPress(transaction)}
@@ -45,37 +55,54 @@ export const TransactionListItem = memo(function TransactionListItem({
         styles.container,
         {
           backgroundColor: pressed
-            ? (isDark ? colors.glass.background : 'rgba(0,0,0,0.04)')
+            ? (isDark ? colors.glass.background : 'rgba(0,0,0,0.03)')
             : 'transparent',
         },
       ]}
     >
-      <CategoryIcon category={transaction.category} size={46} source={txSource} />
+      <CategoryIcon category={transaction.category} size={44} source={txSource} />
 
       <View style={styles.details}>
-        <AppText variant="labelLG" color={colors.text.primary} numberOfLines={1}>
-          {transaction.description}
-        </AppText>
+        {/* Title row — description + source badge inline */}
+        <View style={styles.titleRow}>
+          <AppText
+            variant="labelLG"
+            color={colors.text.primary}
+            numberOfLines={1}
+            style={styles.descriptionText}
+          >
+            {transaction.description}
+          </AppText>
+          {badgeLabel && (
+            <View style={[styles.sourceBadge, { backgroundColor: badgeColor + '14' }]}>
+              <AppText style={[styles.sourceBadgeText, { color: badgeColor }]}>
+                {badgeLabel}
+              </AppText>
+            </View>
+          )}
+        </View>
+
+        {/* Meta row — category · time + account badge */}
         <View style={styles.metaRow}>
-          <AppText variant="caption" color={colors.text.secondary}>
+          <AppText variant="caption" color={colors.text.tertiary} style={styles.metaText}>
             {subtitle}
           </AppText>
           {transaction.type === 'transfer' ? (
             (() => {
               const toAccount = transaction.toAccountId ? accounts.find((a) => a.id === transaction.toAccountId) : null;
               return (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={styles.transferRow}>
                   {account && (
-                    <View style={[styles.accountBadge, { backgroundColor: isDark ? account.color + '22' : account.color + '15', borderColor: isDark ? account.color + '44' : account.color + '30' }]}>
-                      <Ionicons name={(account.icon || 'wallet-outline') as any} size={10} color={account.color} />
+                    <View style={[styles.accountBadge, { backgroundColor: isDark ? account.color + '18' : account.color + '0E', borderColor: isDark ? account.color + '35' : account.color + '22' }]}>
+                      <Ionicons name={(account.icon || 'wallet-outline') as any} size={9} color={account.color} />
                       <AppText style={[styles.accountBadgeText, { color: account.color }]}>{account.name}</AppText>
                     </View>
                   )}
                   {toAccount && (
                     <>
-                      <Ionicons name="arrow-forward" size={10} color={colors.text.tertiary} />
-                      <View style={[styles.accountBadge, { backgroundColor: isDark ? toAccount.color + '22' : toAccount.color + '15', borderColor: isDark ? toAccount.color + '44' : toAccount.color + '30' }]}>
-                        <Ionicons name={(toAccount.icon || 'wallet-outline') as any} size={10} color={toAccount.color} />
+                      <Ionicons name="arrow-forward" size={9} color={colors.text.tertiary} />
+                      <View style={[styles.accountBadge, { backgroundColor: isDark ? toAccount.color + '18' : toAccount.color + '0E', borderColor: isDark ? toAccount.color + '35' : toAccount.color + '22' }]}>
+                        <Ionicons name={(toAccount.icon || 'wallet-outline') as any} size={9} color={toAccount.color} />
                         <AppText style={[styles.accountBadgeText, { color: toAccount.color }]}>{toAccount.name}</AppText>
                       </View>
                     </>
@@ -88,12 +115,12 @@ export const TransactionListItem = memo(function TransactionListItem({
               style={[
                 styles.accountBadge,
                 {
-                  backgroundColor: isDark ? account.color + '22' : account.color + '15',
-                  borderColor:     isDark ? account.color + '44' : account.color + '30',
+                  backgroundColor: isDark ? account.color + '18' : account.color + '0E',
+                  borderColor:     isDark ? account.color + '35' : account.color + '22',
                 },
               ]}
             >
-              <Ionicons name={(account.icon || 'wallet-outline') as any} size={10} color={account.color} />
+              <Ionicons name={(account.icon || 'wallet-outline') as any} size={9} color={account.color} />
               <AppText style={[styles.accountBadgeText, { color: account.color }]}>
                 {account.name}
               </AppText>
@@ -102,9 +129,10 @@ export const TransactionListItem = memo(function TransactionListItem({
         </View>
       </View>
 
+      {/* Right column — amount + optional balance */}
       <View style={styles.right}>
         {txSource === 'budget' || txSource === 'ledger' ? (
-          <AppText variant="labelLG" color={colors.text.primary} style={{ fontWeight: '600' }}>
+          <AppText variant="labelLG" color={colors.text.primary} style={styles.amountText}>
             {symbol}{transaction.amount.toFixed(2)}
           </AppText>
         ) : (
@@ -121,35 +149,6 @@ export const TransactionListItem = memo(function TransactionListItem({
             Bal: {formatCurrencyVal(balanceAfter, transaction.currency)}
           </AppText>
         )}
-        {(() => {
-          const badgeLabel =
-            txSource === 'ledger' ? 'ledger' :
-            txSource === 'budget' ? 'budget' :
-            transaction.type;
-
-          const badgeColor =
-            txSource === 'ledger' ? '#8B5CF6' :
-            txSource === 'budget' ? '#10B981' :
-            (isIncome ? colors.status.income : colors.status.expense);
-
-          return (
-            <View
-              style={[
-                styles.badge,
-                {
-                  backgroundColor: badgeColor + '18',
-                },
-              ]}
-            >
-              <AppText
-                variant="caption"
-                style={{ color: badgeColor, fontWeight: '700', textTransform: 'capitalize' }}
-              >
-                {badgeLabel}
-              </AppText>
-            </View>
-          );
-        })()}
       </View>
     </Pressable>
   );
@@ -166,18 +165,50 @@ const styles = StyleSheet.create({
     minHeight: Layout.transactionRowHeight,
   },
   details: { flex: 1, gap: 3 },
+
+  /* Title row with description + source badge */
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  descriptionText: {
+    fontWeight: '700',
+    flexShrink: 1,
+  },
+  sourceBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  sourceBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+
+  /* Meta row */
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     flexWrap: 'wrap',
-    marginTop: 2,
+    marginTop: 1,
+  },
+  metaText: {
+    fontSize: 11.5,
+  },
+  transferRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   accountBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 6,
+    gap: 3,
+    paddingHorizontal: 5,
     paddingVertical: 1.5,
     borderRadius: 999,
     borderWidth: 1,
@@ -187,17 +218,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.1,
   },
+
+  /* Right column */
   right: { alignItems: 'flex-end', gap: 2 },
+  amountText: {
+    fontWeight: '600',
+  },
   balanceText: {
     fontSize: 10,
     fontWeight: '500',
     marginTop: 1,
-    opacity: 0.8,
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    marginTop: 2,
+    opacity: 0.7,
   },
 });

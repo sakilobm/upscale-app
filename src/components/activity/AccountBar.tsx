@@ -1,8 +1,9 @@
 /**
  * @file AccountBar.tsx
  * @architecture Presentation Layer — UI Component
- * @description Horizontal scrollable bar of account filter chips plus a "Manage" button.
- *   Reads account and filter state directly from stores (display-layer concern).
+ * @description Horizontal scrollable bar of account filter chips with a subtle
+ *   "Manage" action. Reads state from stores. Now with improved spacing and a
+ *   cleaner manage button with pill styling.
  * @associatedFiles src/components/activity/AccountChip.tsx, src/app/(tabs)/transactions.tsx
  */
 
@@ -16,12 +17,12 @@ import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
 import { useAccountStore } from '@store/accountStore';
 import { useTransactionStore } from '@store/transactionStore';
-import { Spacing } from '@constants/index';
+import { Spacing, Radius } from '@constants/index';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 export function AccountBar() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const accounts   = useAccountStore((s) => s.accounts);
   const filters    = useTransactionStore((s) => s.filters);
   const setFilters = useTransactionStore((s) => s.setFilters);
@@ -59,10 +60,16 @@ export function AccountBar() {
         ))}
         <Pressable
           onPress={() => router.push('/accounts')}
-          style={({ pressed }) => [s.manageBtn, { opacity: pressed ? 0.65 : 1 }]}
+          style={({ pressed }) => [
+            s.manageBtn,
+            {
+              opacity: pressed ? 0.65 : 1,
+              backgroundColor: isDark ? colors.glass.background : colors.glass.backgroundMid,
+            },
+          ]}
         >
-          <Ionicons name="settings-outline" size={14} color={colors.text.secondary} />
-          <AppText variant="labelSM" color={colors.text.secondary} style={{ fontSize: 12 }}>Manage</AppText>
+          <Ionicons name="settings-outline" size={13} color={colors.text.tertiary} />
+          <AppText variant="labelSM" color={colors.text.tertiary} style={{ fontSize: 11, fontWeight: '600' }}>Manage</AppText>
         </Pressable>
       </ScrollView>
     </View>
@@ -70,10 +77,11 @@ export function AccountBar() {
 }
 
 const s = StyleSheet.create({
-  outer:     { paddingLeft: Spacing['5'] },
+  outer:     { paddingLeft: Spacing['5'], paddingTop: Spacing['2'], paddingBottom: Spacing['1'] },
   content:   { paddingRight: Spacing['5'], alignItems: 'center' },
   manageBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 12, paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: Radius.full,
   },
 });

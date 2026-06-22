@@ -9,6 +9,7 @@
  */
 
 import { View, ScrollView, StyleSheet, RefreshControl, TextInput, Platform } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useActivityScreen } from '@features/transactions/hooks/useActivityScreen';
@@ -34,23 +35,30 @@ export default function TransactionsScreen() {
   } = useActivityScreen();
 
   const rawBalanceColor = selectedAccount?.color ?? colors.brand.primary;
-  const isBrightColor = !isDark && rawBalanceColor === colors.brand.primary;
-  const balanceColor = isBrightColor ? colors.text.brand : rawBalanceColor;
-  const balanceIcon = (selectedAccount?.icon ?? 'wallet-outline') as any;
-  const cardBg = isDark ? colors.background.secondary : colors.background.card;
-  const cardBorder = isDark ? colors.glass.border : colors.glass.borderStrong;
-  const dividerColor = isDark ? colors.glass.background : colors.glass.background;
+  const isBrightColor   = !isDark && rawBalanceColor === colors.brand.primary;
+  const balanceColor    = isBrightColor ? colors.text.brand : rawBalanceColor;
+  const balanceIcon     = (selectedAccount?.icon ?? 'wallet-outline') as any;
+  const cardBg          = isDark ? colors.background.secondary : colors.background.card;
+  const cardBorder      = isDark ? colors.glass.border : colors.glass.borderStrong;
+  const dividerColor    = isDark ? colors.glass.background : colors.glass.backgroundMid;
 
   if (isLoading && !groups) return <LoadingScreen message="Loading transactions..." />;
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: colors.background.primary }]} edges={['top']}>
-      <View style={s.topArea}>
+      <ScrollView
+        contentContainerStyle={s.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        stickyHeaderIndices={[2]}
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} tintColor={colors.brand.primary} />}
+      >
+        {/* Child index 0: Hero stats */}
         <ActivityHero summary={summary} monthLabel={monthLabel} />
 
+        {/* Child index 1: Search box */}
         <View style={s.searchOuter}>
-          <View style={[s.searchBox, { backgroundColor: cardBg, borderColor: cardBorder, shadowColor: colors.black }]}>
-            <Ionicons name="search-outline" size={18} color={colors.text.tertiary} />
+          <View style={[s.searchBox, { backgroundColor: isDark ? colors.background.secondary : colors.background.card, borderColor: cardBorder, shadowColor: colors.black }]}>
+            <Ionicons name="search-outline" size={17} color={colors.text.tertiary} />
             <TextInput
               style={[s.searchInput, { ...Typography.bodyMD, lineHeight: undefined, color: colors.text.primary }]}
               placeholder="Search transactions..."
@@ -65,52 +73,63 @@ export default function TransactionsScreen() {
           </View>
         </View>
 
-        <AccountBar />
-        <FilterBar activeType={filters.type} onTypeChange={(type) => setFilters({ type })} />
-        <View style={[s.dividerLine, { backgroundColor: colors.glass.background }]} />
-      </View>
+        {/* Child index 2: Sticky Header — accounts + filter */}
+        <View style={[s.stickyHeaderContainer, { backgroundColor: colors.background.primary }]}>
+          <AccountBar />
+          <FilterBar activeType={filters.type} onTypeChange={(type) => setFilters({ type })} />
+          <View style={[s.dividerLine, { backgroundColor: isDark ? colors.glass.border : colors.glass.borderStrong }]} />
+        </View>
 
-      {isEmpty ? (
-        <ScrollView contentContainerStyle={{ paddingTop: Spacing['4'], paddingBottom: Layout.tabBarHeight + Spacing['8'] }} showsVerticalScrollIndicator={false}>
-          <ActivityEmptyState />
-        </ScrollView>
-      ) : (
-        <ScrollView
-          contentContainerStyle={[s.list, { paddingBottom: Layout.tabBarHeight + Spacing['8'] }]}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} tintColor={colors.brand.primary} />}
-        >
-          {(groups ?? []).map((group) => (
-            <View key={group.date} style={s.section}>
-              <View style={s.dateHeader}>
-                <AppText variant="labelMD" color={colors.text.secondary}>{formatDateHeader(group.date)}</AppText>
-                <View style={[s.balancePill, { backgroundColor: balanceColor + '16' }]}>
-                  <Ionicons name={balanceIcon} size={12} color={balanceColor} />
-                  <AppText variant="labelSM" style={{ color: balanceColor, fontWeight: '600', fontSize: 12 }}>
-                    {symbol}{group.balanceAfter.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </AppText>
-                </View>
-              </View>
-
-              <View style={[s.groupCard, { backgroundColor: cardBg, borderColor: cardBorder, shadowColor: colors.black }]}>
-                {group.transactions.map((tx, idx) => (
-                  <View key={tx.id}>
-                    <SwipeableTransactionRow
-                      tx={tx}
-                      onPress={handleTransactionPress}
-                      onDelete={async () => { try { await removeTransaction(tx.id); } catch { /* no-op */ } }}
-                      balanceAfter={runningBalances.get(tx.id)}
-                    />
-                    {idx < group.transactions.length - 1 && (
-                      <View style={[s.rowDivider, { backgroundColor: dividerColor }]} />
-                    )}
+        {/* Child index 3: Empty state or Transaction groups */}
+        {isEmpty ? (
+          <View style={s.emptyStateContainer}>
+            <ActivityEmptyState />
+          </View>
+        ) : (
+          <View style={s.list}>
+            {(groups ?? []).map((group, groupIdx) => (
+              <Animated.View
+                key={group.date}
+                style={s.section}
+                entering={FadeInDown.springify().damping(22).stiffness(150).delay(groupIdx * 45)}
+              >
+                {/* Date header row */}
+                <View style={s.dateHeader}>
+                  <View style={s.dateLabelRow}>
+                    <View style={[s.dateDot, { backgroundColor: balanceColor }]} />
+                    <AppText style={[s.dateText, { color: colors.text.secondary }]}>
+                      {formatDateHeader(group.date)}
+                    </AppText>
                   </View>
-                ))}
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      )}
+                  <View style={[s.balancePill, { backgroundColor: balanceColor + '0C', borderColor: balanceColor + '28' }]}>
+                    <Ionicons name={balanceIcon} size={10} color={balanceColor} />
+                    <AppText style={{ color: balanceColor, fontWeight: '700', fontSize: 10.5 }}>
+                      {symbol}{group.balanceAfter.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </AppText>
+                  </View>
+                </View>
+
+                {/* Transaction card */}
+                <View style={[s.groupCard, { backgroundColor: cardBg, borderColor: cardBorder, shadowColor: colors.black }]}>
+                  {group.transactions.map((tx, idx) => (
+                    <View key={tx.id}>
+                      <SwipeableTransactionRow
+                        tx={tx}
+                        onPress={handleTransactionPress}
+                        onDelete={async () => { try { await removeTransaction(tx.id); } catch { /* no-op */ } }}
+                        balanceAfter={runningBalances.get(tx.id)}
+                      />
+                      {idx < group.transactions.length - 1 && (
+                        <View style={[s.rowDivider, { backgroundColor: dividerColor }]} />
+                      )}
+                    </View>
+                  ))}
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
 
       <EditTransactionSheet
         visible={!!editingTransaction}
@@ -123,31 +142,62 @@ export default function TransactionsScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1 },
-  topArea: { gap: Spacing['4'], paddingBottom: Spacing['2'] },
 
-  searchOuter: { paddingHorizontal: Spacing['5'] },
+  scrollContainer: {
+    paddingTop: Spacing['1'],
+    paddingBottom: Layout.tabBarHeight + Spacing['8'],
+  },
+
+  /* ── Search ── */
+  searchOuter: {
+    paddingHorizontal: Spacing['5'],
+    marginTop: Spacing['4'],
+    marginBottom: Spacing['2'],
+  },
   searchBox: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing['2'],
     paddingHorizontal: Spacing['4'], height: 46, borderRadius: Radius.lg, borderWidth: 1,
     ...Platform.select({
-      ios: { shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      ios:     { shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 6 },
       android: { elevation: 1 },
     }),
   },
   searchInput: { flex: 1, paddingVertical: 0 },
 
+  /* ── Sticky header ── */
+  stickyHeaderContainer: {
+    paddingTop: Spacing['1'],
+    paddingBottom: Spacing['3'],
+    gap: Spacing['2'],
+  },
   dividerLine: { height: StyleSheet.hairlineWidth, marginHorizontal: Spacing['5'] },
 
-  list: { paddingHorizontal: Spacing['5'], paddingTop: Spacing['2'], gap: Spacing['4'] },
+  /* ── Transaction list ── */
+  list:    { paddingHorizontal: Spacing['5'], paddingTop: Spacing['3'], gap: Spacing['5'] },
   section: { gap: Spacing['2'] },
-  dateHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing['1'] },
-  balancePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: Radius.full },
+
+  dateHeader:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing['1'] },
+  dateLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  dateDot:      { width: 5, height: 5, borderRadius: 2.5 },
+  dateText:     { fontSize: 12, fontWeight: '700', letterSpacing: 0.3 },
+
+  balancePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: Radius.full, borderWidth: 1,
+  },
+
   groupCard: {
     borderRadius: Radius.xl, borderWidth: 1, overflow: 'hidden',
     ...Platform.select({
-      ios: { shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10 },
+      ios:     { shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10 },
       android: { elevation: 2 },
     }),
   },
   rowDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: Spacing['4'] },
+
+  emptyStateContainer: {
+    paddingTop: Spacing['8'],
+    paddingHorizontal: Spacing['5'],
+  },
 });

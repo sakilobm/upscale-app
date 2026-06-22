@@ -1,8 +1,9 @@
 /**
  * @file AccountChip.tsx
  * @architecture Presentation Layer — UI Component
- * @description A single tappable account-filter chip in the Activity screen's horizontal
- *   account bar. Uses a spring scale animation on press for tactile feedback.
+ * @description A refined tappable account-filter chip with cleaner proportions, softer
+ *   active state, and polished spring-scale animation. Reduced visual noise with
+ *   monochromatic tinting and tighter spacing.
  * @associatedFiles src/components/activity/AccountBar.tsx, src/app/(tabs)/transactions.tsx
  */
 
@@ -38,35 +39,40 @@ export function AccountChip({ chip, isActive, onPress }: Props) {
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   const handlePress = () => {
-    scale.value = withSpring(0.94, { damping: 14, stiffness: 320 }, () => {
+    scale.value = withSpring(0.93, { damping: 14, stiffness: 320 }, () => {
       scale.value = withSpring(1, { damping: 14, stiffness: 320 });
     });
     onPress();
   };
 
   const isBrightColor = !isDark && chip.color === colors.brand.primary;
-  const displayColor = isBrightColor ? colors.text.brand : chip.color;
+  const displayColor  = isBrightColor ? colors.text.brand : chip.color;
 
-  const bg = isActive ? displayColor + '1E' : colors.glass.background;
-  const border = isActive ? displayColor + '55' : 'transparent';
+  // Active: vivid tint bg + solid border. Inactive: subtle surface + ghost border.
+  const bg      = isActive ? displayColor + '14' : (isDark ? colors.glass.background : colors.background.card);
+  const border  = isActive ? displayColor + '40' : (isDark ? colors.glass.border : colors.glass.borderStrong);
   const nameClr = isActive ? displayColor : colors.text.secondary;
-  const balClr = isActive ? displayColor + 'BB' : colors.text.secondary;
+  const balClr  = isActive ? displayColor + 'AA' : colors.text.tertiary;
+  const iconBg  = isActive ? displayColor + '22' : displayColor + '0E';
 
   return (
     <Pressable onPress={handlePress} style={s.wrapper}>
       <Animated.View style={[s.chip, animStyle, { backgroundColor: bg, borderColor: border, borderWidth: 1 }]}>
-        <View style={[s.icon, { backgroundColor: displayColor + (isActive ? '28' : '14') }]}>
-          <Ionicons name={chip.icon} size={17} color={displayColor} />
+        <View style={[s.icon, { backgroundColor: iconBg }]}>
+          <Ionicons name={chip.icon} size={16} color={displayColor} />
         </View>
         <View style={s.labels}>
-          <AppText variant="labelSM" style={{ color: nameClr, fontWeight: isActive ? '700' : '500', lineHeight: 15 }} numberOfLines={1}>
+          <AppText
+            variant="labelSM"
+            style={{ color: nameClr, fontWeight: isActive ? '700' : '600', lineHeight: 15, fontSize: 12.5 }}
+            numberOfLines={1}
+          >
             {chip.name}
           </AppText>
-          <AppText style={{ color: balClr, fontSize: 11, lineHeight: 14 }} numberOfLines={1}>
+          <AppText style={{ color: balClr, fontSize: 10.5, lineHeight: 13, fontWeight: isActive ? '600' : '400' }} numberOfLines={1}>
             {symbol}{chip.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </AppText>
         </View>
-        {isActive && <View style={[s.activeLine, { backgroundColor: displayColor }]} />}
       </Animated.View>
     </Pressable>
   );
@@ -74,8 +80,11 @@ export function AccountChip({ chip, isActive, onPress }: Props) {
 
 const s = StyleSheet.create({
   wrapper: { marginRight: 8 },
-  chip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, borderRadius: Radius.xl, gap: 8 },
-  icon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  chip: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 10, paddingVertical: 8,
+    borderRadius: Radius.lg, gap: 8,
+  },
+  icon:   { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   labels: { gap: 1 },
-  activeLine: { position: 'absolute', bottom: 0, left: 10, right: 10, height: 2, borderRadius: 1 },
 });
