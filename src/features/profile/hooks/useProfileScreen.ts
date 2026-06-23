@@ -35,6 +35,10 @@ export interface NotifPrefs {
   budgetAlerts: boolean;
   plannedPay:   boolean;
   weeklyReport: boolean;
+  quietHours:   boolean;
+  minAlertAmount: number;
+  channels: 'push' | 'email' | 'both';
+  smartInsights: boolean;
 }
 
 export interface SecPrefs {
@@ -68,7 +72,14 @@ export function useProfileScreen() {
 
   // ── Local preferences (not persisted) ──
   const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>({
-    transactions: true, budgetAlerts: true, plannedPay: true, weeklyReport: false,
+    transactions: true,
+    budgetAlerts: true,
+    plannedPay: true,
+    weeklyReport: false,
+    quietHours: false,
+    minAlertAmount: 0,
+    channels: 'both',
+    smartInsights: true,
   });
   const [secPrefs, setSecPrefs] = useState<SecPrefs>({
     biometric: false, autoLock: true, hideBalance: false,
@@ -165,7 +176,7 @@ export function useProfileScreen() {
       haptics: {
         level: hapticLevel,
       },
-      updateNotification: (key: keyof NotifPrefs, value: boolean) => {
+      updateNotification: <K extends keyof NotifPrefs>(key: K, value: NotifPrefs[K]) => {
         Haptics.selectionAsync();
         setNotifPrefs((p) => ({ ...p, [key]: value }));
       },

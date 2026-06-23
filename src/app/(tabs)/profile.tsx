@@ -51,6 +51,13 @@ export default function ProfileScreen() {
   const screen = useProfileScreen();
   const { data, sheets, confirms, preferences, handlers } = screen;
 
+  const activeNotifs = [
+    preferences.notifications.transactions,
+    preferences.notifications.budgetAlerts,
+    preferences.notifications.plannedPay,
+    preferences.notifications.weeklyReport,
+  ].filter(Boolean).length;
+
   return (
     <SafeAreaView style={[s.safeArea, { backgroundColor: colors.background.primary }]} edges={['top']}>
       <ScrollView
@@ -90,7 +97,7 @@ export default function ProfileScreen() {
         <SectionCard title="Account" delay={160} accentColor={colors.brand.primary}>
           <SettingRow animDelay={0}   icon="wallet-outline"           iconColor={colors.brand.primary} label="Manage Accounts"   subtitle="Add, edit, or delete accounts"                         onPress={() => router.push('/accounts')} />
           <SettingRow animDelay={40}  icon="grid-outline"             iconColor={colors.status.income} label="Manage Categories" subtitle="Create & customize spending categories"                 onPress={() => router.push('/categories')} />
-          <SettingRow animDelay={80}  icon="notifications-outline"    iconColor={colors.brand.accentWarm} label="Notifications"     subtitle={`${Object.values(preferences.notifications).filter(Boolean).length} of 4 enabled`} onPress={sheets.notifications.open} />
+          <SettingRow animDelay={80}  icon="notifications-outline"    iconColor={colors.brand.accentWarm} label="Notifications"     subtitle={`${activeNotifs} of 4 enabled`} onPress={sheets.notifications.open} />
           <SettingRow animDelay={120} icon="globe-outline"            iconColor={colors.status.info} label="Currency & Region" subtitle={`${data.user?.currency ?? 'USD'} · ${CURRENCY_SYMBOLS[data.user?.currency ?? 'USD']}`} onPress={sheets.currency.open} />
           <SettingRow animDelay={160} icon="shield-checkmark-outline" iconColor={colors.status.expense} label="Security & Privacy" subtitle={preferences.security.biometric ? 'Biometrics on' : 'PIN only'} onPress={sheets.security.open} />
           <SettingRow animDelay={200} icon="phone-portrait-outline"   iconColor={colors.brand.secondary} label="Vibration & Haptics" subtitle={preferences.haptics.level === 'off' ? 'Off' : `${preferences.haptics.level.charAt(0).toUpperCase() + preferences.haptics.level.slice(1)} strength`} onPress={sheets.haptics.open} isLast />
@@ -143,7 +150,7 @@ export default function ProfileScreen() {
         <CurrencySheet current={data.user?.currency ?? 'USD'} onSelect={handlers.selectCurrency} />
       </ProfileBottomSheet>
 
-      <ProfileBottomSheet visible={sheets.notifications.isOpen} onClose={sheets.notifications.close} title="Notifications"        snapHeight={400}>
+      <ProfileBottomSheet visible={sheets.notifications.isOpen} onClose={sheets.notifications.close} title="Notifications"        snapHeight={600}>
         <NotifSheet prefs={preferences.notifications} onChange={preferences.updateNotification} />
       </ProfileBottomSheet>
 
