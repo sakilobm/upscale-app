@@ -9,6 +9,8 @@
 
 import React from 'react';
 import { View, StyleSheet, Switch, Pressable, ScrollView } from 'react-native';
+import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
@@ -16,8 +18,9 @@ import { Spacing, Radius } from '@constants/index';
 import type { NotifPrefs } from '@features/profile/hooks/useProfileScreen';
 
 interface Props {
-  prefs: NotifPrefs;
+  prefs:    NotifPrefs;
   onChange: <K extends keyof NotifPrefs>(key: K, value: NotifPrefs[K]) => void;
+  onClose?: () => void;
 }
 
 const ALERTS: { key: keyof NotifPrefs; label: string; sub: string; icon: string; color: string }[] = [
@@ -40,7 +43,7 @@ const CHANNELS: { value: 'push' | 'email' | 'both'; label: string; icon: string 
   { value: 'both', label: 'Both', icon: 'phone-portrait-outline' },
 ];
 
-export function NotifSheet({ prefs, onChange }: Props) {
+export function NotifSheet({ prefs, onChange, onClose }: Props) {
   const { colors, isDark } = useTheme();
 
   const cardBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
@@ -209,6 +212,35 @@ export function NotifSheet({ prefs, onChange }: Props) {
           })}
         </View>
       </View>
+      {/* SECTION 4: CUSTOM ALERTS PROMO CARD */}
+      <View style={[s.infoCard, { backgroundColor: colors.brand.primary + '0B', borderColor: colors.brand.primary + '20' }]}>
+        <View style={s.infoIconRow}>
+          <View style={[s.infoIconBox, { backgroundColor: colors.brand.primary + '18' }]}>
+            <Ionicons name="sparkles" size={15} color={colors.brand.primary} />
+          </View>
+          <AppText variant="labelLG" color={colors.text.primary} style={s.infoTitle}>Need Custom Reminders?</AppText>
+        </View>
+        <AppText variant="caption" color={colors.text.secondary} style={s.infoSub}>
+          Schedule daily check-ins, custom alerts, or weekly reviews to stay on top of your financial goals.
+        </AppText>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onClose?.();
+            router.push('/notifications');
+          }}
+          style={({ pressed }) => [
+            s.infoBtn,
+            {
+              backgroundColor: colors.brand.primary,
+              opacity: pressed ? 0.85 : 1,
+            },
+          ]}
+        >
+          <AppText style={[s.infoBtnText, { color: colors.white }]}>Set Custom Reminders</AppText>
+          <Ionicons name="arrow-forward-outline" size={12} color={colors.white} style={{ marginLeft: 4 }} />
+        </Pressable>
+      </View>
     </ScrollView>
   );
 }
@@ -286,5 +318,43 @@ const s = StyleSheet.create({
   },
   channelLabel: {
     fontSize: 11,
+  },
+  infoCard: {
+    padding: Spacing['4'],
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    gap: 10,
+    marginTop: Spacing['2'],
+  },
+  infoIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['2'],
+  },
+  infoIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoTitle: {
+    fontWeight: '700',
+  },
+  infoSub: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  infoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: Radius.lg,
+    marginTop: 4,
+  },
+  infoBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

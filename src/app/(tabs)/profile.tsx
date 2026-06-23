@@ -151,7 +151,7 @@ export default function ProfileScreen() {
       </ProfileBottomSheet>
 
       <ProfileBottomSheet visible={sheets.notifications.isOpen} onClose={sheets.notifications.close} title="Notifications"        snapHeight={600}>
-        <NotifSheet prefs={preferences.notifications} onChange={preferences.updateNotification} />
+        <NotifSheet prefs={preferences.notifications} onChange={preferences.updateNotification} onClose={sheets.notifications.close} />
       </ProfileBottomSheet>
 
       <ProfileBottomSheet visible={sheets.security.isOpen}      onClose={sheets.security.close}      title="Security & Privacy"  snapHeight={420}>
