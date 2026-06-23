@@ -70,22 +70,13 @@ export function useProfileScreen() {
   const [clearDataConfirm, setClearDataConfirm] = useState(false);
   const [rateConfirm,      setRateConfirm]      = useState(false);
 
-  // ── Local preferences (not persisted) ──
-  const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>({
-    transactions: true,
-    budgetAlerts: true,
-    plannedPay: true,
-    weeklyReport: false,
-    quietHours: false,
-    minAlertAmount: 0,
-    channels: 'both',
-    smartInsights: true,
-  });
   const [secPrefs, setSecPrefs] = useState<SecPrefs>({
     biometric: false, autoLock: true, hideBalance: false,
   });
   
   const hapticLevel = usePreferencesStore((s) => s.hapticLevel);
+  const notifPrefs = usePreferencesStore((s) => s.notifPrefs);
+  const setNotifPrefs = usePreferencesStore((s) => s.setNotifPrefs);
 
   // ── Handlers that close sheets before delegating ──
   const handleSelectCurrency = useCallback((code: CurrencyCode) => {
@@ -178,7 +169,7 @@ export function useProfileScreen() {
       },
       updateNotification: <K extends keyof NotifPrefs>(key: K, value: NotifPrefs[K]) => {
         Haptics.selectionAsync();
-        setNotifPrefs((p) => ({ ...p, [key]: value }));
+        setNotifPrefs({ [key]: value });
       },
       updateSecurity: (key: keyof SecPrefs, value: boolean) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

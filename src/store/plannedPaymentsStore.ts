@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { zustandStorage } from './storage';
-import { addMonths, addWeeks, addYears, format, differenceInDays, parseISO, isBefore } from 'date-fns';
+import { addMonths, addWeeks, addYears, format, differenceInDays, parseISO, isBefore, subDays, isAfter } from 'date-fns';
 import type { TransactionCategory } from '@store/types';
 
 import { useTransactionStore } from './transactionStore';
 import { useAccountStore } from './accountStore';
 import { toast } from './toastStore';
+import { usePreferencesStore } from './preferencesStore';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,12 +26,13 @@ export interface PlannedPayment {
   isRecurring:       boolean;
   recurringInterval?: RecurringInterval;
   settledAt?:        string;
+  notificationId?:   string; // Store scheduled Expo notification ID
 }
 
 interface PlannedPaymentsState {
   payments:       PlannedPayment[];
   isLoading:      boolean;
-  addPayment:     (payment: Omit<PlannedPayment, 'id' | 'status' | 'settledAt' | 'amountPaid'>) => void;
+  addPayment:     (payment: Omit<PlannedPayment, 'id' | 'status' | 'settledAt' | 'amountPaid' | 'notificationId'>) => void;
   payPartial:     (paymentId: string, amount: number, accountId: string, note?: string) => void;
   settlePayment:  (paymentId: string) => void;
   deletePayment:  (paymentId: string) => void;
@@ -56,6 +58,51 @@ export function isUrgent(dueDate: string): boolean {
   return days >= 0 && days <= 3;
 }
 
+// Helper to schedule background notifications for upcoming payments
+async function schedulePlannedPaymentReminder(
+  payment: Omit<PlannedPayment, 'status' | 'settledAt' | 'amountPaid' | 'notificationId'> & { id: string }
+): Promise<string | null> {
+  try {
+    const prefs = usePreferencesStore.getState().notifPrefs;
+    if (!prefs.plannedPay) return null;
+
+    const due = parseISO(payment.dueDate);
+    const reminderDate = subDays(due, 2);
+
+    // If the reminder date is in the future, schedule a local system notification
+    if (isAfter(reminderDate, new Date())) {
+      const { scheduleReminderNotification } = await import('@features/notifications/services/notificationService');
+      const dateStr = format(reminderDate, 'yyyy-MM-dd');
+      
+      const currencySymbol = '$';
+      const amountStr = `${currencySymbol}${payment.amount.toFixed(2)}`;
+
+      const expoId = await scheduleReminderNotification(
+        'Payment Reminder 📅',
+        `Your payment of ${amountStr} for "${payment.title}" is due in 2 days.`,
+        '09:00',
+        'none',
+        [],
+        dateStr
+      );
+      return expoId;
+    }
+  } catch (err) {
+    console.error('[NotificationService] Failed to schedule planned payment reminder:', err);
+  }
+  return null;
+}
+
+async function cancelPlannedPaymentReminder(notificationId?: string) {
+  if (!notificationId) return;
+  try {
+    const { cancelScheduledReminder } = await import('@features/notifications/services/notificationService');
+    await cancelScheduledReminder(notificationId);
+  } catch (err) {
+    console.error('[NotificationService] Failed to cancel scheduled reminder:', err);
+  }
+}
+
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const usePlannedPaymentsStore = create<PlannedPaymentsState>()(
@@ -65,8 +112,17 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>()(
       isLoading: false,
 
       addPayment: (draft) => {
-        const payment: PlannedPayment = { ...draft, id: `pp-${Date.now()}`, status: computeStatus(draft.dueDate), amountPaid: 0 };
+        const id = `pp-${Date.now()}`;
+        const payment: PlannedPayment = { ...draft, id, status: computeStatus(draft.dueDate), amountPaid: 0 };
         set((s) => ({ payments: [payment, ...s.payments] }));
+
+        // Schedule background reminder
+        setTimeout(async () => {
+          const notificationId = await schedulePlannedPaymentReminder({ ...draft, id });
+          if (notificationId) {
+            usePlannedPaymentsStore.getState().updatePayment(id, { notificationId });
+          }
+        }, 100);
       },
 
       payPartial: (paymentId, amount, accountId, note) => {
@@ -88,6 +144,12 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>()(
 
           if (updatedPayment) {
             const payment = updatedPayment as PlannedPayment;
+            
+            // Cancel notification if fully paid
+            if (payment.status === 'SETTLED' && payment.notificationId) {
+              cancelPlannedPaymentReminder(payment.notificationId);
+            }
+
             const { accounts, updateAccount } = useAccountStore.getState();
             const { addTransaction } = useTransactionStore.getState();
             const account = accounts.find((a) => a.id === accountId);
@@ -126,12 +188,17 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>()(
             payment.recurringInterval === 'weekly'  ? addWeeks(parseISO(payment.dueDate), 1)  :
             payment.recurringInterval === 'monthly' ? addMonths(parseISO(payment.dueDate), 1) :
                                                       addYears(parseISO(payment.dueDate), 1);
-          set((s) => ({
-            payments: [
-              ...s.payments,
-              { ...payment, id: `pp-${Date.now()}-r`, dueDate: format(nextDue, 'yyyy-MM-dd'), status: 'UPCOMING', amountPaid: 0, settledAt: undefined },
-            ],
-          }));
+          
+          // Add the recurring next instance
+          usePlannedPaymentsStore.getState().addPayment({
+            title: payment.title,
+            amount: payment.amount,
+            dueDate: format(nextDue, 'yyyy-MM-dd'),
+            category: payment.category,
+            accountId: payment.accountId,
+            isRecurring: payment.isRecurring,
+            recurringInterval: payment.recurringInterval,
+          });
         }
       },
 
@@ -139,9 +206,13 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>()(
         const payment = usePlannedPaymentsStore.getState().payments.find((p) => p.id === paymentId);
         
         if (payment && payment.status !== 'SETTLED') {
+          // Cancel active notification
+          if (payment.notificationId) {
+            cancelPlannedPaymentReminder(payment.notificationId);
+          }
+
           const remAmount = payment.amount - (payment.amountPaid ?? 0);
           if (remAmount > 0) {
-            // Record a transaction in transaction store (ledger)
             const { addTransaction } = useTransactionStore.getState();
             const { updateAccount, accounts } = useAccountStore.getState();
             
@@ -188,16 +259,24 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>()(
             payment.recurringInterval === 'weekly'  ? addWeeks(parseISO(payment.dueDate), 1)  :
             payment.recurringInterval === 'monthly' ? addMonths(parseISO(payment.dueDate), 1) :
                                                       addYears(parseISO(payment.dueDate), 1);
-          set((s) => ({
-            payments: [
-              ...s.payments,
-              { ...payment, id: `pp-${Date.now()}-r`, dueDate: format(nextDue, 'yyyy-MM-dd'), status: 'UPCOMING', amountPaid: 0, settledAt: undefined },
-            ],
-          }));
+          
+          usePlannedPaymentsStore.getState().addPayment({
+            title: payment.title,
+            amount: payment.amount,
+            dueDate: format(nextDue, 'yyyy-MM-dd'),
+            category: payment.category,
+            accountId: payment.accountId,
+            isRecurring: payment.isRecurring,
+            recurringInterval: payment.recurringInterval,
+          });
         }
       },
 
       deletePayment: (paymentId) => {
+        const payment = usePlannedPaymentsStore.getState().payments.find((p) => p.id === paymentId);
+        if (payment?.notificationId) {
+          cancelPlannedPaymentReminder(payment.notificationId);
+        }
         set((s) => ({ payments: s.payments.filter((p) => p.id !== paymentId) }));
       },
 
