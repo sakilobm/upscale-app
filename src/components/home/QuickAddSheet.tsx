@@ -12,6 +12,7 @@ import React, { useState, useEffect, type ComponentProps } from 'react';
 import {
   View, StyleSheet, Modal, TextInput, Pressable,
   ScrollView, Platform, Dimensions, KeyboardAvoidingView,
+  ActivityIndicator,
 } from 'react-native';
 import { useKeyboardHeight } from '@hooks/useKeyboardHeight';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -53,7 +54,7 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
     accountId, setAccountId,
     note, setNote,
     cats, accounts, amountDisplay,
-    handleSave, reset,
+    handleSave, reset, isSaving,
   } = useQuickAddTransaction(onClose);
 
   const slideY = useSharedValue(SH * 0.9);
@@ -137,7 +138,10 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
               ) : (
                 <>
                   {/* Type toggle */}
-                  <View style={[s.typeRow, { backgroundColor: colors.glass.backgroundMid }]}>
+                  <View 
+                    style={[s.typeRow, { backgroundColor: colors.glass.backgroundMid, opacity: isSaving ? 0.6 : 1 }]}
+                    pointerEvents={isSaving ? 'none' : 'auto'}
+                  >
                     {(['expense', 'income'] as const).map((t) => {
                       const active = type === t;
                       const tColor = t === 'expense' ? colors.status.expense : colors.status.income;
@@ -175,7 +179,7 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
                   </View>
 
                   {/* Numpad */}
-                  <View style={s.numpad}>
+                  <View style={[s.numpad, { opacity: isSaving ? 0.6 : 1 }]} pointerEvents={isSaving ? 'none' : 'auto'}>
                     {NUMPAD_KEYS.map((key) => {
                       const isBackspace = key === '⌫';
                       const isDot = key === '.';
@@ -205,7 +209,13 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
 
                   {/* Category */}
                   <AppText variant="labelSM" style={[s.sectionLabel, { color: colors.text.tertiary }]}>CATEGORY</AppText>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.catScroll}>
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false} 
+                    contentContainerStyle={s.catScroll}
+                    pointerEvents={isSaving ? 'none' : 'auto'}
+                    style={{ opacity: isSaving ? 0.6 : 1 }}
+                  >
                     {cats.map((catDef) => {
                       const active = category === catDef.id;
                       return (
@@ -238,21 +248,27 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
                       );
                     })}
                     <Pressable
-                  onPress={() => { setCatFormVisible(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                  style={[s.catChip, s.catNewChip, { borderColor: (isDark ? colors.brand.primary : '#8EB41F') + '80' }]}
-                >
-                  <View style={[s.catIcon, { backgroundColor: (isDark ? colors.brand.primary : '#8EB41F') + '22' }]}>
-                    <Ionicons name="add" size={15} color={isDark ? colors.brand.primary : '#8EB41F'} />
-                  </View>
-                  <AppText variant="labelSM" style={{ color: isDark ? colors.brand.primary : '#8EB41F', fontWeight: '700', fontSize: 11 }}>
-                    New
-                  </AppText>
-                </Pressable>
+                      onPress={() => { setCatFormVisible(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                      style={[s.catChip, s.catNewChip, { borderColor: (isDark ? colors.brand.primary : '#8EB41F') + '80' }]}
+                    >
+                      <View style={[s.catIcon, { backgroundColor: (isDark ? colors.brand.primary : '#8EB41F') + '22' }]}>
+                        <Ionicons name="add" size={15} color={isDark ? colors.brand.primary : '#8EB41F'} />
+                      </View>
+                      <AppText variant="labelSM" style={{ color: isDark ? colors.brand.primary : '#8EB41F', fontWeight: '700', fontSize: 11 }}>
+                        New
+                      </AppText>
+                    </Pressable>
                   </ScrollView>
 
                   {/* Account */}
                   <AppText variant="labelSM" style={[s.sectionLabel, { color: colors.text.tertiary }]}>ACCOUNT</AppText>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.accountScroll}>
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false} 
+                    contentContainerStyle={s.accountScroll}
+                    pointerEvents={isSaving ? 'none' : 'auto'}
+                    style={{ opacity: isSaving ? 0.6 : 1 }}
+                  >
                     {accounts.map((acc) => {
                       const active = accountId === acc.id;
                       return (
@@ -290,6 +306,7 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
                         backgroundColor: inputBg,
                         color: colors.text.primary,
                         borderColor: colors.glass.border,
+                        opacity: isSaving ? 0.6 : 1,
                       },
                     ]}
                     value={note}
@@ -297,15 +314,29 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
                     placeholder="Add a note (optional)"
                     placeholderTextColor={colors.text.tertiary}
                     maxLength={80}
+                    editable={!isSaving}
                   />
 
                   {/* Add button */}
                   <Pressable
                     onPress={handleSave}
-                    style={({ pressed }) => [s.addBtn, { backgroundColor: accentColor, opacity: pressed ? 0.85 : 1 }]}
+                    disabled={isSaving}
+                    style={({ pressed }) => [
+                      s.addBtn,
+                      {
+                        backgroundColor: accentColor,
+                        opacity: isSaving ? 0.6 : (pressed ? 0.85 : 1),
+                      },
+                    ]}
                   >
-                    <Ionicons name="checkmark-circle" size={20} color={colors.white} />
-                    <AppText style={[s.addBtnText, { color: colors.white }]}>Add {type === 'expense' ? 'Expense' : 'Income'}</AppText>
+                    {isSaving ? (
+                      <ActivityIndicator size="small" color={colors.white} />
+                    ) : (
+                      <>
+                        <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+                        <AppText style={[s.addBtnText, { color: colors.white }]}>Add {type === 'expense' ? 'Expense' : 'Income'}</AppText>
+                      </>
+                    )}
                   </Pressable>
                 </>
               )}

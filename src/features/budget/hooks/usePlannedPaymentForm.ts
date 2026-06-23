@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import * as Haptics from 'expo-haptics';
 import { useCategoryStore } from '@store/categoryStore';
 import { useAccountStore } from '@store/accountStore';
 
@@ -23,6 +24,7 @@ export function usePlannedPaymentForm(
   const [category, setCategoryState] = useState('other');
   const [accountId, setAccountIdState] = useState('');
   const [error,     setError]         = useState<string | null>(null);
+  const [isSaving,  setIsSaving]      = useState(false);
 
   useEffect(() => {
     if (!accountId && accounts.length > 0) {
@@ -49,6 +51,7 @@ export function usePlannedPaymentForm(
   }, []);
 
   const handleSubmit = useCallback(() => {
+    if (isSaving) return;
     setError(null);
     const parsed = parseFloat(amount);
     if (!title.trim())                       { setError('Title is required');       return; }
@@ -56,10 +59,17 @@ export function usePlannedPaymentForm(
     if (!dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) { setError('Please select a due date');   return; }
     if (!accountId)                          { setError('Select an account');       return; }
 
-    onSubmit({ title: title.trim(), amount: parsed, dueDate, category, accountId });
-    reset();
-    onClose();
-  }, [title, amount, dueDate, category, accountId, onSubmit, onClose, reset]);
+    setIsSaving(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+
+    setTimeout(() => {
+      onSubmit({ title: title.trim(), amount: parsed, dueDate, category, accountId });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      reset();
+      setIsSaving(false);
+      onClose();
+    }, 600);
+  }, [isSaving, title, amount, dueDate, category, accountId, onSubmit, onClose, reset]);
 
   const cats = allCategories.filter(
     (c) => c.applicableTo === 'expense' || c.applicableTo === 'both'
@@ -76,5 +86,6 @@ export function usePlannedPaymentForm(
     handleSubmit,
     reset,
     error,
+    isSaving,
   };
 }

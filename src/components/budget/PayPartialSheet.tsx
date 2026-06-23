@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   View, StyleSheet, Modal, TextInput,
   Platform, Pressable, ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { KeyboardAvoidingSheet } from '@components/KeyboardAvoidingSheet';
 import { BlurView } from 'expo-blur';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
@@ -30,6 +32,7 @@ export function PayPartialSheet({ visible, onClose, payment, onSubmit }: Props) 
   const [accountId, setAccountId] = useState('');
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (payment) {
@@ -38,6 +41,7 @@ export function PayPartialSheet({ visible, onClose, payment, onSubmit }: Props) 
       setAccountId(payment.accountId || accounts[0]?.id || '');
       setNote('');
       setError(null);
+      setIsSaving(false);
     }
   }, [payment, visible]);
 
@@ -48,6 +52,7 @@ export function PayPartialSheet({ visible, onClose, payment, onSubmit }: Props) 
   const handleHide = () => { scale.value = withSpring(0.86, { damping: 18, stiffness: 220 }); };
 
   const handleSubmit = () => {
+    if (isSaving) return;
     const val = parseFloat(amount);
     if (isNaN(val) || val <= 0) {
       setError('Please enter a valid amount');
@@ -61,8 +66,16 @@ export function PayPartialSheet({ visible, onClose, payment, onSubmit }: Props) 
       setError('Please select an account');
       return;
     }
-    onSubmit(val, accountId, note || undefined);
-    onClose();
+    
+    setIsSaving(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+
+    setTimeout(() => {
+      onSubmit(val, accountId, note || undefined);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      setIsSaving(false);
+      onClose();
+    }, 600);
   };
 
   if (!payment) return null;
@@ -104,149 +117,164 @@ export function PayPartialSheet({ visible, onClose, payment, onSubmit }: Props) 
             footer={
               <Pressable
                 onPress={handleSubmit}
-                style={({ pressed }) => [s.submitBtn, { backgroundColor: colors.brand.primary, opacity: pressed ? 0.8 : 1 }]}
+                disabled={isSaving}
+                style={({ pressed }) => [
+                  s.submitBtn,
+                  {
+                    backgroundColor: colors.brand.primary,
+                    opacity: isSaving ? 0.6 : (pressed ? 0.8 : 1),
+                  },
+                ]}
               >
-                <Ionicons name="checkmark-circle" size={20} color={colors.brand.onPrimary} />
-                <AppText style={[s.submitBtnText, { color: colors.brand.onPrimary }]}>Record Payment</AppText>
+                {isSaving ? (
+                  <ActivityIndicator size="small" color={colors.brand.onPrimary} />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle" size={20} color={colors.brand.onPrimary} />
+                    <AppText style={[s.submitBtnText, { color: colors.brand.onPrimary }]}>Record Payment</AppText>
+                  </>
+                )}
               </Pressable>
             }
           >
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.form}>
-              
-              {/* Error box */}
-              {!!error && (
-                <View style={[s.errorBox, { backgroundColor: colors.status.expense + '15', borderColor: colors.status.expense + '30' }]}>
-                  <Ionicons name="alert-circle" size={16} color={colors.status.expense} />
-                  <AppText variant="caption" style={{ color: colors.status.expense, fontWeight: '600', flex: 1 }}>{error}</AppText>
-                </View>
-              )}
+            <View style={{ opacity: isSaving ? 0.65 : 1 }} pointerEvents={isSaving ? 'none' : 'auto'}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.form}>
+                
+                {/* Error box */}
+                {!!error && (
+                  <View style={[s.errorBox, { backgroundColor: colors.status.expense + '15', borderColor: colors.status.expense + '30' }]}>
+                    <Ionicons name="alert-circle" size={16} color={colors.status.expense} />
+                    <AppText variant="caption" style={{ color: colors.status.expense, fontWeight: '600', flex: 1 }}>{error}</AppText>
+                  </View>
+                )}
 
-              {/* Status info */}
-              <View style={[s.infoBox, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
-                <View style={s.infoRow}>
-                  <AppText variant="caption" color={colors.text.tertiary}>Total Budget:</AppText>
-                  <AppText variant="labelSM" color={colors.text.primary}>{symbol}{payment.amount.toFixed(2)}</AppText>
-                </View>
-                <View style={s.infoRow}>
-                  <AppText variant="caption" color={colors.text.tertiary}>Already Paid/Spent:</AppText>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                    <Ionicons name="remove" size={12} color={colors.status.expense} style={{ fontWeight: '800' }} />
-                    <AppText variant="labelSM" color={colors.status.expense} style={{ fontWeight: '700' }}>
-                      {symbol}{(payment.amountPaid ?? 0).toFixed(2)}
-                    </AppText>
+                {/* Status info */}
+                <View style={[s.infoBox, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
+                  <View style={s.infoRow}>
+                    <AppText variant="caption" color={colors.text.tertiary}>Total Budget:</AppText>
+                    <AppText variant="labelSM" color={colors.text.primary}>{symbol}{payment.amount.toFixed(2)}</AppText>
+                  </View>
+                  <View style={s.infoRow}>
+                    <AppText variant="caption" color={colors.text.tertiary}>Already Paid/Spent:</AppText>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                      <Ionicons name="remove" size={12} color={colors.status.expense} style={{ fontWeight: '800' }} />
+                      <AppText variant="labelSM" color={colors.status.expense} style={{ fontWeight: '700' }}>
+                        {symbol}{(payment.amountPaid ?? 0).toFixed(2)}
+                      </AppText>
+                    </View>
+                  </View>
+                  <View style={[s.divider, { backgroundColor: colors.glass.border }]} />
+                  <View style={s.infoRow}>
+                    <AppText variant="labelSM" color={colors.text.secondary}>Remaining Balance:</AppText>
+                    <AppText variant="labelLG" color={colors.text.primary} style={{ fontWeight: '700' }}>{symbol}{remaining.toFixed(2)}</AppText>
                   </View>
                 </View>
-                <View style={[s.divider, { backgroundColor: colors.glass.border }]} />
-                <View style={s.infoRow}>
-                  <AppText variant="labelSM" color={colors.text.secondary}>Remaining Balance:</AppText>
-                  <AppText variant="labelLG" color={colors.text.primary} style={{ fontWeight: '700' }}>{symbol}{remaining.toFixed(2)}</AppText>
-                </View>
-              </View>
 
-              {/* Input Amount */}
-              <View style={s.inputGroup}>
-                <AppText variant="labelSM" color={colors.text.secondary}>Payment Amount</AppText>
-                <View style={[s.inputWrap, { backgroundColor: inputBg, borderColor: colors.glass.border }]}>
-                  <AppText style={[s.symbolText, { color: colors.text.tertiary }]}>{symbol}</AppText>
+                {/* Input Amount */}
+                <View style={s.inputGroup}>
+                  <AppText variant="labelSM" color={colors.text.secondary}>Payment Amount</AppText>
+                  <View style={[s.inputWrap, { backgroundColor: inputBg, borderColor: colors.glass.border }]}>
+                    <AppText style={[s.symbolText, { color: colors.text.tertiary }]}>{symbol}</AppText>
+                    <TextInput
+                      style={[s.input, { color: colors.text.primary }]}
+                      keyboardType="decimal-pad"
+                      value={amount}
+                      onChangeText={(val) => { setAmount(val); setError(null); }}
+                      placeholder="0.00"
+                      placeholderTextColor={colors.text.tertiary}
+                    />
+                  </View>
+                  
+                  {/* Live progress preview bar */}
+                  {payment.amount > 0 && (() => {
+                    const typedVal = parseFloat(amount) || 0;
+                    const paidPaid = payment.amountPaid ?? 0;
+                    const totalSpendProj = paidPaid + typedVal;
+                    const isOverBudget = totalSpendProj > payment.amount;
+                    const paidPct = (paidPaid / payment.amount) * 100;
+                    const typedPct = (typedVal / payment.amount) * 100;
+                    return (
+                      <View style={{ marginTop: 6, gap: 4 }}>
+                        <View style={[s.liveProgressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}>
+                          {paidPaid > 0 && (
+                            <View style={[s.liveProgressSegment, { width: `${paidPct}%`, backgroundColor: colors.text.tertiary + '80' }]} />
+                          )}
+                          {typedVal > 0 && (
+                            <View style={[s.liveProgressSegment, { width: `${Math.min(typedPct, 100 - paidPct)}%`, backgroundColor: isOverBudget ? colors.status.expense : '#10B981' }]} />
+                          )}
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <AppText variant="caption" color={colors.text.tertiary} style={{ fontSize: 9 }}>
+                            Proj. Total: {symbol}{totalSpendProj.toFixed(2)}
+                          </AppText>
+                          <AppText 
+                            variant="caption" 
+                            style={{ 
+                              fontSize: 9, 
+                              color: isOverBudget ? colors.status.expense : colors.status.income, 
+                              fontWeight: '700' 
+                            }}
+                          >
+                            {isOverBudget 
+                              ? `Over Budget by ${symbol}${(totalSpendProj - payment.amount).toFixed(2)}!` 
+                              : `${((totalSpendProj / payment.amount) * 100).toFixed(0)}% Completed`}
+                          </AppText>
+                        </View>
+                      </View>
+                    );
+                  })()}
+                </View>
+
+                {/* Select Account */}
+                <View style={s.inputGroup}>
+                  <AppText variant="labelSM" color={colors.text.secondary}>Pay From Account</AppText>
+                  <View style={s.accountList}>
+                    {accounts.map((acc) => {
+                      const active = accountId === acc.id;
+                      return (
+                        <Pressable
+                          key={acc.id}
+                          onPress={() => { setAccountId(acc.id); setError(null); }}
+                          style={[
+                            s.accountItem,
+                            {
+                              borderColor: active ? acc.color : colors.glass.border,
+                              backgroundColor: active ? acc.color + '15' : 'transparent',
+                            },
+                          ]}
+                        >
+                          <Ionicons name={acc.icon as any} size={15} color={active ? acc.color : colors.text.secondary} />
+                          <AppText
+                            variant="caption"
+                            style={{
+                              color: active ? acc.color : colors.text.secondary,
+                              fontWeight: '700',
+                            }}
+                          >
+                            {acc.name}
+                          </AppText>
+                          <AppText variant="caption" color={colors.text.tertiary}>
+                            {symbol}{acc.balance.toFixed(0)}
+                          </AppText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* Optional Note */}
+                <View style={s.inputGroup}>
+                  <AppText variant="labelSM" color={colors.text.secondary}>Note (Optional)</AppText>
                   <TextInput
-                    style={[s.input, { color: colors.text.primary }]}
-                    keyboardType="decimal-pad"
-                    value={amount}
-                    onChangeText={(val) => { setAmount(val); setError(null); }}
-                    placeholder="0.00"
+                    style={[s.textInput, { backgroundColor: inputBg, borderColor: colors.glass.border, color: colors.text.primary }]}
+                    placeholder="e.g. Paid first installment"
                     placeholderTextColor={colors.text.tertiary}
+                    value={note}
+                    onChangeText={setNote}
                   />
                 </View>
-                
-                {/* Live progress preview bar */}
-                {payment.amount > 0 && (() => {
-                  const typedVal = parseFloat(amount) || 0;
-                  const paidPaid = payment.amountPaid ?? 0;
-                  const totalSpendProj = paidPaid + typedVal;
-                  const isOverBudget = totalSpendProj > payment.amount;
-                  const paidPct = (paidPaid / payment.amount) * 100;
-                  const typedPct = (typedVal / payment.amount) * 100;
-                  return (
-                    <View style={{ marginTop: 6, gap: 4 }}>
-                      <View style={[s.liveProgressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}>
-                        {paidPaid > 0 && (
-                          <View style={[s.liveProgressSegment, { width: `${paidPct}%`, backgroundColor: colors.text.tertiary + '80' }]} />
-                        )}
-                        {typedVal > 0 && (
-                          <View style={[s.liveProgressSegment, { width: `${Math.min(typedPct, 100 - paidPct)}%`, backgroundColor: isOverBudget ? colors.status.expense : '#10B981' }]} />
-                        )}
-                      </View>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <AppText variant="caption" color={colors.text.tertiary} style={{ fontSize: 9 }}>
-                          Proj. Total: {symbol}{totalSpendProj.toFixed(2)}
-                        </AppText>
-                        <AppText 
-                          variant="caption" 
-                          style={{ 
-                            fontSize: 9, 
-                            color: isOverBudget ? colors.status.expense : colors.status.income, 
-                            fontWeight: '700' 
-                          }}
-                        >
-                          {isOverBudget 
-                            ? `Over Budget by ${symbol}${(totalSpendProj - payment.amount).toFixed(2)}!` 
-                            : `${((totalSpendProj / payment.amount) * 100).toFixed(0)}% Completed`}
-                        </AppText>
-                      </View>
-                    </View>
-                  );
-                })()}
-              </View>
-
-              {/* Select Account */}
-              <View style={s.inputGroup}>
-                <AppText variant="labelSM" color={colors.text.secondary}>Pay From Account</AppText>
-                <View style={s.accountList}>
-                  {accounts.map((acc) => {
-                    const active = accountId === acc.id;
-                    return (
-                      <Pressable
-                        key={acc.id}
-                        onPress={() => { setAccountId(acc.id); setError(null); }}
-                        style={[
-                          s.accountItem,
-                          {
-                            borderColor: active ? acc.color : colors.glass.border,
-                            backgroundColor: active ? acc.color + '15' : 'transparent',
-                          },
-                        ]}
-                      >
-                        <Ionicons name={acc.icon as any} size={15} color={active ? acc.color : colors.text.secondary} />
-                        <AppText
-                          variant="caption"
-                          style={{
-                            color: active ? acc.color : colors.text.secondary,
-                            fontWeight: '700',
-                          }}
-                        >
-                          {acc.name}
-                        </AppText>
-                        <AppText variant="caption" color={colors.text.tertiary}>
-                          {symbol}{acc.balance.toFixed(0)}
-                        </AppText>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* Optional Note */}
-              <View style={s.inputGroup}>
-                <AppText variant="labelSM" color={colors.text.secondary}>Note (Optional)</AppText>
-                <TextInput
-                  style={[s.textInput, { backgroundColor: inputBg, borderColor: colors.glass.border, color: colors.text.primary }]}
-                  placeholder="e.g. Paid first installment"
-                  placeholderTextColor={colors.text.tertiary}
-                  value={note}
-                  onChangeText={setNote}
-                />
-              </View>
-            </ScrollView>
+              </ScrollView>
+            </View>
           </KeyboardAvoidingSheet>
         </Animated.View>
       </View>

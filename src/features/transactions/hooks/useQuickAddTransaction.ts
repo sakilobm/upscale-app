@@ -37,41 +37,51 @@ export function useQuickAddTransaction(onSuccess: () => void) {
     setCategory(t === 'expense' ? 'food' : 'salary');
   }, []);
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleKey = useCallback((key: string) => {
+    if (isSaving) return;
     setAmountStr((prev) => applyNumpad(prev, key));
-  }, []);
+  }, [isSaving]);
 
   const handleSave = useCallback(() => {
+    if (isSaving) return;
     const amount = parseFloat(amountStr);
     if (!amount || amount <= 0) { toast.error('Enter a valid amount'); return; }
     const account = accounts.find((a) => a.id === accountId);
     if (!account) { toast.error('Select an account'); return; }
 
-    const now = new Date().toISOString();
-    const newTx: Transaction = {
-      id:          `tx-${Date.now()}`,
-      userId:      'user-1',
-      type,
-      category,
-      amount,
-      currency:    account.currency,
-      description: note.trim() || (allCategories.find((c) => c.id === category)?.label ?? category),
-      note:        note.trim() || null,
-      date:        now,
-      accountId,
-      createdAt:   now,
-      updatedAt:   now,
-    };
+    setIsSaving(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
 
-    addTransaction(newTx);
-    updateAccount(accountId, {
-      balance: type === 'income' ? account.balance + amount : account.balance - amount,
-    });
+    setTimeout(() => {
+      const now = new Date().toISOString();
+      const newTx: Transaction = {
+        id:          `tx-${Date.now()}`,
+        userId:      'user-1',
+        type,
+        category,
+        amount,
+        currency:    account.currency,
+        description: note.trim() || (allCategories.find((c) => c.id === category)?.label ?? category),
+        note:        note.trim() || null,
+        date:        now,
+        accountId,
+        createdAt:   now,
+        updatedAt:   now,
+      };
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    toast.success(`${type === 'expense' ? 'Expense' : 'Income'} added`);
-    onSuccess();
-  }, [amountStr, type, category, accountId, note, accounts, allCategories, addTransaction, updateAccount, onSuccess]);
+      addTransaction(newTx);
+      updateAccount(accountId, {
+        balance: type === 'income' ? account.balance + amount : account.balance - amount,
+      });
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      toast.success(`${type === 'expense' ? 'Expense' : 'Income'} added`);
+      setIsSaving(false);
+      onSuccess();
+    }, 600);
+  }, [isSaving, amountStr, type, category, accountId, note, accounts, allCategories, addTransaction, updateAccount, onSuccess]);
 
   const cats = allCategories.filter((c) =>
     type === 'expense'
@@ -105,5 +115,6 @@ export function useQuickAddTransaction(onSuccess: () => void) {
     accentColor,
     handleSave,
     reset,
+    isSaving,
   };
 }

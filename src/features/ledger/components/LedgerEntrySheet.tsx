@@ -8,6 +8,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { ToastContainer } from '@components/Toast';
 import Animated, {
@@ -72,6 +73,7 @@ export function LedgerEntrySheet({
   const [dueDate,     setDueDate]     = useState('');
   const [accountId,   setAccountId]   = useState('');
   const [error,       setError]       = useState<string | null>(null);
+  const [isSaving,    setIsSaving]    = useState(false);
 
   const translateY  = useSharedValue(600);
   const backdropOp  = useSharedValue(0);
@@ -80,6 +82,7 @@ export function LedgerEntrySheet({
     if (visible) {
       backdropOp.value = withTiming(1, { duration: 250 });
       translateY.value = withSpring(0, { damping: 22, stiffness: 160, mass: 0.9 });
+      setIsSaving(false);
     } else {
       backdropOp.value = withTiming(0, { duration: 200 });
       translateY.value = withSpring(600, { damping: 20, stiffness: 180 });
@@ -111,6 +114,7 @@ export function LedgerEntrySheet({
   ];
 
   const handleSubmit = () => {
+    if (isSaving) return;
     setError(null);
     const parsed = parseFloat(amount);
     if (mode === 'add') {
@@ -119,20 +123,27 @@ export function LedgerEntrySheet({
     if (isNaN(parsed) || parsed <= 0) { setError('Enter a valid amount'); return; }
     if (!accountId) { setError('Select an account'); return; }
 
-    if (mode === 'add') {
-      onAdd({
-        personName: personName.trim(),
-        direction,
-        totalAmount: parsed,
-        currency:   userCurrency,
-        note:       note.trim() || undefined,
-        dueDate:    dueDate.trim() || undefined,
-        accountId,
-      });
-    } else if (mode === 'partial' && editEntry) {
-      onPartialReturn(editEntry.id, parsed, accountId, note.trim() || undefined);
-    }
-    onClose();
+    setIsSaving(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+
+    setTimeout(() => {
+      if (mode === 'add') {
+        onAdd({
+          personName: personName.trim(),
+          direction,
+          totalAmount: parsed,
+          currency:   userCurrency,
+          note:       note.trim() || undefined,
+          dueDate:    dueDate.trim() || undefined,
+          accountId,
+        });
+      } else if (mode === 'partial' && editEntry) {
+        onPartialReturn(editEntry.id, parsed, accountId, note.trim() || undefined);
+      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      setIsSaving(false);
+      onClose();
+    }, 600);
   };
 
   if (!visible) return null;
@@ -177,7 +188,7 @@ export function LedgerEntrySheet({
           </View>
 
           {/* Form */}
-          <View style={styles.form}>
+          <View style={[styles.form, { opacity: isSaving ? 0.65 : 1 }]} pointerEvents={isSaving ? 'none' : 'auto'}>
             {error && (
               <View style={[styles.errorBanner, { backgroundColor: colors.status.expense + '12', borderColor: colors.status.expense + '30' }]}>
                 <Ionicons name="alert-circle-outline" size={16} color={colors.status.expense} />
@@ -311,17 +322,22 @@ export function LedgerEntrySheet({
           {/* Submit */}
           <Pressable
             onPress={handleSubmit}
+            disabled={isSaving}
             style={({ pressed }) => [
               styles.submitBtn,
-              { backgroundColor: colors.brand.primary, opacity: pressed ? 0.82 : 1 },
+              { backgroundColor: colors.brand.primary, opacity: isSaving ? 0.6 : (pressed ? 0.82 : 1) },
             ]}
           >
-            <AppText
-              variant="labelLG"
-              style={{ color: colors.brand.onPrimary, fontWeight: '700' }}
-            >
-              {mode === 'add' ? 'Save Entry' : 'Record Return'}
-            </AppText>
+            {isSaving ? (
+              <ActivityIndicator size="small" color={colors.brand.onPrimary} />
+            ) : (
+              <AppText
+                variant="labelLG"
+                style={{ color: colors.brand.onPrimary, fontWeight: '700' }}
+              >
+                {mode === 'add' ? 'Save Entry' : 'Record Return'}
+              </AppText>
+            )}
           </Pressable>
           <ToastContainer isModal />
         </Animated.View>

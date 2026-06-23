@@ -10,6 +10,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ToastContainer } from '@components/Toast';
@@ -69,6 +70,7 @@ export function AddLoanSheet({ visible, onClose, onAdd, editLoan, onEdit }: AddL
   const [accountId, setAccountId] = useState('');
   const [postPrincipal, setPostPrincipal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const translateY = useSharedValue(600);
   const backdropOp = useSharedValue(0);
@@ -77,6 +79,7 @@ export function AddLoanSheet({ visible, onClose, onAdd, editLoan, onEdit }: AddL
     if (visible) {
       backdropOp.value = withTiming(1, { duration: 250 });
       translateY.value = withSpring(0, { damping: 22, stiffness: 160, mass: 0.9 });
+      setIsSaving(false);
       
       if (editLoan) {
         setName(editLoan.name);
@@ -117,6 +120,7 @@ export function AddLoanSheet({ visible, onClose, onAdd, editLoan, onEdit }: AddL
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOp.value }));
 
   const handleSubmit = () => {
+    if (isSaving) return;
     setError(null);
     if (!name.trim()) { setError('Loan name is required'); return; }
     if (!counterparty.trim()) { setError(type === 'BORROWED' ? 'Lender name is required' : 'Borrower name is required'); return; }
@@ -135,45 +139,51 @@ export function AddLoanSheet({ visible, onClose, onAdd, editLoan, onEdit }: AddL
     
     if (!startDate) { setError('Select a start date'); return; }
 
-    // Calculate next payment date as 1 month from start date
-    let nextPaymentDate = startDate;
-    try {
-      nextPaymentDate = format(addMonths(parseISO(startDate), 1), 'yyyy-MM-dd');
-    } catch (e) {
-      nextPaymentDate = startDate;
-    }
+    setIsSaving(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
 
-    if (editLoan && onEdit) {
-      onEdit(editLoan.id, {
-        name: name.trim(),
-        counterparty: counterparty.trim(),
-        type,
-        principalAmount: parsedPrincipal,
-        interestRate: parsedInterest,
-        emiAmount: parsedEmi,
-        totalPayments: parsedPayments,
-        startDate,
-        color: selectedColor,
-        accountId,
-      });
-    } else {
-      onAdd({
-        name: name.trim(),
-        counterparty: counterparty.trim(),
-        type,
-        principalAmount: parsedPrincipal,
-        interestRate: parsedInterest,
-        startDate,
-        nextPaymentDate,
-        emiAmount: parsedEmi,
-        totalPayments: parsedPayments,
-        color: selectedColor,
-        accountId,
-      }, postPrincipal);
-    }
-    
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
-    onClose();
+    setTimeout(() => {
+      // Calculate next payment date as 1 month from start date
+      let nextPaymentDate = startDate;
+      try {
+        nextPaymentDate = format(addMonths(parseISO(startDate), 1), 'yyyy-MM-dd');
+      } catch (e) {
+        nextPaymentDate = startDate;
+      }
+
+      if (editLoan && onEdit) {
+        onEdit(editLoan.id, {
+          name: name.trim(),
+          counterparty: counterparty.trim(),
+          type,
+          principalAmount: parsedPrincipal,
+          interestRate: parsedInterest,
+          emiAmount: parsedEmi,
+          totalPayments: parsedPayments,
+          startDate,
+          color: selectedColor,
+          accountId,
+        });
+      } else {
+        onAdd({
+          name: name.trim(),
+          counterparty: counterparty.trim(),
+          type,
+          principalAmount: parsedPrincipal,
+          interestRate: parsedInterest,
+          startDate,
+          nextPaymentDate,
+          emiAmount: parsedEmi,
+          totalPayments: parsedPayments,
+          color: selectedColor,
+          accountId,
+        }, postPrincipal);
+      }
+      
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
+      setIsSaving(false);
+      onClose();
+    }, 600);
   };
 
   const sheetBg: [string, string] = [
@@ -243,6 +253,8 @@ export function AddLoanSheet({ visible, onClose, onAdd, editLoan, onEdit }: AddL
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.formScroll}
               keyboardShouldPersistTaps="handled"
+              pointerEvents={isSaving ? 'none' : 'auto'}
+              style={{ opacity: isSaving ? 0.65 : 1 }}
             >
               {/* Loan Type toggle */}
               <AppText variant="labelSM" color={colors.text.secondary} style={styles.fieldLabel}>
@@ -461,14 +473,19 @@ export function AddLoanSheet({ visible, onClose, onAdd, editLoan, onEdit }: AddL
               {/* Submit */}
               <Pressable
                 onPress={handleSubmit}
+                disabled={isSaving}
                 style={({ pressed }) => [
                   styles.submitBtn,
-                  { backgroundColor: colors.brand.primary, opacity: pressed ? 0.82 : 1 },
+                  { backgroundColor: colors.brand.primary, opacity: isSaving ? 0.6 : (pressed ? 0.82 : 1) },
                 ]}
               >
-                <AppText variant="labelLG" style={{ color: colors.brand.onPrimary, fontWeight: '700' }}>
-                  {editLoan ? 'Save Changes' : 'Create Loan Contract'}
-                </AppText>
+                {isSaving ? (
+                  <ActivityIndicator size="small" color={colors.brand.onPrimary} />
+                ) : (
+                  <AppText variant="labelLG" style={{ color: colors.brand.onPrimary, fontWeight: '700' }}>
+                    {editLoan ? 'Save Changes' : 'Create Loan Contract'}
+                  </AppText>
+                )}
               </Pressable>
             </ScrollView>
           </KeyboardAvoidingView>
