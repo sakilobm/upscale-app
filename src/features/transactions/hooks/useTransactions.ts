@@ -2,10 +2,15 @@ import { useCallback, useMemo } from 'react';
 import { buildTransaction } from '../services/transactionService';
 import { useTransactionStore } from '@store/transactionStore';
 import { useAccountStore } from '@store/accountStore';
+import { useLoansStore } from '@store/loansStore';
+import {
+  scheduleReminderNotification,
+  cancelScheduledReminder,
+} from '@features/notifications/services/notificationService';
 import { calculateRunningBalances } from '../utils/balanceCalculator';
 import type { NewTransaction } from '@store/types';
 import type { TransactionGroupHeader } from '../types';
-import { format, isToday, isYesterday } from 'date-fns';
+import { format, isToday, isYesterday, addMonths, parseISO } from 'date-fns';
 
 function buildBalanceLookup(
   transactions: ReturnType<typeof useTransactionStore.getState>['transactions'],
@@ -76,12 +81,75 @@ export function useTransactions(): UseTransactionsReturn {
   }, [storeAdd]);
 
   const removeTransaction = useCallback(async (id: string) => {
+    const tx = storeTransactions.find((t) => t.id === id);
+    if (tx) {
+      // 1. Revert account balance
+      const account = accounts.find((a) => a.id === tx.accountId);
+      if (account) {
+        const diff = tx.amount;
+        const nextBalance = tx.type === 'income' ? account.balance - diff : account.balance + diff;
+        useAccountStore.getState().updateAccount(tx.accountId, { balance: nextBalance });
+      }
+
+      // 2. If it's a loan transaction, rollback the loan parameters
+      if (tx.source === 'loan') {
+        const matches = tx.note?.match(/EMI Installment repayment for "([^"]+)"/);
+        if (matches && matches[1]) {
+          const loanName = matches[1];
+          const loans = useLoansStore.getState().loans;
+          const targetLoan = loans.find((l) => l.name === loanName && l.accountId === tx.accountId);
+          if (targetLoan && targetLoan.completedPayments > 0) {
+            const prevDate = format(addMonths(parseISO(targetLoan.nextPaymentDate), -1), 'yyyy-MM-dd');
+            const newCompleted = targetLoan.completedPayments - 1;
+            const newAmountPaid = Math.max(0, targetLoan.amountPaid - targetLoan.emiAmount);
+            
+            useLoansStore.getState().updateLoan(targetLoan.id, {
+              amountPaid: newAmountPaid,
+              completedPayments: newCompleted,
+              nextPaymentDate: prevDate,
+            });
+
+            // Reschedule reminder notification if enabled
+            const updatedLoan = useLoansStore.getState().loans.find((l) => l.id === targetLoan.id);
+            if (updatedLoan && updatedLoan.remindersEnabled && updatedLoan.reminderTime) {
+              try {
+                if (targetLoan.reminderExpoId) {
+                  await cancelScheduledReminder(targetLoan.reminderExpoId).catch(() => {});
+                }
+                const title = targetLoan.type === 'BORROWED' ? 'Loan Repayment Due' : 'Loan Installment Due';
+                const body = targetLoan.type === 'BORROWED'
+                  ? `Repayment of ${targetLoan.emiAmount} is due for "${targetLoan.name}" to ${targetLoan.counterparty}.`
+                  : `Repayment of ${targetLoan.emiAmount} for "${targetLoan.name}" is due from ${targetLoan.counterparty}.`;
+
+                const newExpoId = await scheduleReminderNotification(
+                  title,
+                  body,
+                  updatedLoan.reminderTime,
+                  'none',
+                  [],
+                  updatedLoan.nextPaymentDate
+                );
+                useLoansStore.getState().updateLoan(targetLoan.id, { reminderExpoId: newExpoId });
+              } catch (e) {
+                console.warn('Failed to reschedule loan reminder:', e);
+              }
+            }
+          }
+        }
+      }
+    }
     storeDelete(id);
-  }, [storeDelete]);
+  }, [storeDelete, storeTransactions, accounts]);
 
   const filtered = useMemo(() => {
     let txs = storeTransactions;
-    if (filters.type !== 'all')       txs = txs.filter((t) => t.type === filters.type);
+    if (filters.type !== 'all') {
+      if (filters.type === 'loan') {
+        txs = txs.filter((t) => t.source === 'loan');
+      } else {
+        txs = txs.filter((t) => t.type === filters.type);
+      }
+    }
     if (filters.category !== 'all')   txs = txs.filter((t) => t.category === filters.category);
     if (filters.month)                txs = txs.filter((t) => t.date.startsWith(filters.month!));
     if (filters.accountId)            txs = txs.filter((t) => t.accountId === filters.accountId);

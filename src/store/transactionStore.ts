@@ -4,7 +4,7 @@ import { zustandStorage } from './storage';
 import type { Transaction, NewTransaction, TransactionType, TransactionCategory } from './types';
 
 export interface TransactionFilters {
-  type: TransactionType | 'all';
+  type: TransactionType | 'all' | 'loan';
   category: TransactionCategory | 'all';
   month: string | null;      // 'YYYY-MM'
   accountId: string | null;

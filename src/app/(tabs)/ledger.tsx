@@ -57,7 +57,7 @@ export default function LedgerScreen() {
     openInfoSheet, closeInfoSheet, openLoanSheet, closeLoanSheet,
     openLoanInfoSheet, closeLoanInfoSheet, openEditLoanSheet,
     handleAddEntry, handleSettle, handleAddLoan, handleEditLoan,
-    deleteEntry, addPartialReturn, recordPayment, deleteLoan,
+    deleteEntry, addPartialReturn, recordPayment, undoPayment, deleteLoan,
     handleToggleReminder,
   } = useLedgerScreen();
 
@@ -237,6 +237,7 @@ export default function LedgerScreen() {
         loan={infoLoan}
         onClose={closeLoanInfoSheet}
         onRecordPayment={recordPayment}
+        onUndoPayment={undoPayment}
         onDelete={deleteLoan}
         onEdit={openEditLoanSheet}
         onToggleReminder={handleToggleReminder}

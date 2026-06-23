@@ -97,55 +97,74 @@ export function EditTransactionSheet({ visible, transaction, onClose }: Props) {
             </View>
 
             {/* Type toggle */}
-            <View style={[s.typeRow, { backgroundColor: colors.glass.backgroundMid }]}>
-              {(['expense', 'income'] as const).map((t) => {
-                const active = type === t;
-                const tColor = t === 'expense' ? colors.status.expense : colors.status.income;
-                return (
-                  <Pressable
-                    key={t}
-                    onPress={() => { setType(t); Haptics.selectionAsync(); }}
-                    style={[
-                      s.typeBtn,
-                      active && { backgroundColor: tColor + '1A', borderColor: tColor + '44', borderWidth: 1 },
-                    ]}
-                  >
-                    <Ionicons
-                      name={t === 'expense' ? 'arrow-down-circle-outline' : 'arrow-up-circle-outline'}
-                      size={18}
-                      color={active ? tColor : colors.text.tertiary}
-                    />
-                    <AppText
-                      variant="labelMD"
-                      style={{ color: active ? tColor : colors.text.tertiary, fontWeight: active ? '700' : '500' }}
+            <View pointerEvents={transaction.source === 'loan' ? 'none' : 'auto'}>
+              <View style={[s.typeRow, { backgroundColor: colors.glass.backgroundMid }]}>
+                {(['expense', 'income'] as const).map((t) => {
+                  const active = type === t;
+                  const tColor = t === 'expense' ? colors.status.expense : colors.status.income;
+                  return (
+                    <Pressable
+                      key={t}
+                      onPress={() => { setType(t); Haptics.selectionAsync(); }}
+                      style={[
+                        s.typeBtn,
+                        active && { backgroundColor: tColor + '1A', borderColor: tColor + '44', borderWidth: 1 },
+                      ]}
                     >
-                      {t === 'expense' ? 'Expense' : 'Income'}
-                    </AppText>
-                  </Pressable>
-                );
-              })}
+                      <Ionicons
+                        name={t === 'expense' ? 'arrow-down-circle-outline' : 'arrow-up-circle-outline'}
+                        size={18}
+                        color={active ? tColor : colors.text.tertiary}
+                      />
+                      <AppText
+                        variant="labelMD"
+                        style={{ color: active ? tColor : colors.text.tertiary, fontWeight: active ? '700' : '500' }}
+                      >
+                        {t === 'expense' ? 'Expense' : 'Income'}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
 
             {/* Amount */}
-            <View style={s.amountSection}>
-              <AppText variant="caption" style={{ color: colors.text.tertiary, fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 }}>
-                AMOUNT ({selectedAccountCurrency})
-              </AppText>
-              <View style={s.amountInputRow}>
-                <AppText style={[s.amountSymbol, { color: accentColor }]}>{currentSymbol}</AppText>
-                <TextInput
-                  style={[s.amountInputText, { color: accentColor }]}
-                  value={amountStr}
-                  onChangeText={setAmountStr}
-                  keyboardType="decimal-pad"
-                  placeholder="0.00"
-                  placeholderTextColor={colors.text.tertiary}
-                  maxLength={10}
-                />
+            <View pointerEvents={transaction.source === 'loan' ? 'none' : 'auto'}>
+              <View style={s.amountSection}>
+                <AppText variant="caption" style={{ color: colors.text.tertiary, fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 }}>
+                  AMOUNT ({selectedAccountCurrency})
+                </AppText>
+                <View style={s.amountInputRow}>
+                  <AppText style={[s.amountSymbol, { color: accentColor }]}>{currentSymbol}</AppText>
+                  <TextInput
+                    style={[s.amountInputText, { color: accentColor }]}
+                    value={amountStr}
+                    onChangeText={setAmountStr}
+                    keyboardType="decimal-pad"
+                    placeholder="0.00"
+                    placeholderTextColor={colors.text.tertiary}
+                    maxLength={10}
+                  />
+                </View>
               </View>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.formScroll} keyboardShouldPersistTaps="handled">
+              {transaction.source === 'loan' && (
+                <View style={[s.loanWarning, { backgroundColor: colors.status.warning + '12', borderColor: colors.status.warning + '30' }]}>
+                  <Ionicons name="alert-circle-outline" size={18} color={colors.status.warning} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <AppText variant="labelSM" style={{ color: colors.status.warning, fontWeight: '700' }}>
+                      Linked to Loan Amortization
+                    </AppText>
+                    <AppText variant="caption" color={colors.text.secondary}>
+                      This transaction is generated for the installment of "{transaction.description}". To edit or undo, please manage it from the Loans tab.
+                    </AppText>
+                  </View>
+                </View>
+              )}
+
+              <View pointerEvents={transaction.source === 'loan' ? 'none' : 'auto'} style={{ gap: 16 }}>
               {/* Date & Time */}
               <View style={s.fieldGroup}>
                 <DatePickerField
@@ -333,14 +352,30 @@ export function EditTransactionSheet({ visible, transaction, onClose }: Props) {
                 </View>
               </View>
 
+              </View>
+
               {/* Save button */}
-              <Pressable
-                onPress={handleSave}
-                style={({ pressed }) => [s.addBtn, { backgroundColor: accentColor, opacity: pressed ? 0.85 : 1 }]}
-              >
-                <Ionicons name="checkmark-circle" size={20} color={colors.white} />
-                <AppText style={[s.addBtnText, { color: colors.white }]}>Save Changes</AppText>
-              </Pressable>
+              {transaction.source === 'loan' ? (
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    onClose();
+                    router.push('/(tabs)/ledger');
+                  }}
+                  style={({ pressed }) => [s.addBtn, { backgroundColor: colors.brand.primary, opacity: pressed ? 0.85 : 1 }]}
+                >
+                  <Ionicons name="people-outline" size={20} color={colors.white} />
+                  <AppText style={[s.addBtnText, { color: colors.white }]}>Go to Ledger Loans</AppText>
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={handleSave}
+                  style={({ pressed }) => [s.addBtn, { backgroundColor: accentColor, opacity: pressed ? 0.85 : 1 }]}
+                >
+                  <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+                  <AppText style={[s.addBtnText, { color: colors.white }]}>Save Changes</AppText>
+                </Pressable>
+              )}
             </ScrollView>
           </Animated.View>
         </KeyboardAvoidingView>
@@ -391,4 +426,13 @@ const s = StyleSheet.create({
   shortcutsSection: { marginTop: 8, marginBottom: 8 },
   shortcutsRow: { gap: 8 },
   shortcutBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: Radius.lg, borderWidth: 1 },
+  loanWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
 });

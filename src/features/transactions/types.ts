@@ -8,8 +8,8 @@ export interface TransactionListItemProps {
 }
 
 export interface FilterBarProps {
-  activeType: TransactionType | 'all';
-  onTypeChange: (type: TransactionType | 'all') => void;
+  activeType: TransactionType | 'all' | 'loan';
+  onTypeChange: (type: TransactionType | 'all' | 'loan') => void;
 }
 
 export interface TransactionGroupHeader {

@@ -31,7 +31,8 @@ import type { Loan } from '@store/loansStore';
 interface Props {
   loan:            Loan | undefined;
   onClose:         () => void;
-  onRecordPayment: (id: string) => void;
+  onRecordPayment: (id: string) => Promise<void> | void;
+  onUndoPayment?:  (id: string) => Promise<void> | void;
   onDelete:        (id: string) => void;
   onEdit:          (loan: Loan) => void;
   onToggleReminder:(id: string, enabled: boolean, time: string) => Promise<void>;
@@ -41,6 +42,7 @@ export function LoanInfoSheet({
   loan,
   onClose,
   onRecordPayment,
+  onUndoPayment,
   onDelete,
   onEdit,
   onToggleReminder,
@@ -59,12 +61,14 @@ export function LoanInfoSheet({
   const [reminders, setReminders] = useState(false);
   const [time, setTime] = useState('09:00');
   const [isRecording, setIsRecording] = useState(false);
+  const [isUndoing, setIsUndoing] = useState(false);
 
   useEffect(() => {
     if (visible && loan) {
       setReminders(loan.remindersEnabled ?? false);
       setTime(loan.reminderTime ?? '09:00');
       setIsRecording(false);
+      setIsUndoing(false);
       backdropOp.value = withTiming(1,   { duration: 220 });
       translateY.value = withSpring(0,   { damping: 22, stiffness: 160, mass: 0.9 });
     } else {
@@ -116,16 +120,38 @@ export function LoanInfoSheet({
     }
   };
 
-  const handleRecordEMI = () => {
-    if (isRecording) return;
+  const handleRecordEMI = async () => {
+    if (isRecording || isUndoing) return;
     setIsRecording(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
 
-    setTimeout(() => {
-      onRecordPayment(loan.id);
+    const minTimePromise = new Promise((resolve) => setTimeout(resolve, 600));
+
+    try {
+      await Promise.all([onRecordPayment(loan.id), minTimePromise]);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    } catch (err) {
+      console.error(err);
+    } finally {
       setIsRecording(false);
-    }, 600);
+    }
+  };
+
+  const handleUndoEMI = async () => {
+    if (isUndoing || isRecording || !onUndoPayment) return;
+    setIsUndoing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+
+    const minTimePromise = new Promise((resolve) => setTimeout(resolve, 600));
+
+    try {
+      await Promise.all([onUndoPayment(loan.id), minTimePromise]);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsUndoing(false);
+    }
   };
 
   const handleConfirmDelete = () => {
@@ -351,36 +377,85 @@ export function LoanInfoSheet({
 
         {/* Actions Row */}
         <View style={s.actions}>
-          {loan.completedPayments < loan.totalPayments ? (
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            {loan.completedPayments < loan.totalPayments ? (
+              <Pressable
+                onPress={handleRecordEMI}
+                disabled={isRecording || isUndoing}
+                style={[
+                  s.actionBtn,
+                  s.actionPrimary,
+                  { flex: 1.4, opacity: (isRecording || isUndoing) ? 0.6 : 1 },
+                ]}
+              >
+                <LinearGradient
+                  colors={[colors.brand.primary, colors.brand.accent] as [string, string]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={StyleSheet.absoluteFill}
+                />
+                {isRecording ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle-outline" size={18} color={colors.white} />
+                    <AppText style={[s.actionPrimaryText, { color: colors.white }]}>
+                      Record EMI
+                    </AppText>
+                  </>
+                )}
+              </Pressable>
+            ) : (
+              <View
+                style={[
+                  s.completedBanner,
+                  {
+                    flex: 1.4,
+                    backgroundColor: colors.status.income + '12',
+                    borderColor: colors.status.income + '30',
+                  },
+                ]}
+              >
+                <Ionicons name="checkmark-circle" size={18} color={colors.status.income} />
+                <AppText variant="labelSM" style={{ color: colors.status.income, fontWeight: '700', fontSize: 13 }}>
+                  Fully Repaid
+                </AppText>
+              </View>
+            )}
+
             <Pressable
-              onPress={handleRecordEMI}
-              disabled={isRecording}
-              style={[s.actionBtn, s.actionPrimary, { opacity: isRecording ? 0.6 : 1 }]}
+              onPress={handleUndoEMI}
+              disabled={isRecording || isUndoing || loan.completedPayments === 0}
+              style={[
+                s.actionBtn,
+                {
+                  flex: 1,
+                  backgroundColor: colors.background.tertiary,
+                  borderColor: colors.glass.border,
+                  borderWidth: 1,
+                  opacity: loan.completedPayments === 0 ? 0.25 : (isRecording || isUndoing) ? 0.6 : 1,
+                },
+              ]}
             >
-              <LinearGradient
-                colors={[colors.brand.primary, colors.brand.accent] as [string, string]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={StyleSheet.absoluteFill}
-              />
-              {isRecording ? (
-                <ActivityIndicator size="small" color={colors.white} />
+              {isUndoing ? (
+                <ActivityIndicator size="small" color={colors.text.secondary} />
               ) : (
                 <>
-                  <Ionicons name="checkmark-circle-outline" size={18} color={colors.white} />
-                  <AppText style={[s.actionPrimaryText, { color: colors.white }]}>
-                    Record EMI Installment
+                  <Ionicons
+                    name="refresh-outline"
+                    size={16}
+                    color={loan.completedPayments === 0 ? colors.text.tertiary : colors.text.secondary}
+                  />
+                  <AppText
+                    variant="labelSM"
+                    color={loan.completedPayments === 0 ? colors.text.tertiary : colors.text.secondary}
+                    style={{ fontWeight: '700' }}
+                  >
+                    Undo Last
                   </AppText>
                 </>
               )}
             </Pressable>
-          ) : (
-            <View style={[s.completedBanner, { backgroundColor: colors.status.income + '12', borderColor: colors.status.income + '30' }]}>
-              <Ionicons name="checkmark-circle" size={18} color={colors.status.income} />
-              <AppText variant="labelSM" style={{ color: colors.status.income, fontWeight: '700' }}>
-                Loan Fully Repaid & Closed
-              </AppText>
-            </View>
-          )}
+          </View>
 
           <View style={s.secondaryActions}>
             <Pressable

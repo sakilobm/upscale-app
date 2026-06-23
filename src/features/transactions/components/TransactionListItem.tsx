@@ -37,11 +37,13 @@ export const TransactionListItem = memo(function TransactionListItem({
   const badgeLabel =
     txSource === 'ledger' ? 'Ledger' :
     txSource === 'budget' ? 'Budget' :
+    txSource === 'loan' ? 'Loan' :
     null;
 
   const badgeColor =
     txSource === 'ledger' ? '#8B5CF6' :
     txSource === 'budget' ? '#10B981' :
+    txSource === 'loan' ? '#3B82F6' :
     (isIncome ? colors.status.income : colors.status.expense);
 
   return (

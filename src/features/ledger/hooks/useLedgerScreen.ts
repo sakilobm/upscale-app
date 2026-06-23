@@ -60,6 +60,7 @@ export function useLedgerScreen() {
   const {
     loans,
     recordPayment,
+    undoPayment,
     addLoan,
     deleteLoan,
     updateLoan,
@@ -204,6 +205,7 @@ export function useLedgerScreen() {
     deleteEntry,
     addPartialReturn,
     recordPayment,
+    undoPayment,
     handleAddLoan,
     handleEditLoan,
     deleteLoan,

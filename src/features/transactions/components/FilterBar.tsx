@@ -1,5 +1,5 @@
 import React, { memo, useCallback, type ComponentProps } from 'react';
-import { View, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Pressable, StyleSheet, Platform, ScrollView } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
   FadeIn,
@@ -14,11 +14,12 @@ import type { TransactionType } from '@store/types';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
-const FILTERS: { label: string; value: TransactionType | 'all'; icon: IoniconName }[] = [
+const FILTERS: { label: string; value: TransactionType | 'all' | 'loan'; icon: IoniconName }[] = [
   { label: 'All',       value: 'all',      icon: 'grid-outline'               },
   { label: 'Income',    value: 'income',    icon: 'arrow-down-circle-outline'  },
   { label: 'Expense',   value: 'expense',   icon: 'arrow-up-circle-outline'    },
   { label: 'Transfer',  value: 'transfer',  icon: 'swap-horizontal-outline'    },
+  { label: 'Loans',     value: 'loan',      icon: 'people-outline'             },
 ];
 
 /** Single filter chip with micro-scale animation on press */
@@ -88,37 +89,32 @@ export const FilterBar = memo(function FilterBar({
   onTypeChange,
 }: FilterBarProps) {
   const handlePress = useCallback(
-    (value: TransactionType | 'all') => {
-      Haptics.selectionAsync();
+    (value: TransactionType | 'all' | 'loan') => {
+      Haptics.selectionAsync().catch(() => {});
       onTypeChange(value);
     },
     [onTypeChange]
   );
 
   return (
-    <Animated.View
-      entering={FadeIn.duration(300)}
-      style={styles.container}
-    >
-      {FILTERS.map((filter) => (
-        <FilterChip
-          key={filter.value}
-          filter={filter}
-          isActive={filter.value === activeType}
-          onPress={() => handlePress(filter.value)}
-        />
-      ))}
+    <Animated.View entering={FadeIn.duration(300)} style={styles.outer}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {FILTERS.map((filter) => (
+          <FilterChip
+            key={filter.value}
+            filter={filter}
+            isActive={filter.value === activeType}
+            onPress={() => handlePress(filter.value)}
+          />
+        ))}
+      </ScrollView>
     </Animated.View>
   );
 });
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginHorizontal: Spacing['5'],
-  },
+  outer:   { paddingLeft: Spacing['5'], paddingVertical: Spacing['1'] },
+  content: { paddingRight: Spacing['5'], flexDirection: 'row', alignItems: 'center', gap: 8 },
   chipPressable: {},
   chip: {
     flexDirection: 'row',

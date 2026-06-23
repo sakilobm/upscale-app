@@ -18,6 +18,7 @@ import { AccountBar } from '@components/activity/AccountBar';
 import { ActivityEmptyState } from '@components/activity/ActivityEmptyState';
 import { SwipeableTransactionRow } from '@components/activity/SwipeableTransactionRow';
 import { FilterBar } from '@features/transactions/components/FilterBar';
+import { CategoryFilterBar } from '@features/transactions/components/CategoryFilterBar';
 import { EditTransactionSheet } from '@components/transactions/EditTransactionSheet';
 import { AppText } from '@components/AppText';
 import { LoadingScreen } from '@components/LoadingScreen';
@@ -77,6 +78,7 @@ export default function TransactionsScreen() {
         <View style={[s.stickyHeaderContainer, { backgroundColor: colors.background.primary }]}>
           <AccountBar />
           <FilterBar activeType={filters.type} onTypeChange={(type) => setFilters({ type })} />
+          <CategoryFilterBar />
           <View style={[s.dividerLine, { backgroundColor: isDark ? colors.glass.border : colors.glass.borderStrong }]} />
         </View>
 
@@ -166,9 +168,9 @@ const s = StyleSheet.create({
 
   /* ── Sticky header ── */
   stickyHeaderContainer: {
-    paddingTop: Spacing['1'],
-    paddingBottom: Spacing['3'],
-    gap: Spacing['2'],
+    paddingTop: Spacing['2'],
+    paddingBottom: Spacing['4'],
+    gap: Spacing['3'],
   },
   dividerLine: { height: StyleSheet.hairlineWidth, marginHorizontal: Spacing['5'] },
 

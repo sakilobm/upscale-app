@@ -10,6 +10,7 @@ import {
   requestNotificationPermission,
 } from '@features/notifications/services/notificationService';
 import { toast } from '@store/toastStore';
+import { addMonths, format, parseISO } from 'date-fns';
 
 export function useLoans(type?: LoanType) {
   const loans         = useLoansStore((s) => s.loans);
@@ -226,6 +227,75 @@ export function useLoans(type?: LoanType) {
     }
   }, [loans, storeDelete]);
 
+  // ─── Undo Last Payment ─────────────────────────────────────────────────────
+  const undoPayment = useCallback(async (loanId: string) => {
+    const loan = loans.find((l) => l.id === loanId);
+    if (!loan || loan.completedPayments === 0) return;
+
+    const prevDate = format(addMonths(parseISO(loan.nextPaymentDate), -1), 'yyyy-MM-dd');
+    const newCompleted = loan.completedPayments - 1;
+    const newAmountPaid = Math.max(0, loan.amountPaid - loan.emiAmount);
+
+    // 1. Update loan in store
+    updateLoan(loanId, {
+      amountPaid: newAmountPaid,
+      completedPayments: newCompleted,
+      nextPaymentDate: prevDate,
+    });
+
+    // 2. Reschedule notification if reminders enabled
+    const latestLoans = useLoansStore.getState().loans;
+    const updatedLoan = latestLoans.find((l) => l.id === loanId);
+    if (updatedLoan && updatedLoan.remindersEnabled && updatedLoan.reminderTime) {
+      try {
+        if (loan.reminderExpoId) {
+          await cancelScheduledReminder(loan.reminderExpoId).catch(() => {});
+        }
+        const title = loan.type === 'BORROWED' ? 'Loan Repayment Due' : 'Loan Installment Due';
+        const body = loan.type === 'BORROWED'
+          ? `Repayment of ${loan.emiAmount} is due for "${loan.name}" to ${loan.counterparty}.`
+          : `Repayment of ${loan.emiAmount} for "${loan.name}" is due from ${loan.counterparty}.`;
+
+        const newExpoId = await scheduleReminderNotification(
+          title,
+          body,
+          updatedLoan.reminderTime,
+          'none',
+          [],
+          updatedLoan.nextPaymentDate
+        );
+        updateLoan(loanId, { reminderExpoId: newExpoId });
+      } catch (e) {
+        console.warn('Failed to reschedule loan reminder:', e);
+      }
+    }
+
+    // 3. Find and delete transaction
+    const txs = useTransactionStore.getState().transactions;
+    const description = `${loan.name} — Installment #${loan.completedPayments}`;
+    const targetTx = txs.find((t) => 
+      t.source === 'loan' && 
+      t.accountId === loan.accountId &&
+      t.description === description
+    );
+
+    if (targetTx) {
+      useTransactionStore.getState().deleteTransaction(targetTx.id);
+
+      // Revert account balance
+      const account = accounts.find((a) => a.id === targetTx.accountId);
+      if (account) {
+        const txType = loan.type === 'BORROWED' ? 'expense' : 'income';
+        const nextBalance = txType === 'income'
+          ? account.balance - targetTx.amount
+          : account.balance + targetTx.amount;
+        updateAccount(targetTx.accountId, { balance: nextBalance });
+      }
+    }
+
+    toast.info(`Undone Installment #${loan.completedPayments} payment`);
+  }, [loans, accounts, updateAccount, updateLoan]);
+
   return {
     loans: filtered,
     totalDebt,
@@ -233,6 +303,7 @@ export function useLoans(type?: LoanType) {
     upcomingPayments,
     addLoan,
     recordPayment,
+    undoPayment,
     deleteLoan,
     updateLoan,
     toggleLoanReminder,
