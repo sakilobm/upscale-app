@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -15,6 +15,7 @@ import {
   Gesture,
 } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
@@ -23,9 +24,9 @@ import { Radius, Spacing } from '@constants/Dimensions';
 import { NudgeButton } from './NudgeButton';
 import type { LedgerEntry } from '@store/ledgerStore';
 
-// ─── Avatar ring ─────────────────────────────────────────────────────────────
+// ─── Avatar ──────────────────────────────────────────────────────────────────
 
-const RING_SIZE = 52;
+const RING_SIZE = 44;
 const AVATAR_INNER = RING_SIZE - 4;
 const RING_THICKNESS = 2;
 
@@ -55,10 +56,10 @@ function AvatarRing({
           borderColor: ringColor,
           borderWidth: RING_THICKNESS,
           shadowColor: ringColor,
-          shadowOpacity: status !== 'SETTLED' ? (isDark ? 0.55 : 0.3) : 0,
+          shadowOpacity: status !== 'SETTLED' ? (isDark ? 0.35 : 0.15) : 0,
           shadowRadius: 8,
-          shadowOffset: { width: 0, height: 0 },
-          elevation: status !== 'SETTLED' ? 4 : 0,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: status !== 'SETTLED' ? 3 : 0,
         },
       ]}
     >
@@ -69,13 +70,16 @@ function AvatarRing({
             width: AVATAR_INNER,
             height: AVATAR_INNER,
             borderRadius: AVATAR_INNER / 2,
-            backgroundColor: color + (status === 'SETTLED' ? '28' : '38'),
+            backgroundColor: color + (status === 'SETTLED' ? '15' : '22'),
           },
         ]}
       >
         <AppText
           variant="labelMD"
-          style={[styles.initials, { color: status === 'SETTLED' ? colors.text.tertiary : color }]}
+          style={[
+            styles.initials,
+            { color: status === 'SETTLED' ? colors.text.tertiary : color },
+          ]}
         >
           {initials}
         </AppText>
@@ -96,8 +100,9 @@ function StatusChip({ status }: { status: LedgerEntry['status'] }) {
   const label = status === 'SETTLED' ? 'Settled' : status === 'OVERDUE' ? 'Overdue' : 'Active';
 
   return (
-    <View style={[styles.chip, { backgroundColor: chipColor + '22' }]}>
-      <AppText variant="caption" style={{ color: chipColor, fontSize: 10, fontWeight: '700' }}>
+    <View style={[styles.chip, { backgroundColor: chipColor + '12', borderColor: chipColor + '22' }]}>
+      <View style={[styles.chipDot, { backgroundColor: chipColor }]} />
+      <AppText variant="caption" style={[styles.chipText, { color: chipColor }]}>
         {label}
       </AppText>
     </View>
@@ -121,10 +126,6 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
   const account = useAccountStore((s) => s.accounts.find((a) => a.id === entry.accountId));
 
   const translateX = useSharedValue(0);
-  const rowHeight = useSharedValue(80);
-  const opacity = useSharedValue(1);
-
-  // Track whether a meaningful swipe has occurred to suppress the onPress
   const swipedRef = useRef(false);
 
   const handleSettle = () => onSettle(entry.id);
@@ -162,7 +163,22 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
   const dirColor =
     entry.direction === 'OWED_TO_ME' ? colors.status.income : colors.status.expense;
 
-  const cardBg = colors.surface.sheet;
+  const ringColor =
+    entry.status === 'SETTLED' ? colors.text.tertiary :
+      entry.status === 'OVERDUE' ? colors.status.expense :
+        entry.personColor;
+
+  const glowColor =
+    entry.status === 'SETTLED' ? colors.transparent : ringColor;
+
+  // Modern glow border: dynamic glow color at low opacity, or fallback to glass border
+  const cardBorderColor = entry.status !== 'SETTLED'
+    ? glowColor + (isDark ? '44' : '26') // Translucent border glow matching person/status
+    : (isDark ? colors.glass.border : colors.glass.borderStrong);
+
+  const cardGradColors = isDark
+    ? [colors.background.secondary, colors.background.tertiary] as const
+    : ['#FFFFFF', '#F8FAFC'] as const;
 
   return (
     <View style={styles.swipeContainer}>
@@ -191,91 +207,139 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
             styles.card,
             cardStyle,
             {
-              backgroundColor: cardBg,
-              borderColor: colors.glass.background,
-              shadowColor: colors.black,
+              shadowColor: glowColor,
+              shadowOpacity: entry.status !== 'SETTLED' ? (isDark ? 0.35 : 0.1) : 0,
+              shadowRadius: 14,
+              shadowOffset: { width: 0, height: 6 },
+              backgroundColor: isDark ? colors.background.secondary : colors.white,
             },
           ]}
         >
-          <Pressable
-            onPress={() => {
-              if (swipedRef.current) {
-                translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
-                setTimeout(() => { swipedRef.current = false; }, 150);
-              } else {
-                onPress(entry);
-              }
-            }}
-            style={styles.cardContent}
-            android_ripple={{ color: colors.glass.backgroundMid }}
-          >
-            {/* Avatar */}
-            <AvatarRing
-              initials={entry.personInitials}
-              color={entry.personColor}
-              status={entry.status}
+          {/* Inner clips container for child elements to allow overflow shadows */}
+          <View style={[styles.cardInner, { borderColor: cardBorderColor }]}>
+            {/* Custom Linear Gradient for polished visual depth */}
+            <LinearGradient
+              colors={cardGradColors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
             />
 
-            {/* Body */}
-            <View style={styles.body}>
-              <View style={styles.topRow}>
-                <View style={styles.nameRow}>
-                  <AppText variant="labelLG" color={colors.text.primary} style={styles.name}>
+            {/* Ambient glow blob matching the status or person color */}
+            {entry.status !== 'SETTLED' && (
+              <View
+                style={[
+                  styles.cardGlowBlob,
+                  {
+                    backgroundColor: glowColor,
+                    opacity: isDark ? 0.08 : 0.04,
+                  },
+                ]}
+              />
+            )}
+
+            {/* Top shine overlay to give glassmorphic texture in dark mode */}
+            {isDark && (
+              <View style={[styles.cardShine, { backgroundColor: colors.glass.shine }]} />
+            )}
+
+            <Pressable
+              onPress={() => {
+                if (swipedRef.current) {
+                  translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
+                  setTimeout(() => { swipedRef.current = false; }, 150);
+                } else {
+                  onPress(entry);
+                }
+              }}
+              style={styles.cardContent}
+              android_ripple={{ color: colors.glass.backgroundMid }}
+            >
+              {/* Row 1: Avatar + Name + Amount */}
+              <View style={styles.mainRow}>
+                <AvatarRing
+                  initials={entry.personInitials}
+                  color={entry.personColor}
+                  status={entry.status}
+                />
+
+                <View style={styles.nameBlock}>
+                  <AppText
+                    variant="labelLG"
+                    color={colors.text.primary}
+                    numberOfLines={1}
+                    style={styles.name}
+                  >
                     {entry.personName}
                   </AppText>
-                  <StatusChip status={entry.status} />
+
+                  {/* Meta line: account badge + note */}
+                  <View style={styles.metaRow}>
+                    {account && (
+                      <View
+                        style={[
+                          styles.accountBadge,
+                          {
+                            backgroundColor: isDark ? account.color + '15' : account.color + '0E',
+                            borderColor: isDark ? account.color + '2C' : account.color + '18',
+                          },
+                        ]}
+                      >
+                        <Ionicons name={account.icon as any} size={9} color={account.color} />
+                        <AppText style={[styles.accountLabel, { color: account.color }]}>
+                          {account.name}
+                        </AppText>
+                      </View>
+                    )}
+                    {entry.note && (
+                      <AppText
+                        variant="caption"
+                        color={colors.text.secondary}
+                        numberOfLines={1}
+                        style={styles.note}
+                      >
+                        {entry.note}
+                      </AppText>
+                    )}
+                  </View>
                 </View>
-                <AppText
-                  variant="labelLG"
-                  style={[styles.amount, { color: dirColor }]}
-                >
-                  {entry.direction === 'OWED_TO_ME' ? '+' : '-'}{symbol}{remaining.toFixed(2)}
-                </AppText>
+
+                {/* Right: Amount + Status */}
+                <View style={styles.amountBlock}>
+                  <AppText
+                    style={[styles.amount, { color: dirColor }]}
+                    numberOfLines={1}
+                  >
+                    {entry.direction === 'OWED_TO_ME' ? '+' : '-'}{symbol}{remaining.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </AppText>
+                  <View style={styles.amountMeta}>
+                    <StatusChip status={entry.status} />
+                    {entry.status !== 'SETTLED' && <NudgeButton entry={entry} size={28} />}
+                  </View>
+                </View>
               </View>
 
-              {/* Note & Account badge */}
-              {(entry.note || account) && (
-                <View style={styles.metaRow}>
-                  {account && (
-                    <View style={[styles.accountBadge, { backgroundColor: account.color + '15' }]}>
-                      <Ionicons name={account.icon as any} size={9} color={account.color} />
-                      <AppText style={[styles.accountLabel, { color: account.color }]}>
-                        {account.name}
-                      </AppText>
-                    </View>
-                  )}
-                  {entry.note && (
-                    <AppText variant="caption" color={colors.text.tertiary} numberOfLines={1} style={styles.note}>
-                      {account ? `· ${entry.note}` : entry.note}
-                    </AppText>
-                  )}
-                </View>
-              )}
-
-              {/* Progress bar */}
+              {/* Row 2: Progress bar (only when partial returns exist) */}
               {entry.totalAmount > 0 && progressPct > 0 && progressPct < 1 && (
-                <View style={[styles.progressTrack, { backgroundColor: colors.glass.backgroundMid }]}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${progressPct * 100}%` as any,
-                        backgroundColor: entry.personColor,
-                      },
-                    ]}
-                  />
+                <View style={styles.progressSection}>
+                  <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          width: `${progressPct * 100}%` as any,
+                          backgroundColor: entry.personColor,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <AppText variant="caption" color={colors.text.secondary} style={styles.progressLabel}>
+                    {symbol}{entry.amountReturned.toLocaleString(undefined, { maximumFractionDigits: 0 })} returned of {symbol}{entry.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </AppText>
                 </View>
               )}
-            </View>
-
-            {/* Right: Nudge + amount total */}
-            <View style={styles.right}>
-              {entry.status !== 'SETTLED' && <NudgeButton entry={entry} size={30} />}
-              <AppText variant="caption" color={colors.text.tertiary} style={styles.total}>
-                of {symbol}{entry.totalAmount.toFixed(0)}
-              </AppText>
-            </View>
-          </Pressable>
+            </Pressable>
+          </View>
         </Animated.View>
       </GestureDetector>
     </View>
@@ -285,7 +349,7 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
 const styles = StyleSheet.create({
   swipeContainer: {
     position: 'relative',
-    marginBottom: Spacing['2'],
+    marginBottom: Spacing['3'],
   },
   actions: {
     position: 'absolute',
@@ -298,29 +362,54 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   actionBtn: {
-    width: 46,
-    height: 46,
+    width: 44,
+    height: 44,
     borderRadius: Radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   card: {
     borderRadius: Radius.xl,
-    borderWidth: 1,
-    overflow: 'hidden',
+    position: 'relative',
     ...Platform.select({
       ios: {
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.07,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 6 },
+        shadowRadius: 14,
       },
-      android: { elevation: 2 },
+      android: { elevation: 3 },
     }),
   },
+  cardInner: {
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  cardShine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+  },
+  cardGlowBlob: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
   cardContent: {
+    paddingHorizontal: Spacing['4'],
+    paddingVertical: Spacing['4'],
+    gap: Spacing['3'],
+  },
+
+  /* Row 1: main content */
+  mainRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing['4'],
     gap: Spacing['3'],
   },
   avatarRing: {
@@ -332,74 +421,99 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   initials: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: -0.2,
   },
-  chip: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 999,
-  },
-  body: {
+  nameBlock: {
     flex: 1,
-    gap: 3,
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flex: 1,
-    flexWrap: 'wrap',
+    gap: 4,
   },
   name: {
-    fontSize: 15,
-  },
-  amount: {
-    fontSize: 16,
+    fontSize: 15.5,
     fontWeight: '700',
-  },
-  note: {
-    marginTop: 0,
-    flex: 1,
+    letterSpacing: -0.1,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
+    gap: 8,
   },
   accountBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
   },
   accountLabel: {
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  note: {
+    flex: 1,
+    fontSize: 11.5,
+    fontWeight: '400',
+  },
+
+  /* Right: amount + status */
+  amountBlock: {
+    alignItems: 'flex-end',
+    gap: 5,
+  },
+  amount: {
+    fontSize: 16.5,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  amountMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+
+  /* Status chip */
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4.5,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  chipDot: {
+    width: 4.5,
+    height: 4.5,
+    borderRadius: 2.25,
+  },
+  chipText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+
+  /* Progress section */
+  progressSection: {
+    gap: 5,
+    marginTop: 2,
   },
   progressTrack: {
     height: 3,
-    borderRadius: 2,
-    marginTop: 6,
+    borderRadius: 2.5,
     overflow: 'hidden',
   },
   progressFill: {
     height: 3,
-    borderRadius: 2,
+    borderRadius: 2.5,
   },
-  right: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  total: {
+  progressLabel: {
     fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'right',
   },
 });
