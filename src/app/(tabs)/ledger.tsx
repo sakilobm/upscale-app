@@ -11,13 +11,14 @@
  *   src/features/ledger/components/LedgerEntrySheet.tsx
  */
 
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
 import { AppHeader } from '@components/AppHeader';
 import { FAB } from '@components/FAB';
 import { useTheme } from '@hooks/useTheme';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Layout, Radius } from '@constants/Dimensions';
 import { useLedgerScreen } from '@features/ledger/hooks/useLedgerScreen';
 import { SegmentedControl } from '@features/ledger/components/SegmentedControl';
@@ -29,6 +30,7 @@ import { AddLoanSheet } from '@features/ledger/components/AddLoanSheet';
 import { LoanInfoSheet } from '@features/ledger/components/LoanInfoSheet';
 import { LedgerInfoSheet } from '@features/ledger/components/LedgerInfoSheet';
 import { LedgerEmptyState } from '@features/ledger/components/LedgerEmptyState';
+import { loanProgress, daysUntilPayment } from '@store/loansStore';
 import type { LedgerTab } from '@features/ledger/types';
 
 // ─── Segment definitions ─────────────────────────────────────────────────────
@@ -43,6 +45,7 @@ const SEGMENTS: { key: LedgerTab; label: string }[] = [
 
 export default function LedgerScreen() {
   const { colors, isDark } = useTheme();
+  const { symbol } = useFormatCurrency();
 
   const {
     activeTab, setActiveTab,
@@ -100,16 +103,82 @@ export default function LedgerScreen() {
         {/* Main content */}
         {activeTab === 'loans' ? (
           <View style={s.loansSection}>
-            {loans.length === 0
-              ? <LedgerEmptyState variant="loans" />
-              : (
+            {loans.length === 0 ? (
+              <LedgerEmptyState variant="loans" />
+            ) : (
+              <>
                 <DebtHorizonStack
                   loans={loans}
                   onRecordPayment={recordPayment}
                   onPressCard={openLoanInfoSheet}
                 />
-              )
-            }
+                
+                <View style={s.loansVerticalSection}>
+                  <AppText variant="labelSM" color={colors.text.tertiary} style={s.sectionLabel}>
+                    ALL INSTALLMENTS
+                  </AppText>
+                  {loans.map((loan) => {
+                    const progress = loanProgress(loan);
+                    const days = daysUntilPayment(loan);
+                    const remaining = loan.principalAmount - loan.amountPaid;
+                    const isLate = days < 0;
+                    const statusColor = isLate
+                      ? colors.status.expense
+                      : days <= 7
+                      ? colors.status.warning
+                      : colors.status.income;
+                    return (
+                      <Pressable
+                        key={loan.id}
+                        onPress={() => openLoanInfoSheet(loan)}
+                        style={({ pressed }) => [
+                          s.loanItemCard,
+                          {
+                            backgroundColor: colors.background.secondary,
+                            borderColor: colors.glass.border,
+                            opacity: pressed ? 0.8 : 1,
+                          },
+                        ]}
+                      >
+                        <View style={s.loanItemHeader}>
+                          <View style={[s.loanDot, { backgroundColor: loan.color }]} />
+                          <View style={{ flex: 1 }}>
+                            <AppText variant="bodySM" color={colors.text.primary} style={{ fontWeight: '700' }}>
+                              {loan.name}
+                            </AppText>
+                            <AppText variant="caption" color={colors.text.tertiary}>
+                              with {loan.counterparty} · {loan.type === 'BORROWED' ? 'Borrowed' : 'Lent'}
+                            </AppText>
+                          </View>
+                          <View style={{ alignItems: 'flex-end' }}>
+                            <AppText variant="bodySM" color={colors.text.primary} style={{ fontWeight: '700' }}>
+                              {symbol}{loan.emiAmount.toLocaleString()}
+                            </AppText>
+                            <AppText variant="caption" color={colors.text.tertiary}>
+                              EMI Amount
+                            </AppText>
+                          </View>
+                        </View>
+
+                        <View style={s.loanItemProgress}>
+                          <View style={[s.loanItemTrack, { backgroundColor: colors.glass.background }]}>
+                            <View style={[s.loanItemFill, { width: `${progress * 100}%` as any, backgroundColor: loan.color }]} />
+                          </View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+                            <AppText variant="caption" color={colors.text.tertiary} style={s.loanItemProgressLabel}>
+                              {loan.completedPayments} of {loan.totalPayments} paid
+                            </AppText>
+                            <AppText variant="caption" color={statusColor} style={{ fontWeight: '600' }}>
+                              {isLate ? `${Math.abs(days)}d late` : days === 0 ? 'Due today' : `Due in ${days}d`}
+                            </AppText>
+                          </View>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            )}
           </View>
         ) : sections.length === 0 ? (
           <LedgerEmptyState variant={activeTab} />
@@ -190,6 +259,41 @@ const s = StyleSheet.create({
 
   segmentWrapper: { marginBottom: Spacing['5'] },
   loansSection: { marginTop: Spacing['2'] },
+  loansVerticalSection: {
+    marginTop: Spacing['6'],
+    gap: Spacing['4'],
+  },
+  loanItemCard: {
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    padding: Spacing['4'],
+    gap: Spacing['3'],
+  },
+  loanItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['3'],
+  },
+  loanDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  loanItemProgress: {
+    gap: 4,
+  },
+  loanItemTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  loanItemFill: {
+    height: 4,
+    borderRadius: 2,
+  },
+  loanItemProgressLabel: {
+    fontSize: 11,
+  },
   listSection: { gap: Spacing['4'] },
   sectionBlock: { gap: Spacing['2'] },
   sectionLabel: { fontSize: 11, letterSpacing: 1, marginBottom: Spacing['1'] },

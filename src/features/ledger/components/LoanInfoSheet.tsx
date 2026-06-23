@@ -7,6 +7,7 @@ import {
   Platform,
   Switch,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { ToastContainer } from '@components/Toast';
 import Animated, {
@@ -57,11 +58,13 @@ export function LoanInfoSheet({
 
   const [reminders, setReminders] = useState(false);
   const [time, setTime] = useState('09:00');
+  const [isRecording, setIsRecording] = useState(false);
 
   useEffect(() => {
     if (visible && loan) {
       setReminders(loan.remindersEnabled ?? false);
       setTime(loan.reminderTime ?? '09:00');
+      setIsRecording(false);
       backdropOp.value = withTiming(1,   { duration: 220 });
       translateY.value = withSpring(0,   { damping: 22, stiffness: 160, mass: 0.9 });
     } else {
@@ -99,6 +102,30 @@ export function LoanInfoSheet({
       setReminders(!val);
       Alert.alert('Permission Required', e?.message || 'Failed to enable reminders');
     }
+  };
+
+  const handleTimeSelect = async (newTime: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setTime(newTime);
+    if (reminders) {
+      try {
+        await onToggleReminder(loan.id, true, newTime);
+      } catch (e: any) {
+        Alert.alert('Permission Required', e?.message || 'Failed to update reminder time');
+      }
+    }
+  };
+
+  const handleRecordEMI = () => {
+    if (isRecording) return;
+    setIsRecording(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+
+    setTimeout(() => {
+      onRecordPayment(loan.id);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      setIsRecording(false);
+    }, 600);
   };
 
   const handleConfirmDelete = () => {
@@ -251,43 +278,100 @@ export function LoanInfoSheet({
         </View>
 
         {/* Reminders Toggle Section */}
-        <View style={[s.reminderSection, { backgroundColor: colors.background.tertiary, borderColor: colors.glass.border }]}>
-          <View style={s.flex1}>
-            <AppText variant="labelSM" color={colors.text.primary} style={{ fontWeight: '700' }}>
-              Repayment Reminders
-            </AppText>
-            <AppText variant="caption" color={colors.text.tertiary}>
-              Alert at 9:00 AM on payment due date
-            </AppText>
+        <View style={[s.reminderCard, { backgroundColor: colors.background.tertiary, borderColor: colors.glass.border }]}>
+          <View style={s.reminderHeader}>
+            <View style={s.flex1}>
+              <AppText variant="labelSM" color={colors.text.primary} style={{ fontWeight: '700' }}>
+                Payment Reminders
+              </AppText>
+              <AppText variant="caption" color={colors.text.tertiary}>
+                Receive alerts on installment due dates
+              </AppText>
+            </View>
+            <Switch
+              value={reminders}
+              onValueChange={handleReminderToggle}
+              trackColor={{ false: colors.glass.backgroundMid, true: colors.brand.primary }}
+              thumbColor={colors.white}
+              ios_backgroundColor={colors.glass.backgroundMid}
+            />
           </View>
-          <Switch
-            value={reminders}
-            onValueChange={handleReminderToggle}
-            trackColor={{ false: colors.glass.backgroundMid, true: colors.brand.primary }}
-            thumbColor={colors.white}
-            ios_backgroundColor={colors.glass.backgroundMid}
-          />
+
+          {reminders && (
+            <View style={s.timeSelectionArea}>
+              <AppText variant="caption" color={colors.text.secondary} style={s.timeLabel}>
+                ALERT TIME
+              </AppText>
+              <View style={s.timeChipsRow}>
+                {[
+                  { time: '09:00', label: 'Morning', sub: '9:00 AM', icon: 'sunny-outline' },
+                  { time: '13:00', label: 'Midday', sub: '1:00 PM', icon: 'time-outline' },
+                  { time: '18:00', label: 'Evening', sub: '6:00 PM', icon: 'moon-outline' },
+                ].map((opt) => {
+                  const active = time === opt.time;
+                  return (
+                    <Pressable
+                      key={opt.time}
+                      onPress={() => handleTimeSelect(opt.time)}
+                      style={[
+                        s.timeChip,
+                        {
+                          backgroundColor: active ? colors.brand.primary + '1A' : colors.glass.background,
+                          borderColor: active ? colors.brand.primary : colors.glass.border,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name={opt.icon as any}
+                        size={13}
+                        color={active ? colors.brand.primary : colors.text.secondary}
+                      />
+                      <View>
+                        <AppText
+                          variant="caption"
+                          style={{
+                            color: active ? colors.brand.primary : colors.text.primary,
+                            fontWeight: '700',
+                            fontSize: 10,
+                          }}
+                        >
+                          {opt.label}
+                        </AppText>
+                        <AppText variant="caption" color={colors.text.tertiary} style={{ fontSize: 8 }}>
+                          {opt.sub}
+                        </AppText>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Actions Row */}
         <View style={s.actions}>
           {loan.completedPayments < loan.totalPayments ? (
             <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-                onRecordPayment(loan.id);
-              }}
-              style={[s.actionBtn, s.actionPrimary]}
+              onPress={handleRecordEMI}
+              disabled={isRecording}
+              style={[s.actionBtn, s.actionPrimary, { opacity: isRecording ? 0.6 : 1 }]}
             >
               <LinearGradient
                 colors={[colors.brand.primary, colors.brand.accent] as [string, string]}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 style={StyleSheet.absoluteFill}
               />
-              <Ionicons name="checkmark-circle-outline" size={18} color={colors.white} />
-              <AppText style={[s.actionPrimaryText, { color: colors.white }]}>
-                Record EMI Installment
-              </AppText>
+              {isRecording ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle-outline" size={18} color={colors.white} />
+                  <AppText style={[s.actionPrimaryText, { color: colors.white }]}>
+                    Record EMI Installment
+                  </AppText>
+                </>
+              )}
             </Pressable>
           ) : (
             <View style={[s.completedBanner, { backgroundColor: colors.status.income + '12', borderColor: colors.status.income + '30' }]}>
@@ -364,12 +448,37 @@ const s = StyleSheet.create({
   detailRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: Spacing['3'] },
   divider: { height: StyleSheet.hairlineWidth },
 
-  reminderSection: {
+  reminderCard: {
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    padding: Spacing['4'],
+    gap: Spacing['3'],
+  },
+  reminderHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing['4'],
-    paddingVertical: 12,
-    borderRadius: Radius.xl,
+  },
+  timeSelectionArea: {
+    gap: 8,
+    marginTop: 4,
+  },
+  timeLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  timeChipsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  timeChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: Radius.lg,
     borderWidth: 1,
   },
 
