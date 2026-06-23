@@ -341,6 +341,31 @@ export default function HomeScreen() {
                   <QuickStatCard label="Income" amount={data.monthSummary.totalIncome} type="income" iconEmoji="💰" currency={user.currency} />
                   <QuickStatCard label="Expenses" amount={data.monthSummary.totalExpense} type="expense" iconEmoji="💸" currency={user.currency} />
                 </View>
+
+                {/* Analytics CTA */}
+                <Pressable
+                  onPress={() => router.push('/analytics')}
+                  style={({ pressed }) => [s.analyticsCta, { opacity: pressed ? 0.85 : 1 }]}
+                >
+                  <LinearGradient
+                    colors={isDark ? ['rgba(108,99,255,0.12)', 'rgba(56,189,248,0.08)'] : ['rgba(108,99,255,0.08)', 'rgba(56,189,248,0.05)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
+                  />
+                  <View style={[s.analyticsCtaIcon, { backgroundColor: colors.brand.primary + '18' }]}>
+                    <Ionicons name="analytics" size={18} color={colors.brand.primary} />
+                  </View>
+                  <View style={{ flex: 1, gap: 1 }}>
+                    <AppText variant="labelMD" color={colors.text.primary} style={{ fontWeight: '700' }}>
+                      Full Analytics
+                    </AppText>
+                    <AppText variant="caption" color={colors.text.tertiary}>
+                      Charts, trends, insights & growth metrics
+                    </AppText>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
+                </Pressable>
               </View>
             )}
 
@@ -521,5 +546,21 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+  },
+  analyticsCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['3'],
+    padding: Spacing['3'] + 2,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginTop: Spacing['3'],
+  },
+  analyticsCtaIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

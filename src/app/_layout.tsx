@@ -87,6 +87,7 @@ export default function RootLayout() {
         <Stack.Screen name="accounts"      options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
         <Stack.Screen name="categories"    options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
         <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="analytics"     options={{ animation: 'slide_from_right' }} />
       </Stack>
       <ToastContainer />
       {showSplash && (
