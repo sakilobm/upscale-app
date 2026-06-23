@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { triggerAppHaptic } from '@/services/hapticsService';
 import { useAuthStore } from '@store/authStore';
 import { toast } from '@store/toastStore';
 import type { CurrencyCode } from '@store/types';
@@ -73,17 +73,17 @@ export function useOnboardingScreen() {
   const progress    = step / (ONBOARDING_TOTAL - 1);
 
   const handleNext = () => {
-    Haptics.selectionAsync();
+    triggerAppHaptic('selection', 'onboarding');
     setStep((s) => Math.min(s + 1, ONBOARDING_TOTAL - 1));
   };
 
   const handleBack = () => {
-    Haptics.selectionAsync();
+    triggerAppHaptic('selection', 'onboarding');
     setStep((s) => Math.max(s - 1, 0));
   };
 
   const handleSkip = () => {
-    Haptics.selectionAsync();
+    triggerAppHaptic('selection', 'onboarding');
     setStep(ONBOARDING_TOTAL - 1);
   };
 
@@ -93,7 +93,7 @@ export function useOnboardingScreen() {
       toast.error('Please enter your name to continue');
       return;
     }
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    triggerAppHaptic('success', 'onboarding');
     const userId = `user-${Date.now()}`;
     setUser({
       id:        userId,

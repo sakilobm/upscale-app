@@ -45,6 +45,14 @@ export default function OnboardingScreen() {
   }, [step]);
   const containerStyle = useAnimatedStyle(() => ({ transform: [{ translateX: translateX.value }] }));
 
+  // ── Track if onboarding screen is active globally ──
+  useEffect(() => {
+    (globalThis as any).__isOnboardingActive = true;
+    return () => {
+      (globalThis as any).__isOnboardingActive = false;
+    };
+  }, []);
+
   // ── Active slide gradient accent colour ──
   const slideKey       = FEATURE_SLIDES[Math.min(step, FEATURE_SLIDES.length - 1)]?.gradientKey ?? 'purpleViolet';
   const activeGradient = colors.gradients[slideKey] as any;

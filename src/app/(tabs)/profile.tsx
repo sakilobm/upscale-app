@@ -28,6 +28,7 @@ import { NotifSheet } from '@components/profile/NotifSheet';
 import { SecuritySheet } from '@components/profile/SecuritySheet';
 import { ExportSheet } from '@components/profile/ExportSheet';
 import { HelpSheet } from '@components/profile/HelpSheet';
+import { HapticSettingsSheet } from '@components/profile/HapticSettingsSheet';
 import { ConfirmModal } from '@components/ConfirmModal';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
@@ -91,7 +92,8 @@ export default function ProfileScreen() {
           <SettingRow animDelay={40}  icon="grid-outline"             iconColor={colors.status.income} label="Manage Categories" subtitle="Create & customize spending categories"                 onPress={() => router.push('/categories')} />
           <SettingRow animDelay={80}  icon="notifications-outline"    iconColor={colors.brand.accentWarm} label="Notifications"     subtitle={`${Object.values(preferences.notifications).filter(Boolean).length} of 4 enabled`} onPress={sheets.notifications.open} />
           <SettingRow animDelay={120} icon="globe-outline"            iconColor={colors.status.info} label="Currency & Region" subtitle={`${data.user?.currency ?? 'USD'} · ${CURRENCY_SYMBOLS[data.user?.currency ?? 'USD']}`} onPress={sheets.currency.open} />
-          <SettingRow animDelay={160} icon="shield-checkmark-outline" iconColor={colors.status.expense} label="Security & Privacy" subtitle={preferences.security.biometric ? 'Biometrics on' : 'PIN only'} onPress={sheets.security.open} isLast />
+          <SettingRow animDelay={160} icon="shield-checkmark-outline" iconColor={colors.status.expense} label="Security & Privacy" subtitle={preferences.security.biometric ? 'Biometrics on' : 'PIN only'} onPress={sheets.security.open} />
+          <SettingRow animDelay={200} icon="phone-portrait-outline"   iconColor={colors.brand.secondary} label="Vibration & Haptics" subtitle={preferences.haptics.level === 'off' ? 'Off' : `${preferences.haptics.level.charAt(0).toUpperCase() + preferences.haptics.level.slice(1)} strength`} onPress={sheets.haptics.open} isLast />
         </SectionCard>
 
         <SectionCard title="Data" delay={240} accentColor={colors.status.income}>
@@ -147,6 +149,10 @@ export default function ProfileScreen() {
 
       <ProfileBottomSheet visible={sheets.security.isOpen}      onClose={sheets.security.close}      title="Security & Privacy"  snapHeight={420}>
         <SecuritySheet prefs={preferences.security} onChange={preferences.updateSecurity} />
+      </ProfileBottomSheet>
+
+      <ProfileBottomSheet visible={sheets.haptics.isOpen}       onClose={sheets.haptics.close}      title="Vibration & Haptics"  snapHeight={560}>
+        <HapticSettingsSheet />
       </ProfileBottomSheet>
 
       <ProfileBottomSheet visible={sheets.export.isOpen}        onClose={sheets.export.close}        title="Export Data"          snapHeight={340}>

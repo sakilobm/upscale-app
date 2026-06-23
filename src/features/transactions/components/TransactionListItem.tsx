@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { triggerAppHaptic } from '@/services/hapticsService';
 import { CategoryIcon } from '@components/CategoryIcon';
 import { AppText } from '@components/AppText';
 import { AmountText } from '@components/AmountText';
@@ -54,7 +54,7 @@ export const TransactionListItem = memo(function TransactionListItem({
     <Pressable
       onPress={() => onPress(transaction)}
       onLongPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        triggerAppHaptic('medium', 'button');
         onLongPress?.(transaction);
       }}
       style={({ pressed }) => [

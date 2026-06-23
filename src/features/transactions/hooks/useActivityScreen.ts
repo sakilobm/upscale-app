@@ -10,7 +10,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
-import * as Haptics from 'expo-haptics';
+import { triggerAppHaptic } from '@/services/hapticsService';
 import { useTransactions } from './useTransactions';
 import { useTransactionStore } from '@store/transactionStore';
 import { useAccountStore } from '@store/accountStore';
@@ -50,7 +50,7 @@ export function useActivityScreen() {
 
   const handleTransactionPress = useCallback((tx: Transaction) => {
     setEditingTransaction(tx);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    triggerAppHaptic('light', 'button');
   }, []);
 
   return {

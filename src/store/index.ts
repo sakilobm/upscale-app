@@ -8,3 +8,4 @@ export * from './ledgerStore';
 export * from './loansStore';
 export * from './plannedPaymentsStore';
 export * from './toastStore';
+export * from './preferencesStore';

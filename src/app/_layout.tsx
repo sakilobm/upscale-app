@@ -10,6 +10,9 @@ import { useNotificationStore } from '@store/notificationStore';
 import { SplashOverlay } from '@components/SplashOverlay';
 import { ToastContainer } from '@components/Toast';
 import { DarkTheme, LightTheme } from '@constants/themes';
+import { applyGlobalHapticPatch } from '@/services/hapticsService';
+
+applyGlobalHapticPatch();
 
 SplashScreen.preventAutoHideAsync();
 

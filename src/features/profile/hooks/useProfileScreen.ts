@@ -12,6 +12,7 @@ import { useState, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
 import { toast } from '@store/toastStore';
 import { useProfile } from './useProfile';
+import { usePreferencesStore } from '@store/preferencesStore';
 import type { CurrencyCode } from '@store/types';
 
 // ─── Sub-contracts ────────────────────────────────────────────────────────────
@@ -56,6 +57,7 @@ export function useProfileScreen() {
   const [currencySheet, setCurrencySheet] = useState(false);
   const [notifSheet,    setNotifSheet]    = useState(false);
   const [securitySheet, setSecuritySheet] = useState(false);
+  const [hapticsSheet,  setHapticsSheet]  = useState(false);
   const [exportSheet,   setExportSheet]   = useState(false);
   const [helpSheet,     setHelpSheet]     = useState(false);
 
@@ -71,6 +73,8 @@ export function useProfileScreen() {
   const [secPrefs, setSecPrefs] = useState<SecPrefs>({
     biometric: false, autoLock: true, hideBalance: false,
   });
+  
+  const hapticLevel = usePreferencesStore((s) => s.hapticLevel);
 
   // ── Handlers that close sheets before delegating ──
   const handleSelectCurrency = useCallback((code: CurrencyCode) => {
@@ -117,6 +121,11 @@ export function useProfileScreen() {
         open:   () => setSecuritySheet(true),
         close:  () => setSecuritySheet(false),
       } satisfies SheetHandle,
+      haptics: {
+        isOpen: hapticsSheet,
+        open:   () => setHapticsSheet(true),
+        close:  () => setHapticsSheet(false),
+      } satisfies SheetHandle,
       export: {
         isOpen: exportSheet,
         open:   () => setExportSheet(true),
@@ -153,6 +162,9 @@ export function useProfileScreen() {
     preferences: {
       notifications: notifPrefs,
       security:      secPrefs,
+      haptics: {
+        level: hapticLevel,
+      },
       updateNotification: (key: keyof NotifPrefs, value: boolean) => {
         Haptics.selectionAsync();
         setNotifPrefs((p) => ({ ...p, [key]: value }));
