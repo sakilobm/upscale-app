@@ -7,10 +7,10 @@
  *   src/app/(tabs)/transactions.tsx
  */
 
-import React, { useRef } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, Pressable, LayoutChangeEvent } from 'react-native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withSpring, withTiming,
+  useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS,
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,31 +33,43 @@ export function SwipeableTransactionRow({ tx, onDelete, onPress, balanceAfter }:
   const cardBg = colors.surface.sheet;
   const translateX = useSharedValue(0);
   const rowOpacity = useSharedValue(1);
-  const swipedRef  = useRef(false);
+  const rowHeight  = useSharedValue<number | undefined>(undefined);
+
+  const handleLayout = (e: LayoutChangeEvent) => {
+    if (rowHeight.value === undefined) {
+      rowHeight.value = e.nativeEvent.layout.height;
+    }
+  };
 
   const dismiss = () => {
-    translateX.value = withTiming(-400, { duration: 260 });
+    'worklet';
+    translateX.value = withTiming(-400, { duration: 250 });
     rowOpacity.value = withTiming(0,    { duration: 200 });
-    setTimeout(onDelete, 240);
+    if (rowHeight.value === undefined) {
+      rowHeight.value = 72;
+    }
+    rowHeight.value  = withTiming(0,    { duration: 250 }, (finished) => {
+      if (finished) {
+        runOnJS(onDelete)();
+      }
+    });
   };
 
   const panGesture = Gesture.Pan()
-    .runOnJS(true)
     .activeOffsetX([-10, 10000])
     .failOffsetY([-12, 12])
-    .onBegin(() => { swipedRef.current = false; })
     .onUpdate((e) => {
-      if (e.translationX < -5) swipedRef.current = true;
+      'worklet';
       translateX.value = Math.min(Math.max(e.translationX, -(DELETE_W + 8)), 0);
     })
     .onEnd((e) => {
+      'worklet';
       if (e.velocityX < -600 || e.translationX < -180) {
         dismiss();
       } else if (e.translationX < -SNAP_AT) {
         translateX.value = withSpring(-DELETE_W, { damping: 20, stiffness: 200 });
       } else {
         translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
-        setTimeout(() => { swipedRef.current = false; }, 100);
       }
     });
 
@@ -67,8 +79,13 @@ export function SwipeableTransactionRow({ tx, onDelete, onPress, balanceAfter }:
     backgroundColor: cardBg,
   }));
 
+  const containerStyle = useAnimatedStyle(() => ({
+    height:   rowHeight.value,
+    overflow: 'hidden',
+  }));
+
   return (
-    <View style={s.wrapper}>
+    <Animated.View onLayout={handleLayout} style={[s.wrapper, containerStyle]}>
       <Pressable onPress={dismiss} style={[s.deleteAction, { backgroundColor: colors.status.expense }]}>
         <Ionicons name="trash-outline" size={17} color={colors.white} />
       </Pressable>
@@ -78,9 +95,8 @@ export function SwipeableTransactionRow({ tx, onDelete, onPress, balanceAfter }:
           <TransactionListItem
             transaction={tx}
             onPress={(t) => {
-              if (swipedRef.current) {
+              if (translateX.value < -5) {
                 translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
-                setTimeout(() => { swipedRef.current = false; }, 100);
               } else {
                 onPress(t);
               }
@@ -89,7 +105,7 @@ export function SwipeableTransactionRow({ tx, onDelete, onPress, balanceAfter }:
           />
         </Animated.View>
       </GestureDetector>
-    </View>
+    </Animated.View>
   );
 }
 

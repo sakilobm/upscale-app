@@ -79,6 +79,14 @@ export default function TransactionsScreen() {
           <AccountBar />
           <FilterBar activeType={filters.type} onTypeChange={(type) => setFilters({ type })} />
           <CategoryFilterBar />
+          {!isEmpty && (
+            <View style={[s.tipContainer, { backgroundColor: isDark ? colors.glass.background : colors.brand.primary + '06', borderColor: isDark ? colors.glass.border : colors.brand.primary + '18' }]}>
+              <Ionicons name="bulb-outline" size={14} color={colors.brand.primary} />
+              <AppText variant="caption" color={colors.text.secondary} style={s.tipText}>
+                Swipe left on a transaction to delete
+              </AppText>
+            </View>
+          )}
           <View style={[s.dividerLine, { backgroundColor: isDark ? colors.glass.border : colors.glass.borderStrong }]} />
         </View>
 
@@ -171,6 +179,23 @@ const s = StyleSheet.create({
     paddingTop: Spacing['2'],
     paddingBottom: Spacing['4'],
     gap: Spacing['3'],
+  },
+  tipContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing['2'],
+    paddingVertical: 10,
+    paddingHorizontal: Spacing['4'],
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginHorizontal: Spacing['5'],
+    marginTop: Spacing['2'],
+    marginBottom: Spacing['1'],
+  },
+  tipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   dividerLine: { height: StyleSheet.hairlineWidth, marginHorizontal: Spacing['5'] },
 

@@ -100,6 +100,24 @@ const ToastChip = memo(function ToastChip({ item, onDismiss }: ChipProps) {
           {item.message}
         </AppText>
 
+        {/* Action Button if provided */}
+        {item.onAction && item.actionLabel && (
+          <Pressable
+            onPress={() => {
+              item.onAction?.();
+              onDismiss();
+            }}
+            style={({ pressed }) => [
+              styles.actionBtn,
+              { opacity: pressed ? 0.65 : 1 }
+            ]}
+          >
+            <AppText variant="labelSM" style={{ color: color, fontWeight: '800' }}>
+              {item.actionLabel.toUpperCase()}
+            </AppText>
+          </Pressable>
+        )}
+
         {/* Dismiss × */}
         <Ionicons name="close" size={14} color={colors.text.tertiary} />
       </Pressable>
@@ -181,5 +199,12 @@ const styles = StyleSheet.create({
     flex:       1,
     lineHeight: 20,
     fontWeight: '600',
+  },
+  actionBtn: {
+    paddingHorizontal: Spacing['3'],
+    paddingVertical: 6,
+    borderRadius: Radius.md,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    marginRight: 4,
   },
 });

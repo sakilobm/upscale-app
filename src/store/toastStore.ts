@@ -7,11 +7,13 @@ export interface ToastItem {
   message:  string;
   type:     ToastType;
   duration: number;
+  actionLabel?: string;
+  onAction?:    () => void;
 }
 
 interface ToastState {
   toasts: ToastItem[];
-  show:    (message: string, type?: ToastType, duration?: number) => void;
+  show:    (message: string, type?: ToastType, duration?: number, actionLabel?: string, onAction?: () => void) => void;
   hide:    (id: string) => void;
   success: (message: string, duration?: number) => void;
   error:   (message: string, duration?: number) => void;
@@ -22,10 +24,10 @@ interface ToastState {
 export const useToastStore = create<ToastState>((set, get) => ({
   toasts: [],
 
-  show: (message, type = 'info', duration = 2800) => {
+  show: (message, type = 'info', duration = 2800, actionLabel, onAction) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     // Cap at 3 visible toasts
-    set((s) => ({ toasts: [...s.toasts.slice(-2), { id, message, type, duration }] }));
+    set((s) => ({ toasts: [...s.toasts.slice(-2), { id, message, type, duration, actionLabel, onAction }] }));
   },
 
   hide: (id) =>
@@ -39,7 +41,7 @@ export const useToastStore = create<ToastState>((set, get) => ({
 
 // ── Imperative API ────────────────────────────────────────────────────────────
 export const toast = {
-  show:    (m: string, t?: ToastType, d?: number) => useToastStore.getState().show(m, t, d),
+  show:    (m: string, t?: ToastType, d?: number, al?: string, oa?: () => void) => useToastStore.getState().show(m, t, d, al, oa),
   success: (m: string, d?: number)                => useToastStore.getState().success(m, d),
   error:   (m: string, d?: number)                => useToastStore.getState().error(m, d),
   info:    (m: string, d?: number)                => useToastStore.getState().info(m, d),
