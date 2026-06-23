@@ -29,6 +29,7 @@ import { SecuritySheet } from '@components/profile/SecuritySheet';
 import { ExportSheet } from '@components/profile/ExportSheet';
 import { HelpSheet } from '@components/profile/HelpSheet';
 import { HapticSettingsSheet } from '@components/profile/HapticSettingsSheet';
+import { BackupSyncSheet } from '@components/profile/BackupSyncSheet';
 import { ConfirmModal } from '@components/ConfirmModal';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
@@ -107,7 +108,7 @@ export default function ProfileScreen() {
           <SettingRow
             animDelay={0}
             icon="cloud-done-outline" iconColor={colors.status.income} label="Backup & Sync"
-            subtitle="Last synced: Today" onPress={handlers.backup}
+            subtitle="Last synced: Today" onPress={sheets.backup.open}
             right={
               <View style={[s.badge, { backgroundColor: colors.status.income + '18' }]}>
                 <AppText variant="caption" style={{ color: colors.status.income, fontSize: 10, fontWeight: '700' }}>ON</AppText>
@@ -168,6 +169,10 @@ export default function ProfileScreen() {
 
       <ProfileBottomSheet visible={sheets.help.isOpen}          onClose={sheets.help.close}          title="Help & Support"       snapHeight={560}>
         <HelpSheet />
+      </ProfileBottomSheet>
+
+      <ProfileBottomSheet visible={sheets.backup.isOpen}        onClose={sheets.backup.close}        title="Backup & Sync"        snapHeight={580}>
+        <BackupSyncSheet onClose={sheets.backup.close} />
       </ProfileBottomSheet>
 
       {/* ── Confirm Modals ── */}

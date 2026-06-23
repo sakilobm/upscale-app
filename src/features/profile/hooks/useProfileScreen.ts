@@ -64,6 +64,7 @@ export function useProfileScreen() {
   const [hapticsSheet,  setHapticsSheet]  = useState(false);
   const [exportSheet,   setExportSheet]   = useState(false);
   const [helpSheet,     setHelpSheet]     = useState(false);
+  const [backupSheet,   setBackupSheet]   = useState(false);
 
   // ── Confirm dialogs ──
   const [signOutConfirm,   setSignOutConfirm]   = useState(false);
@@ -137,6 +138,11 @@ export function useProfileScreen() {
         isOpen: helpSheet,
         open:   () => setHelpSheet(true),
         close:  () => setHelpSheet(false),
+      } satisfies SheetHandle,
+      backup: {
+        isOpen: backupSheet,
+        open:   () => setBackupSheet(true),
+        close:  () => setBackupSheet(false),
       } satisfies SheetHandle,
     },
 
