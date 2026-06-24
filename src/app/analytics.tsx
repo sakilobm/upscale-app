@@ -628,8 +628,8 @@ function CashFlowChart({
 }) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const maxVal = Math.max(...bars.map((b) => Math.max(b.income, b.expense)), 1);
-  // Add 15% headroom so bars never touch the container top
-  const scaledMax = maxVal * 1.15;
+  // Add 20% headroom so bars never touch the container top
+  const scaledMax = maxVal * 1.20;
   const CHART_H = chartHeight;
   const barWidth = isFullscreen
     ? Math.min(32, (SCREEN_W - 64) / bars.length / 2.5)
@@ -644,7 +644,7 @@ function CashFlowChart({
     <View style={s.barChartContainer}>
       {/* Grid lines + Y-axis labels */}
       {[0.25, 0.5, 0.75, 1].map((pct) => (
-        <View key={pct} style={{ position: 'absolute', bottom: pct * CHART_H + 20, left: 0, right: 0 }}>
+        <View key={pct} style={{ position: 'absolute', bottom: pct * CHART_H + 24, left: 0, right: 0 }}>
           <View
             style={[
               s.gridLine,
@@ -692,42 +692,45 @@ function CashFlowChart({
         </View>
       )}
 
-      <View style={[s.barChartRow, { height: CHART_H, marginTop: 20 }]}>
+      {/* Bar Column Row */}
+      <View style={[s.barChartRow, { height: CHART_H + 24, marginTop: 20 }]}>
         {bars.map((bar, i) => {
           const isSelected = selectedIdx === i;
           return (
             <Pressable
               key={i}
               onPress={() => handleBarTap(i)}
-              style={[s.barGroup, { opacity: selectedIdx !== null && !isSelected ? 0.4 : 1 }]}
+              style={[s.barColumn, { opacity: selectedIdx !== null && !isSelected ? 0.4 : 1 }]}
             >
-              <View style={s.barPair}>
-                {/* Income bar */}
-                <View
-                  style={[
-                    s.bar,
-                    {
-                      height: Math.max((bar.income / scaledMax) * CHART_H, 2),
-                      width: barWidth,
-                      backgroundColor: '#10B981',
-                      borderRadius: barWidth / 2,
-                    },
-                  ]}
-                />
-                {/* Expense bar */}
-                <View
-                  style={[
-                    s.bar,
-                    {
-                      height: Math.max((bar.expense / scaledMax) * CHART_H, 2),
-                      width: barWidth,
-                      backgroundColor: '#EF4444',
-                      borderRadius: barWidth / 2,
-                    },
-                  ]}
-                />
+              <View style={[s.barsContainer, { height: CHART_H }]}>
+                <View style={s.barPair}>
+                  {/* Income bar */}
+                  <View
+                    style={[
+                      s.bar,
+                      {
+                        height: Math.max((bar.income / scaledMax) * CHART_H, 2),
+                        width: barWidth,
+                        backgroundColor: '#10B981',
+                        borderRadius: barWidth / 2,
+                      },
+                    ]}
+                  />
+                  {/* Expense bar */}
+                  <View
+                    style={[
+                      s.bar,
+                      {
+                        height: Math.max((bar.expense / scaledMax) * CHART_H, 2),
+                        width: barWidth,
+                        backgroundColor: '#EF4444',
+                        borderRadius: barWidth / 2,
+                      },
+                    ]}
+                  />
+                </View>
               </View>
-              <AppText style={[s.barLabel, { color: isSelected ? colors.text.primary : colors.text.tertiary, fontWeight: isSelected ? '800' : '600' }]}>
+              <AppText style={[s.barLabel, { color: isSelected ? colors.text.primary : colors.text.tertiary, fontWeight: isSelected ? '800' : '600', marginTop: 6 }]}>
                 {bar.label}
               </AppText>
             </Pressable>
@@ -761,9 +764,11 @@ function TrendLineChart({
 
   const DOT_R = isFullscreen ? 6 : 5;
   const PADDING_V = isFullscreen ? 24 : 16; // vertical padding inside the chart area
+  const PADDING_H = 20; // horizontal padding to prevent edge dot clipping
   const CHART_H = chartHeight;
   const CHART_W = chartWidth;
   const DRAW_H = CHART_H - PADDING_V * 2; // drawable height between top/bottom padding
+  const DRAW_W = CHART_W - PADDING_H * 2; // drawable width inside the padding
 
   const values = points.map((p) => p.value);
   const minVal = Math.min(...values, 0);
@@ -772,8 +777,13 @@ function TrendLineChart({
 
   // Map value to Y coordinate with vertical padding
   const getY = (v: number) => PADDING_V + DRAW_H - ((v - minVal) / range) * DRAW_H;
-  // Map index to X coordinate
-  const getX = (i: number) => points.length > 1 ? (i / (points.length - 1)) * CHART_W : CHART_W / 2;
+  // Map index to X coordinate with horizontal padding to prevent edge clipping
+  const getX = (i: number) => points.length > 1 ? PADDING_H + (i / (points.length - 1)) * DRAW_W : CHART_W / 2;
+
+  const handleDotTap = useCallback((idx: number) => {
+    Haptics.selectionAsync();
+    setSelectedIdx(selectedIdx === idx ? null : idx);
+  }, [selectedIdx]);
 
   if (points.length < 2) {
     return (
@@ -795,7 +805,7 @@ function TrendLineChart({
     return d;
   };
 
-  // Build area fill path (same curve + close to bottom)
+  // Build area fill path (same curve + close to bottom of chart area)
   const buildAreaPath = () => {
     let d = buildPath();
     d += ` L ${getX(points.length - 1)} ${CHART_H}`;
@@ -808,11 +818,6 @@ function TrendLineChart({
 
   // Zero line Y position
   const zeroY = getY(0);
-
-  const handleDotTap = useCallback((idx: number) => {
-    Haptics.selectionAsync();
-    setSelectedIdx(selectedIdx === idx ? null : idx);
-  }, [selectedIdx]);
 
   return (
     <View>
@@ -918,44 +923,48 @@ function TrendLineChart({
               {isSelected && (
                 <Circle cx={cx} cy={cy} r={DOT_R + 5} fill={isPositive ? '#6C63FF' + '20' : '#EF4444' + '20'} />
               )}
-              {/* White ring border */}
+              {/* Premium main dot with theme-aware stroke to prevent color mismatch */}
               <Circle
                 cx={cx}
                 cy={cy}
-                r={isSelected ? DOT_R + 1 : DOT_R}
-                fill={isDark ? colors.background.primary : '#FFF'}
-              />
-              {/* Colored inner dot */}
-              <Circle
-                cx={cx}
-                cy={cy}
-                r={isSelected ? DOT_R - 1 : DOT_R - 2}
+                r={isSelected ? DOT_R : DOT_R - 1}
                 fill={isPositive ? '#6C63FF' : '#EF4444'}
+                stroke={colors.background.secondary}
+                strokeWidth={2}
               />
             </G>
           );
         })}
       </Svg>
 
-      {/* Labels */}
-      <View style={s.trendLabels}>
+      {/* Labels — absolutely positioned to guarantee center alignment under dots */}
+      <View style={[s.trendLabels, { height: 24, position: 'relative', width: CHART_W }]}>
         {points.map((pt, i) => {
+          const cx = getX(i);
           const isSelected = selectedIdx === i;
           return (
-            <AppText
+            <View
               key={i}
-              style={[
-                s.barLabel,
-                {
-                  color: isSelected ? colors.text.primary : colors.text.tertiary,
-                  fontWeight: isSelected ? '800' : '600',
-                  flex: 1,
-                  textAlign: 'center',
-                },
-              ]}
+              style={{
+                position: 'absolute',
+                left: cx - 30,
+                width: 60,
+                alignItems: 'center',
+              }}
             >
-              {pt.label}
-            </AppText>
+              <AppText
+                style={[
+                  s.barLabel,
+                  {
+                    color: isSelected ? colors.text.primary : colors.text.tertiary,
+                    fontWeight: isSelected ? '800' : '600',
+                    fontSize: 9,
+                  },
+                ]}
+              >
+                {pt.label}
+              </AppText>
+            </View>
           );
         })}
       </View>
@@ -1202,9 +1211,12 @@ const s = StyleSheet.create({
     right: 0,
     height: StyleSheet.hairlineWidth,
   },
-  barGroup: {
+  barColumn: {
     alignItems: 'center',
-    gap: 6,
+  },
+  barsContainer: {
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   barPair: {
     flexDirection: 'row',

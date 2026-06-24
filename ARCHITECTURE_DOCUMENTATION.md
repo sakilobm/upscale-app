@@ -8,16 +8,20 @@ This document describes the high-level architecture of `WhereCash`, a modern, po
 
 The project follows a standard modular organization:
 
-- **`src/app/`**: routing tree managed by Expo Router.
+- **`src/app/`**: Routing tree managed by Expo Router.
   - `_layout.tsx`: Root application container configuring global providers (`GestureHandlerRootView`, font preloading, status bar styling).
   - `(tabs)/_layout.tsx`: Tabs layout using Expo Router `<Tabs>` and mapping routes to screens using our animated floating custom tab bar.
   - `(tabs)/index.tsx`, `budget.tsx`, `profile.tsx`, `transactions.tsx`: Screen components.
+- **`src/features/`**: Feature-specific logical layers.
+  - `[feature_name]/hooks/`: Feature-specific custom hooks (e.g. `useProfileScreen.ts`, `useAnalyticsScreen.ts`) containing headless logic, state orchestrators, and side-effects.
 - **`src/components/`**: Reusable UI components.
+  - `profile/`: Screen-specific components like `ImportSheet.tsx`, `BackupSyncSheet.tsx`.
   - `CustomTabBar.tsx`: Custom bottom navigation bar incorporating sliding spring indicators, micro-interactions, haptic feedback, and platform safe-area contexts.
   - `GlassCard.tsx`, `CustomButton.tsx`, `AppText.tsx`: Core UI elements styled to match the theme.
 - **`src/store/`**: Global state management powered by Zustand.
   - `themeStore.ts`: Tracks active theme mode (`light` or `dark`).
   - `authStore.ts`: Simple user authentication and initialization mock.
+  - `transactionStore.ts`: Local transaction records and transaction persistence.
 - **`src/hooks/`**: Custom React hooks.
   - `useTheme.ts`: Helper interface resolving colors and toggle methods.
   - `useCachedFonts.ts`: Asynchronously preloads Google Fonts (`Poppins`, `Inter`).
@@ -116,3 +120,22 @@ To support advanced full-featured loan tracking, EMI installments, and local not
   8. **Undo Repayment Action**: An "Undo Last" button is exposed when `completedPayments > 0`. This reverses the last installment increment, subtracts the EMI amount from the paid balance, rolls back the payment date by one month, and deletes the corresponding ledger transaction while updating the source account balance accordingly.
   9. **Full-Fledged Activity Screen Integration**: Repayment transactions display a custom "Loan" source badge (styled in `#3B82F6` blue) in the Activity list. Swipe-deleting a loan transaction from the Activity list automatically rollbacks the linked loan parameters (decrementing payment counts, reverting due dates, and rescheduling notifications) in addition to updating account balances. Direct editing of loan transactions is disabled inside the edit details sheet; a warning banner is shown, and the user is provided a shortcut link to jump to the Loans ledger to manage it safely.
   10. **Spacious Scrollable Activity Headers**: The Activity/Transactions screen header incorporates three horizontal scrollable filtering rows: a scrolling list of Accounts, a scrolling type selector bar (offering All, Income, Expense, Transfer, and **Loans** filters), and a horizontal scrolling list of Categories. Filtering by "Loans" dynamically retrieves all transactions with `source === 'loan'`. To prevent clutter and ensure readability, the headers use horizontal `ScrollView` elements and a spacious padding/gap system (`gap: Spacing['3']`, `paddingTop: Spacing['2']`, `paddingBottom: Spacing['4']`).
+
+### 5. Multi-Source Financial Import Engine
+To support loading large transactional datasets from spreadsheets and format configurations:
+- **Presentation Layer**: The component `ImportSheet.tsx` exposes a beautiful, animated multi-step configuration:
+  1. **Source Selection**: High-end linear gradient cards for CSV, JSON backup, and bank statement mapping. Includes an inline interactive CSV schema quick reference grid.
+  2. **Data Pasteurization**: Fast TextInput pastes CSV/JSON with live line counts, errors handling, and clear utilities.
+  3. **Mapping & Ingestion**: Converts files synchronously, maps bank fields (handling `date`, `amount`, `memo`, `category`, and `type`), filters invalid transactions, formats double-entry fields, and increments state variables in loop boundaries.
+  4. **Done Confirmation**: Success cards showing transaction counts, badge indicators of source type, and haptic confirmations.
+- **Headless Wiring**: Mounted directly under `profile.tsx` settings card, state-controlled via `useProfileScreen` hooks.
+
+### 6. High-Performance Alignment-Correct Chart System
+To resolve rendering bugs under high transactional spikes and edge-point clipping:
+- **Cash Flow Bar Chart**:
+  - **Headroom Coefficient**: Raised to `1.20` to guarantee bars never clip or touch the upper container edges during major currency variance.
+  - **Grid-Bar Synchronization**: Separates bar pairs and label text elements into distinct, bottom-anchored Flex column blocks of a fixed height (`CHART_H + 24`). Bars reside inside a container with `justifyContent: 'flex-end'`, perfectly aligning the bar bottom coordinates with the grid line offset heights mathematically.
+- **Savings Trend Line Chart**:
+  - **Edge Clipping Fix**: Introduces horizontal padding (`PADDING_H = 20`) to the canvas calculations, mapping the SVG path coordinates within `CHART_W - PADDING_H * 2` to keep boundary circles completely within bounds.
+  - **Theme-Aware Halo**: Replaces mismatching white halos with an SVG stroke using `colors.background.secondary` to naturally blend dots over glass cards.
+  - **Absolute Label Tracking**: Centers labels directly under each SVG point by computing `left: getX(i) - 30` relative to the parent coordinate map.

@@ -65,6 +65,7 @@ export function useProfileScreen() {
   const [exportSheet,   setExportSheet]   = useState(false);
   const [helpSheet,     setHelpSheet]     = useState(false);
   const [backupSheet,   setBackupSheet]   = useState(false);
+  const [importSheet,   setImportSheet]   = useState(false);
 
   // ── Confirm dialogs ──
   const [signOutConfirm,   setSignOutConfirm]   = useState(false);
@@ -143,6 +144,11 @@ export function useProfileScreen() {
         isOpen: backupSheet,
         open:   () => setBackupSheet(true),
         close:  () => setBackupSheet(false),
+      } satisfies SheetHandle,
+      import: {
+        isOpen: importSheet,
+        open:   () => setImportSheet(true),
+        close:  () => setImportSheet(false),
       } satisfies SheetHandle,
     },
 

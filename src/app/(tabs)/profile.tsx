@@ -30,6 +30,7 @@ import { ExportSheet } from '@components/profile/ExportSheet';
 import { HelpSheet } from '@components/profile/HelpSheet';
 import { HapticSettingsSheet } from '@components/profile/HapticSettingsSheet';
 import { BackupSyncSheet } from '@components/profile/BackupSyncSheet';
+import { ImportSheet } from '@components/profile/ImportSheet';
 import { ConfirmModal } from '@components/ConfirmModal';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
@@ -117,7 +118,8 @@ export default function ProfileScreen() {
             }
           />
           <SettingRow animDelay={40}  icon="download-outline" iconColor={colors.brand.secondary} label="Export Data"   subtitle={`${data.txCount} transactions ready`}      onPress={sheets.export.open} />
-          <SettingRow animDelay={80}  icon="trash-outline"    iconColor={colors.status.expense} label="Clear All Data" subtitle="Permanently erase all app data"             onPress={confirms.clearData.show} isLast />
+          <SettingRow animDelay={80}  icon="cloud-upload-outline" iconColor={colors.brand.primary} label="Import Data" subtitle="Import transactions from CSV or JSON" onPress={sheets.import.open} />
+          <SettingRow animDelay={120} icon="trash-outline"    iconColor={colors.status.expense} label="Clear All Data" subtitle="Permanently erase all app data"             onPress={confirms.clearData.show} isLast />
         </SectionCard>
 
         <SectionCard title="Support" delay={320} accentColor={colors.brand.accent}>
@@ -174,6 +176,10 @@ export default function ProfileScreen() {
 
       <ProfileBottomSheet visible={sheets.backup.isOpen}        onClose={sheets.backup.close}        title="Backup & Sync"        snapHeight={580}>
         <BackupSyncSheet onClose={sheets.backup.close} />
+      </ProfileBottomSheet>
+
+      <ProfileBottomSheet visible={sheets.import.isOpen}        onClose={sheets.import.close}        title="Import Data"          snapHeight={600}>
+        <ImportSheet onClose={sheets.import.close} />
       </ProfileBottomSheet>
 
       {/* ── Confirm Modals ── */}
