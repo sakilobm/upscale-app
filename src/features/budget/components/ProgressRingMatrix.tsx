@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { ProgressRing } from '@components/ProgressRing';
 import { AppText } from '@components/AppText';
@@ -9,26 +9,29 @@ import { Spacing, Radius } from '@constants/Dimensions';
 import type { Budget } from '@store/types';
 import { getCategoryById } from '@store/categoryStore';
 
-// ─── Single Ring Cell ─────────────────────────────────────────────────────────
+// ─── Single Ring Cell (Memoized for High Performance) ────────────────────────
 
 interface RingCellProps {
   budget: Budget;
-  onPress: (b: Budget) => void;
+  onPress?: (b: Budget) => void;
 }
 
-function RingCell({ budget, onPress }: RingCellProps) {
-  const { colors, isDark } = useTheme();
+const RingCell = memo(function RingCell({ budget, onPress }: RingCellProps) {
+  const { colors } = useTheme();
   const { symbol } = useFormatCurrency();
   const pct = budget.limit > 0 ? budget.spent / budget.limit : 0;
   const isOver = pct > 1;
   const remaining = Math.max(budget.limit - budget.spent, 0);
 
-  const ringColor = budget.color;
   const catIcon = getCategoryById(budget.category).icon;
+
+  const handlePress = useCallback(() => {
+    onPress?.(budget);
+  }, [budget, onPress]);
 
   return (
     <Pressable
-      onPress={() => onPress(budget)}
+      onPress={handlePress}
       style={({ pressed }) => [styles.cell, { opacity: pressed ? 0.75 : 1 }]}
     >
       <ProgressRing
@@ -62,7 +65,7 @@ function RingCell({ budget, onPress }: RingCellProps) {
       </AppText>
     </Pressable>
   );
-}
+});
 
 // ─── Matrix grid ─────────────────────────────────────────────────────────────
 
@@ -76,8 +79,6 @@ export function ProgressRingMatrix({ budgets, onPress }: ProgressRingMatrixProps
 
   if (!budgets.length) return null;
 
-  const handlePress = (b: Budget) => onPress?.(b);
-
   return (
     <GlassCard padding={Spacing['4']} borderRadius={Radius.xl}>
       <AppText variant="headingSM" color={colors.text.primary} style={styles.title}>
@@ -86,7 +87,7 @@ export function ProgressRingMatrix({ budgets, onPress }: ProgressRingMatrixProps
 
       <View style={styles.grid}>
         {budgets.map((b) => (
-          <RingCell key={b.id} budget={b} onPress={handlePress} />
+          <RingCell key={b.id} budget={b} onPress={onPress} />
         ))}
       </View>
     </GlassCard>

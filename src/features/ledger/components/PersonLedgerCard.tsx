@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useCallback, memo, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -30,7 +30,7 @@ const RING_SIZE = 44;
 const AVATAR_INNER = RING_SIZE - 4;
 const RING_THICKNESS = 2;
 
-function AvatarRing({
+const AvatarRing = memo(function AvatarRing({
   initials,
   color,
   status,
@@ -86,11 +86,11 @@ function AvatarRing({
       </View>
     </View>
   );
-}
+});
 
 // ─── Status chip ─────────────────────────────────────────────────────────────
 
-function StatusChip({ status }: { status: LedgerEntry['status'] }) {
+const StatusChip = memo(function StatusChip({ status }: { status: LedgerEntry['status'] }) {
   const { colors } = useTheme();
   const chipColor =
     status === 'SETTLED' ? colors.status.income :
@@ -107,7 +107,7 @@ function StatusChip({ status }: { status: LedgerEntry['status'] }) {
       </AppText>
     </View>
   );
-}
+});
 
 // ─── Card ────────────────────────────────────────────────────────────────────
 
@@ -120,7 +120,12 @@ interface PersonLedgerCardProps {
   onDelete: (id: string) => void;
 }
 
-export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonLedgerCardProps) {
+export const PersonLedgerCard = memo(function PersonLedgerCard({
+  entry,
+  onPress,
+  onSettle,
+  onDelete,
+}: PersonLedgerCardProps) {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
   const account = useAccountStore((s) => s.accounts.find((a) => a.id === entry.accountId));
@@ -128,30 +133,36 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
   const translateX = useSharedValue(0);
   const swipedRef = useRef(false);
 
-  const handleSettle = () => onSettle(entry.id);
-  const handleDelete = () => onDelete(entry.id);
+  const handleSettle = useCallback(() => onSettle(entry.id), [entry.id, onSettle]);
+  const handleDelete = useCallback(() => onDelete(entry.id), [entry.id, onDelete]);
 
-  const panGesture = Gesture.Pan()
-    .runOnJS(true)
-    .activeOffsetX([-12, 12000])
-    .failOffsetY([-10, 10])
-    .onBegin(() => { swipedRef.current = false; })
-    .onUpdate((e) => {
-      if (e.translationX < -6) swipedRef.current = true;
-      if (e.translationX < 0) {
-        translateX.value = Math.max(e.translationX, -140);
-      } else {
-        translateX.value = Math.min(e.translationX * 0.15, 5);
-      }
-    })
-    .onEnd((e) => {
-      if (e.translationX < SWIPE_THRESHOLD) {
-        translateX.value = withSpring(-120, { damping: 20, stiffness: 180 });
-      } else {
-        translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
-        setTimeout(() => { swipedRef.current = false; }, 150);
-      }
-    });
+  const panGesture = useMemo(() => {
+    return Gesture.Pan()
+      .runOnJS(true)
+      .activeOffsetX([-12, 12000])
+      .failOffsetY([-10, 10])
+      .onBegin(() => {
+        swipedRef.current = false;
+      })
+      .onUpdate((e) => {
+        if (e.translationX < -6) swipedRef.current = true;
+        if (e.translationX < 0) {
+          translateX.value = Math.max(e.translationX, -140);
+        } else {
+          translateX.value = Math.min(e.translationX * 0.15, 5);
+        }
+      })
+      .onEnd((e) => {
+        if (e.translationX < SWIPE_THRESHOLD) {
+          translateX.value = withSpring(-120, { damping: 20, stiffness: 180 });
+        } else {
+          translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
+          setTimeout(() => {
+            swipedRef.current = false;
+          }, 150);
+        }
+      });
+  }, [translateX]);
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -179,6 +190,17 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
   const cardGradColors = isDark
     ? [colors.background.secondary, colors.background.tertiary] as const
     : ['#FFFFFF', '#F8FAFC'] as const;
+
+  const handlePressCard = useCallback(() => {
+    if (swipedRef.current) {
+      translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
+      setTimeout(() => {
+        swipedRef.current = false;
+      }, 150);
+    } else {
+      onPress(entry);
+    }
+  }, [entry, onPress, translateX]);
 
   return (
     <View style={styles.swipeContainer}>
@@ -244,14 +266,7 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
             )}
 
             <Pressable
-              onPress={() => {
-                if (swipedRef.current) {
-                  translateX.value = withSpring(0, { damping: 20, stiffness: 250 });
-                  setTimeout(() => { swipedRef.current = false; }, 150);
-                } else {
-                  onPress(entry);
-                }
-              }}
+              onPress={handlePressCard}
               style={styles.cardContent}
               android_ripple={{ color: colors.glass.backgroundMid }}
             >
@@ -344,7 +359,7 @@ export function PersonLedgerCard({ entry, onPress, onSettle, onDelete }: PersonL
       </GestureDetector>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   swipeContainer: {

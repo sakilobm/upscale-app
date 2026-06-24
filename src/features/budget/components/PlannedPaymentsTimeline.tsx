@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, memo, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -50,7 +50,7 @@ const TX_DELETE_W = 84;   // width of the revealed delete zone
 const TX_SNAP_AT = TX_DELETE_W / 2;  // snap open if past this
 const TX_AUTO_DELETE = 190;  // full swipe left → auto-delete immediately
 
-// ─── Single payment row ───────────────────────────────────────────────────────
+// ─── Single payment row (Memoized for High Performance) ───────────────────────
 
 interface PaymentRowProps {
   payment: PlannedPayment;
@@ -59,7 +59,7 @@ interface PaymentRowProps {
   onPress: (payment: PlannedPayment) => void;
 }
 
-function PaymentRow({ payment, onSettle, onDelete, onPress }: PaymentRowProps) {
+const PaymentRow = memo(function PaymentRow({ payment, onSettle, onDelete, onPress }: PaymentRowProps) {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
   const account = useAccountStore((s) => s.accounts.find((a) => a.id === payment.accountId));
@@ -85,26 +85,35 @@ function PaymentRow({ payment, onSettle, onDelete, onPress }: PaymentRowProps) {
       payment.status === 'OVERDUE' ? colors.status.expense :
         urgent ? colors.status.warning : colors.status.info;
 
+  // ── Lock controller
+  const lock = useCallback(() => {
+    setIsUnlocked(false);
+    glowOp.value = withTiming(0, { duration: 150 });
+    if (lockTimer.current) clearTimeout(lockTimer.current);
+  }, [glowOp, lockTimer]);
+
   // ── Collapse + call action (used for settle)
-  const dismissRow = (action: () => void) => {
+  const dismissRow = useCallback((action: () => void) => {
     rowOpacity.value = withTiming(0, { duration: 220 });
     rowHeight.value = withTiming(0, { duration: 300 });
     setTimeout(action, 300);
-  };
+  }, [rowOpacity, rowHeight]);
 
   // ── Slide left + collapse (used for delete)
-  const dismissLeft = () => {
+  const dismissLeft = useCallback(() => {
     translateX.value = withTiming(-500, { duration: 260 });
     rowOpacity.value = withTiming(0, { duration: 200 });
     rowHeight.value = withTiming(0, { duration: 280 });
     if (isUnlocked) lock();
     setTimeout(() => onDelete(payment.id), 250);
-  };
+  }, [isUnlocked, translateX, rowOpacity, rowHeight, lock, onDelete, payment.id]);
 
-  const handleSettle = () => dismissRow(() => onSettle(payment.id));
+  const handleSettle = useCallback(() => {
+    dismissRow(() => onSettle(payment.id));
+  }, [dismissRow, onSettle, payment.id]);
 
   // ── Long-press unlock (for settle gesture)
-  const unlock = () => {
+  const unlock = useCallback(() => {
     if (payment.status === 'SETTLED') return;
     setIsUnlocked(true);
     glowOp.value = withTiming(1, { duration: 180 });
@@ -115,13 +124,7 @@ function PaymentRow({ payment, onSettle, onDelete, onPress }: PaymentRowProps) {
       glowOp.value = withTiming(0, { duration: 200 });
       translateX.value = withSpring(0, { damping: 20, stiffness: 260 });
     }, LOCK_MS);
-  };
-
-  const lock = () => {
-    setIsUnlocked(false);
-    glowOp.value = withTiming(0, { duration: 150 });
-    if (lockTimer.current) clearTimeout(lockTimer.current);
-  };
+  }, [payment.status, glowOp, lockTimer]);
 
   // ── Unified pan: left = delete (always), right = settle (requires unlock)
   const panGesture = Gesture.Pan()
@@ -357,7 +360,7 @@ function PaymentRow({ payment, onSettle, onDelete, onPress }: PaymentRowProps) {
       </GestureDetector>
     </Animated.View>
   );
-}
+});
 
 // ─── Timeline ─────────────────────────────────────────────────────────────────
 

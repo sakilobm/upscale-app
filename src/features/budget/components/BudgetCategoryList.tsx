@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -13,15 +13,15 @@ import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Radius, Spacing } from '@constants/Dimensions';
 import type { SpendingStats } from '../hooks/useBudgets';
 
-// ─── Single Grid Card Component ───────────────────────────────────────────────
+// ─── Single Grid Card Component (Memoized) ───────────────────────────────────
 interface CategoryCardProps {
   item: SpendingStats;
   onDeleteLimit: (id: string) => void;
   onSetLimit: (category: string) => void;
 }
 
-function CategoryCard({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
-  const { colors, isDark } = useTheme();
+const CategoryCard = memo(function CategoryCard({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
+  const { colors } = useTheme();
   const { symbol } = useFormatCurrency();
 
   const pct = item.hasLimit ? item.percent / 100 : 0;
@@ -47,11 +47,24 @@ function CategoryCard({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
   const displayPercent = item.hasLimit ? Math.round(item.percent) : Math.round(progressPct * 100);
   const progressBarColor = item.hasLimit ? statusColor : item.color;
 
+  const handleCardPress = useCallback(() => {
+    onSetLimit(item.category);
+  }, [item.category, onSetLimit]);
+
+  const handleDeletePress = useCallback((e: any) => {
+    e.stopPropagation();
+    if (item.budgetId) {
+      onDeleteLimit(item.budgetId);
+    }
+  }, [item.budgetId, onDeleteLimit]);
+
+  const handleSetLimitPress = useCallback(() => {
+    onSetLimit(item.category);
+  }, [item.category, onSetLimit]);
+
   return (
     <Pressable
-      onPress={() => {
-        onSetLimit(item.category);
-      }}
+      onPress={handleCardPress}
       style={({ pressed }) => [
         styles.gridCard,
         {
@@ -69,10 +82,7 @@ function CategoryCard({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
 
         {item.hasLimit ? (
           <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              onDeleteLimit(item.budgetId!);
-            }}
+            onPress={handleDeletePress}
             style={({ pressed }) => [
               styles.trashBtn,
               {
@@ -85,7 +95,7 @@ function CategoryCard({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
           </Pressable>
         ) : (
           <Pressable
-            onPress={() => onSetLimit(item.category)}
+            onPress={handleSetLimitPress}
             style={({ pressed }) => [
               styles.inlineSetBtn,
               {
@@ -157,11 +167,11 @@ function CategoryCard({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
       )}
     </Pressable>
   );
-}
+});
 
-// ─── Single Category Capsule Row Component ───────────────────────────────────
-function CategoryCapsule({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
-  const { colors, isDark } = useTheme();
+// ─── Single Category Capsule Row Component (Memoized) ─────────────────────────
+const CategoryCapsule = memo(function CategoryCapsule({ item, onDeleteLimit, onSetLimit }: CategoryCardProps) {
+  const { colors } = useTheme();
   const { symbol } = useFormatCurrency();
 
   const pct = item.hasLimit ? item.percent / 100 : 0;
@@ -186,17 +196,29 @@ function CategoryCapsule({ item, onDeleteLimit, onSetLimit }: CategoryCardProps)
 
   const fillBg = item.hasLimit
     ? statusColor + '1C'
-    : item.color + '1C'; // Use beautiful category color tint instead of muddy grey
+    : item.color + '1C';
+
+  const handleCapsulePress = useCallback(() => {
+    onSetLimit(item.category);
+  }, [item.category, onSetLimit]);
+
+  const handleDeletePress = useCallback(() => {
+    if (item.budgetId) {
+      onDeleteLimit(item.budgetId);
+    }
+  }, [item.budgetId, onDeleteLimit]);
+
+  const handleSetLimitPress = useCallback(() => {
+    onSetLimit(item.category);
+  }, [item.category, onSetLimit]);
 
   return (
     <Pressable
-      onPress={() => {
-        onSetLimit(item.category);
-      }}
+      onPress={handleCapsulePress}
       style={({ pressed }) => [
         styles.capsule,
         {
-          backgroundColor: colors.surface.sheet, // Solid background prevents shadow show-through
+          backgroundColor: colors.surface.sheet,
           borderColor: item.hasLimit ? statusColor + '40' : colors.glass.border,
           opacity: pressed ? 0.85 : 1,
         },
@@ -272,7 +294,7 @@ function CategoryCapsule({ item, onDeleteLimit, onSetLimit }: CategoryCardProps)
               </AppText>
 
               <Pressable
-                onPress={() => onDeleteLimit(item.budgetId!)}
+                onPress={handleDeletePress}
                 style={({ pressed }) => [
                   styles.trashBtn,
                   {
@@ -286,7 +308,7 @@ function CategoryCapsule({ item, onDeleteLimit, onSetLimit }: CategoryCardProps)
             </View>
           ) : (
             <Pressable
-              onPress={() => onSetLimit(item.category)}
+              onPress={handleSetLimitPress}
               style={({ pressed }) => [
                 styles.inlineSetBtn,
                 {
@@ -305,7 +327,7 @@ function CategoryCapsule({ item, onDeleteLimit, onSetLimit }: CategoryCardProps)
       </View>
     </Pressable>
   );
-}
+});
 
 // ─── Main Component Container ────────────────────────────────────────────────
 interface BudgetCategoryListProps {

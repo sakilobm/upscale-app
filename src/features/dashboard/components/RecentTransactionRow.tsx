@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { CategoryIcon } from '@components/CategoryIcon';
 import { AppText } from '@components/AppText';
@@ -46,9 +46,13 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
     (transaction.id.startsWith('tx-ledger-') ? 'ledger' : 
      transaction.id.startsWith('tx-settled-') ? 'budget' : 'general');
 
+  const handlePress = useCallback(() => {
+    onPress(transaction);
+  }, [transaction, onPress]);
+
   return (
     <Pressable
-      onPress={() => onPress(transaction)}
+      onPress={handlePress}
       style={({ pressed }) => [
         styles.container,
         {

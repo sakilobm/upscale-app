@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -27,14 +27,14 @@ const CARD_HEIGHT  = 182;
 
 // ─── Single card ──────────────────────────────────────────────────────────────
 
-function LoanCard({
+const LoanCard = memo(function LoanCard({
   loan,
   onRecord,
   onPress,
 }: {
   loan:     Loan;
   onRecord: (id: string) => void;
-  onPress:  () => void;
+  onPress:  (loan: Loan) => void;
 }) {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
@@ -63,10 +63,19 @@ function LoanCard({
     ? 'Due today'
     : `Due in ${days}d`;
 
+  const handleRecord = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    onRecord(loan.id);
+  }, [loan.id, onRecord]);
+
+  const handlePress = useCallback(() => {
+    onPress(loan);
+  }, [loan, onPress]);
+
   return (
     /* Shadow wrapper — separate from overflow:hidden so iOS shadow renders */
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       style={[styles.cardShadow, { shadowColor: loan.color }]}
     >
       {/* Clip container — clips LinearGradient + glowBlob to rounded corners */}
@@ -126,10 +135,7 @@ function LoanCard({
               <AppText style={[styles.dueText, { color: dueColor }]}>{dueText}</AppText>
             </View>
             <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                onRecord(loan.id);
-              }}
+              onPress={handleRecord}
               style={styles.markPaidBtn}
             >
               <Ionicons name="checkmark" size={13} color={colors.white} />
@@ -140,7 +146,7 @@ function LoanCard({
       </View>
     </Pressable>
   );
-}
+});
 
 // ─── Carousel ─────────────────────────────────────────────────────────────────
 
@@ -150,18 +156,29 @@ interface DebtHorizonStackProps {
   onPressCard:     (loan: Loan) => void;
 }
 
-export function DebtHorizonStack({ loans, onRecordPayment, onPressCard }: DebtHorizonStackProps) {
+export const DebtHorizonStack = memo(function DebtHorizonStack({
+  loans,
+  onRecordPayment,
+  onPressCard,
+}: DebtHorizonStackProps) {
   const { colors } = useTheme();
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
-  if (!loans.length) return null;
-
-  const goTo = (idx: number) => {
+  const goTo = useCallback((idx: number) => {
     scrollRef.current?.scrollTo({ x: idx * SNAP_INTERVAL, animated: true });
     setActiveIndex(idx);
-    Haptics.selectionAsync();
-  };
+    Haptics.selectionAsync().catch(() => {});
+  }, []);
+
+  const handleScrollEnd = useCallback((e: any) => {
+    const idx = Math.round(
+      e.nativeEvent.contentOffset.x / SNAP_INTERVAL
+    );
+    setActiveIndex(Math.max(0, Math.min(idx, loans.length - 1)));
+  }, [loans.length]);
+
+  if (!loans.length) return null;
 
   return (
     /* Negative margin breaks out of parent's 20px horizontal padding */
@@ -176,12 +193,7 @@ export function DebtHorizonStack({ loans, onRecordPayment, onPressCard }: DebtHo
         disableIntervalMomentum
         scrollEventThrottle={16}
         nestedScrollEnabled
-        onMomentumScrollEnd={(e) => {
-          const idx = Math.round(
-            e.nativeEvent.contentOffset.x / SNAP_INTERVAL
-          );
-          setActiveIndex(Math.max(0, Math.min(idx, loans.length - 1)));
-        }}
+        onMomentumScrollEnd={handleScrollEnd}
         contentContainerStyle={styles.carouselContent}
         style={styles.carousel}
       >
@@ -193,7 +205,7 @@ export function DebtHorizonStack({ loans, onRecordPayment, onPressCard }: DebtHo
               idx < loans.length - 1 && { marginRight: CARD_GAP },
             ]}
           >
-            <LoanCard loan={loan} onRecord={onRecordPayment} onPress={() => onPressCard(loan)} />
+            <LoanCard loan={loan} onRecord={onRecordPayment} onPress={onPressCard} />
           </View>
         ))}
       </ScrollView>
@@ -230,7 +242,7 @@ export function DebtHorizonStack({ loans, onRecordPayment, onPressCard }: DebtHo
       </AppText>
     </View>
   );
-}
+});
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
