@@ -12,6 +12,7 @@ import type { NewTransaction } from '@store/types';
 import type { TransactionGroupHeader } from '../types';
 import { format, isToday, isYesterday, addMonths, parseISO } from 'date-fns';
 import { toast } from '@store/toastStore';
+import { addMoney, subtractMoney } from '@/utils/moneyMath';
 
 function buildBalanceLookup(
   transactions: ReturnType<typeof useTransactionStore.getState>['transactions'],
@@ -24,7 +25,7 @@ function buildBalanceLookup(
   const lookup = new Map<string, number>();
   let running = 0;
   for (const tx of sorted) {
-    running += tx.type === 'income' ? tx.amount : -tx.amount;
+    running = tx.type === 'income' ? addMoney(running, tx.amount) : subtractMoney(running, tx.amount);
     lookup.set(tx.date.slice(0, 10), running);
   }
   return lookup;
@@ -42,7 +43,7 @@ function groupTransactionsByDate(
   return Array.from(groups.entries()).map(([date, txs]) => ({
     date,
     totalAmount: txs.reduce(
-      (sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount),
+      (sum, t) => t.type === 'income' ? addMoney(sum, t.amount) : subtractMoney(sum, t.amount),
       0,
     ),
     balanceAfter: balanceLookup.get(date) ?? 0,

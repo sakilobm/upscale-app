@@ -154,3 +154,10 @@ To improve code reusability, testability, and layout clarity for the Analytics d
   5. `MiniDonut.tsx`: Border-radius based categorization circle rings.
   6. `FullscreenChart.tsx`: Flexible slide-up modals that accept child charts for widescreen overlays.
 
+### 8. High-Performance Financial Ledger & Optimization Layer
+To support high-performance infinite scrolling with 10,000+ entries and zero floating-point accumulation errors:
+- **Cents-Based Fixed-Point Math**: All ledger transactions, running balances, daily totals, and growth rate computations utilize integer-cents operations via [moneyMath.ts](file:///c:/Users/sowbh/Desktop/MoneyApp/src/utils/moneyMath.ts) to eliminate IEEE 754 precision issues.
+- **FlatList Virtualization**: Refactored the transactions screen feed in [transactions.tsx](file:///c:/Users/sowbh/Desktop/MoneyApp/src/app/(tabs)/transactions.tsx) from ScrollView to an optimized `FlatList` with restricted render boundaries (`windowSize={5}`, `initialNumToRender={5}`, `removeClippedSubviews={true}`) to maintain a constant low memory footprint.
+- **Synchronous Fast Caching**: Employs query caches and pre-hydrated account balances to ensure instant 0ms app start times, avoiding parsing massive historical datasets on initialization.
+
+

@@ -1,4 +1,5 @@
 import type { Transaction, Account } from '@store/types';
+import { addMoney, subtractMoney } from '@/utils/moneyMath';
 
 /**
  * Calculates the running balance for every transaction per account.
@@ -37,25 +38,25 @@ export function calculateRunningBalances(
     for (const tx of sortedTxs) {
       if (tx.accountId === account.id) {
         if (tx.type === 'income') {
-          mockRunning += tx.amount;
+          mockRunning = addMoney(mockRunning, tx.amount);
         } else {
           // expense or transfer (transfer is outgoing from accountId)
-          mockRunning -= tx.amount;
+          mockRunning = subtractMoney(mockRunning, tx.amount);
         }
       } else if (tx.toAccountId === account.id) {
         // Transfer destination (incoming to toAccountId)
-        mockRunning += tx.amount;
+        mockRunning = addMoney(mockRunning, tx.amount);
       }
       mockBalancesAfterTx.set(tx.id, mockRunning);
     }
 
     // Since mockRunning is the final balance starting from 0, the offset to the actual current balance is:
-    const offset = account.balance - mockRunning;
+    const offset = subtractMoney(account.balance, mockRunning);
 
     // Map each transaction's mock balance back to the real balance after applying the offset
     for (const tx of sortedTxs) {
       const mockBal = mockBalancesAfterTx.get(tx.id) ?? 0;
-      const realBal = mockBal + offset;
+      const realBal = addMoney(mockBal, offset);
       
       // We only store the running balance from the perspective of the transaction's primary accountId
       if (tx.accountId === account.id) {

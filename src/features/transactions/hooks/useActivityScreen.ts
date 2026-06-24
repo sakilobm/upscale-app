@@ -15,12 +15,21 @@ import { useTransactions } from './useTransactions';
 import { useTransactionStore } from '@store/transactionStore';
 import { useAccountStore } from '@store/accountStore';
 import type { Transaction, Account } from '@store/types';
+import { sumMoney } from '@/utils/moneyMath';
 
 export interface ActivitySummary {
   income:  number;
   expense: number;
   count:   number;
 }
+
+export type FlatLedgerItem =
+  | { type: 'hero'; id: string }
+  | { type: 'search'; id: string }
+  | { type: 'filters'; id: string }
+  | { type: 'empty'; id: string }
+  | { type: 'header'; id: string; date: string; totalAmount: number; balanceAfter: number }
+  | { type: 'transaction'; id: string; transaction: Transaction; balanceAfter: number; isFirst: boolean; isLast: boolean };
 
 export function useActivityScreen() {
   const { data: groups, isLoading, isEmpty, refresh, removeTransaction, formatDateHeader, runningBalances } = useTransactions();
@@ -35,9 +44,11 @@ export function useActivityScreen() {
 
   const summary = useMemo<ActivitySummary>(() => {
     const allTxs = (groups ?? []).flatMap((g) => g.transactions);
+    const incomeTxs = allTxs.filter((t) => t.type === 'income').map((t) => t.amount);
+    const expenseTxs = allTxs.filter((t) => t.type === 'expense').map((t) => t.amount);
     return {
-      income:  allTxs.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0),
-      expense: allTxs.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
+      income:  sumMoney(incomeTxs),
+      expense: sumMoney(expenseTxs),
       count:   allTxs.length,
     };
   }, [groups]);
@@ -53,6 +64,42 @@ export function useActivityScreen() {
     triggerAppHaptic('light', 'button');
   }, []);
 
+  const flatListData = useMemo<FlatLedgerItem[]>(() => {
+    const list: FlatLedgerItem[] = [
+      { type: 'hero', id: 'hero-section' },
+      { type: 'search', id: 'search-section' },
+      { type: 'filters', id: 'filters-section' }
+    ];
+
+    if (isEmpty) {
+      list.push({ type: 'empty', id: 'empty-section' });
+    } else {
+      for (const group of groups ?? []) {
+        list.push({
+          type: 'header',
+          id: `header-${group.date}`,
+          date: group.date,
+          totalAmount: group.totalAmount,
+          balanceAfter: group.balanceAfter,
+        });
+
+        const len = group.transactions.length;
+        group.transactions.forEach((tx, idx) => {
+          list.push({
+            type: 'transaction',
+            id: tx.id,
+            transaction: tx,
+            balanceAfter: runningBalances.get(tx.id) ?? 0,
+            isFirst: idx === 0,
+            isLast: idx === len - 1,
+          });
+        });
+      }
+    }
+
+    return list;
+  }, [groups, runningBalances, isEmpty]);
+
   return {
     groups, isLoading, isEmpty, refresh, removeTransaction, formatDateHeader,
     accounts, filters, setFilters,
@@ -63,5 +110,6 @@ export function useActivityScreen() {
     setEditingTransaction,
     handleTransactionPress,
     runningBalances,
+    flatListData,
   };
 }
