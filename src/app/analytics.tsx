@@ -2,24 +2,29 @@
  * @file analytics.tsx
  * @architecture Presentation Layer — Screen (View Shell)
  * @description Full-fledged advanced analytics screen with period-switchable
- *   (weekly/monthly/yearly) financial analysis. Features cash-flow bar charts,
- *   savings trend lines, category donut breakdowns, growth metrics, budget health,
- *   loan & ledger summaries, and AI-powered smart insight cards.
+ *   (weekly/monthly/yearly) financial analysis. Features interactive cash-flow bar
+ *   charts with tap tooltips, SVG-based savings trend lines with perfect dot-line
+ *   alignment, category donut breakdowns, growth metrics, budget health, loan &
+ *   ledger summaries, smart insight cards, and fullscreen chart expansion mode.
  */
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   Pressable,
   Dimensions,
+  Modal,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import Svg, { Path, Circle, Defs, LinearGradient as SvgGrad, Stop, Line, Rect, G } from 'react-native-svg';
 import { AppText } from '@components/AppText';
 import { ProgressBar } from '@components/ProgressBar';
 import { useTheme } from '@hooks/useTheme';
@@ -34,20 +39,67 @@ import {
   type SmartInsight,
 } from '@features/analytics/hooks/useAnalyticsScreen';
 
-const { width: SCREEN_W } = Dimensions.get('window');
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
-// ─── Period pill colors ──────────────────────────────────────────────────────
+// ─── Period pill config ──────────────────────────────────────────────────────
 const PERIODS: { key: PeriodMode; label: string; icon: string }[] = [
   { key: 'weekly',  label: 'Week',  icon: 'calendar-outline' },
   { key: 'monthly', label: 'Month', icon: 'today-outline' },
   { key: 'yearly',  label: 'Year',  icon: 'albums-outline' },
 ];
 
+// ─── Fullscreen chart modal ──────────────────────────────────────────────────
+interface FullscreenChartProps {
+  visible: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}
+
+function FullscreenChart({ visible, onClose, title, children }: FullscreenChartProps) {
+  const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+      <View style={[fs.root, { backgroundColor: colors.background.primary, paddingTop: insets.top }]}>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+        {/* Header bar */}
+        <View style={fs.header}>
+          <AppText variant="headingSM" color={colors.text.primary} style={{ fontWeight: '700', flex: 1 }}>
+            {title}
+          </AppText>
+          <Pressable
+            onPress={onClose}
+            hitSlop={14}
+            style={[fs.closeBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}
+          >
+            <Ionicons name="close" size={20} color={colors.text.primary} />
+          </Pressable>
+        </View>
+        {/* Chart area */}
+        <View style={fs.chartArea}>
+          {children}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const fs = StyleSheet.create({
+  root:     { flex: 1 },
+  header:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, gap: 12 },
+  closeBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  chartArea: { flex: 1, paddingHorizontal: 12, justifyContent: 'center' },
+});
+
 export default function AnalyticsScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { symbol } = useFormatCurrency();
   const analytics = useAnalyticsScreen();
+
+  const [fullscreenChart, setFullscreenChart] = useState<'cashflow' | 'trend' | null>(null);
 
   const cardBg       = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
   const dividerColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
@@ -192,17 +244,32 @@ export default function AnalyticsScreen() {
            ══════════════════════════════════════════════════════════════════ */}
         <SectionTitle title="CASH FLOW" />
         <View style={[s.chartCard, { backgroundColor: cardBg, borderColor: colors.glass.border }]}>
-          <View style={s.chartLegend}>
-            <View style={s.legendItem}>
-              <View style={[s.legendDot, { backgroundColor: '#10B981' }]} />
-              <AppText variant="caption" color={colors.text.tertiary}>Income</AppText>
+          <View style={s.chartHeader}>
+            <View style={s.chartLegend}>
+              <View style={s.legendItem}>
+                <View style={[s.legendDot, { backgroundColor: '#10B981' }]} />
+                <AppText variant="caption" color={colors.text.tertiary}>Income</AppText>
+              </View>
+              <View style={s.legendItem}>
+                <View style={[s.legendDot, { backgroundColor: '#EF4444' }]} />
+                <AppText variant="caption" color={colors.text.tertiary}>Expense</AppText>
+              </View>
             </View>
-            <View style={s.legendItem}>
-              <View style={[s.legendDot, { backgroundColor: '#EF4444' }]} />
-              <AppText variant="caption" color={colors.text.tertiary}>Expense</AppText>
-            </View>
+            <Pressable
+              onPress={() => { Haptics.selectionAsync(); setFullscreenChart('cashflow'); }}
+              hitSlop={10}
+              style={[s.expandBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}
+            >
+              <Ionicons name="expand-outline" size={14} color={colors.text.tertiary} />
+            </Pressable>
           </View>
-          <CashFlowChart bars={analytics.cashFlowBars} colors={colors} isDark={isDark} />
+          <CashFlowChart
+            bars={analytics.cashFlowBars}
+            colors={colors}
+            isDark={isDark}
+            fmtAmount={fmtAmount}
+            chartHeight={140}
+          />
         </View>
 
         {/* ══════════════════════════════════════════════════════════════════
@@ -210,7 +277,26 @@ export default function AnalyticsScreen() {
            ══════════════════════════════════════════════════════════════════ */}
         <SectionTitle title="SAVINGS TREND" />
         <View style={[s.chartCard, { backgroundColor: cardBg, borderColor: colors.glass.border }]}>
-          <TrendLine points={analytics.savingsTrend} colors={colors} isDark={isDark} />
+          <View style={s.chartHeader}>
+            <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '600', letterSpacing: 0.4 }}>
+              Net savings per period
+            </AppText>
+            <Pressable
+              onPress={() => { Haptics.selectionAsync(); setFullscreenChart('trend'); }}
+              hitSlop={10}
+              style={[s.expandBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}
+            >
+              <Ionicons name="expand-outline" size={14} color={colors.text.tertiary} />
+            </Pressable>
+          </View>
+          <TrendLineChart
+            points={analytics.savingsTrend}
+            colors={colors}
+            isDark={isDark}
+            fmtAmount={fmtAmount}
+            chartHeight={100}
+            chartWidth={SCREEN_W - 80}
+          />
         </View>
 
         {/* ══════════════════════════════════════════════════════════════════
@@ -423,6 +509,40 @@ export default function AnalyticsScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          FULLSCREEN CHART MODALS
+         ══════════════════════════════════════════════════════════════════ */}
+      <FullscreenChart
+        visible={fullscreenChart === 'cashflow'}
+        onClose={() => setFullscreenChart(null)}
+        title="Cash Flow"
+      >
+        <CashFlowChart
+          bars={analytics.cashFlowBars}
+          colors={colors}
+          isDark={isDark}
+          fmtAmount={fmtAmount}
+          chartHeight={SCREEN_H * 0.55}
+          isFullscreen
+        />
+      </FullscreenChart>
+
+      <FullscreenChart
+        visible={fullscreenChart === 'trend'}
+        onClose={() => setFullscreenChart(null)}
+        title="Savings Trend"
+      >
+        <TrendLineChart
+          points={analytics.savingsTrend}
+          colors={colors}
+          isDark={isDark}
+          fmtAmount={fmtAmount}
+          chartHeight={SCREEN_H * 0.5}
+          chartWidth={SCREEN_W - 40}
+          isFullscreen
+        />
+      </FullscreenChart>
     </View>
   );
 }
@@ -489,87 +609,171 @@ function GrowthCard({
   );
 }
 
-/** Custom bar chart built with Views */
+// ─── Interactive Cash Flow Bar Chart ─────────────────────────────────────────
+
 function CashFlowChart({
   bars,
   colors,
   isDark,
+  fmtAmount,
+  chartHeight = 140,
+  isFullscreen = false,
 }: {
   bars: CashFlowBar[];
   colors: any;
   isDark: boolean;
+  fmtAmount: (n: number) => string;
+  chartHeight?: number;
+  isFullscreen?: boolean;
 }) {
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const maxVal = Math.max(...bars.map((b) => Math.max(b.income, b.expense)), 1);
-  const CHART_H = 120;
-  const barWidth = Math.min(24, (SCREEN_W - 80) / bars.length / 2.5);
+  // Add 15% headroom so bars never touch the container top
+  const scaledMax = maxVal * 1.15;
+  const CHART_H = chartHeight;
+  const barWidth = isFullscreen
+    ? Math.min(32, (SCREEN_W - 64) / bars.length / 2.5)
+    : Math.min(24, (SCREEN_W - 80) / bars.length / 2.5);
+
+  const handleBarTap = useCallback((idx: number) => {
+    Haptics.selectionAsync();
+    setSelectedIdx(selectedIdx === idx ? null : idx);
+  }, [selectedIdx]);
 
   return (
     <View style={s.barChartContainer}>
-      {/* Grid lines */}
+      {/* Grid lines + Y-axis labels */}
       {[0.25, 0.5, 0.75, 1].map((pct) => (
-        <View
-          key={pct}
-          style={[
-            s.gridLine,
-            { bottom: pct * CHART_H, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' },
-          ]}
-        />
+        <View key={pct} style={{ position: 'absolute', bottom: pct * CHART_H + 20, left: 0, right: 0 }}>
+          <View
+            style={[
+              s.gridLine,
+              { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' },
+            ]}
+          />
+          {isFullscreen && (
+            <AppText style={{ position: 'absolute', left: -4, top: -8, fontSize: 8, color: colors.text.tertiary, fontWeight: '600' }}>
+              {fmtAmount(scaledMax * pct)}
+            </AppText>
+          )}
+        </View>
       ))}
 
-      <View style={[s.barChartRow, { height: CHART_H }]}>
-        {bars.map((bar, i) => (
-          <View key={i} style={s.barGroup}>
-            <View style={s.barPair}>
-              {/* Income bar */}
-              <View
-                style={[
-                  s.bar,
-                  {
-                    height: Math.max((bar.income / maxVal) * CHART_H, 2),
-                    width: barWidth,
-                    backgroundColor: '#10B981',
-                    borderRadius: barWidth / 2,
-                  },
-                ]}
-              />
-              {/* Expense bar */}
-              <View
-                style={[
-                  s.bar,
-                  {
-                    height: Math.max((bar.expense / maxVal) * CHART_H, 2),
-                    width: barWidth,
-                    backgroundColor: '#EF4444',
-                    borderRadius: barWidth / 2,
-                  },
-                ]}
-              />
+      {/* Selected tooltip */}
+      {selectedIdx !== null && bars[selectedIdx] && (
+        <View style={[s.tooltip, {
+          backgroundColor: isDark ? 'rgba(40,40,50,0.96)' : 'rgba(255,255,255,0.96)',
+          borderColor: colors.glass.border,
+          ...Platform.select({
+            ios: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
+            android: { elevation: 6 },
+          }),
+        }]}>
+          <AppText style={{ fontSize: 11, fontWeight: '800', color: colors.text.primary }}>
+            {bars[selectedIdx].label}
+          </AppText>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#10B981' }} />
+              <AppText style={{ fontSize: 10, fontWeight: '700', color: '#10B981' }}>
+                {fmtAmount(bars[selectedIdx].income)}
+              </AppText>
             </View>
-            <AppText style={[s.barLabel, { color: colors.text.tertiary }]}>{bar.label}</AppText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#EF4444' }} />
+              <AppText style={{ fontSize: 10, fontWeight: '700', color: '#EF4444' }}>
+                {fmtAmount(bars[selectedIdx].expense)}
+              </AppText>
+            </View>
           </View>
-        ))}
+          <AppText style={{ fontSize: 10, fontWeight: '700', color: bars[selectedIdx].net >= 0 ? '#10B981' : '#EF4444' }}>
+            Net: {bars[selectedIdx].net >= 0 ? '+' : ''}{fmtAmount(bars[selectedIdx].net)}
+          </AppText>
+        </View>
+      )}
+
+      <View style={[s.barChartRow, { height: CHART_H, marginTop: 20 }]}>
+        {bars.map((bar, i) => {
+          const isSelected = selectedIdx === i;
+          return (
+            <Pressable
+              key={i}
+              onPress={() => handleBarTap(i)}
+              style={[s.barGroup, { opacity: selectedIdx !== null && !isSelected ? 0.4 : 1 }]}
+            >
+              <View style={s.barPair}>
+                {/* Income bar */}
+                <View
+                  style={[
+                    s.bar,
+                    {
+                      height: Math.max((bar.income / scaledMax) * CHART_H, 2),
+                      width: barWidth,
+                      backgroundColor: '#10B981',
+                      borderRadius: barWidth / 2,
+                    },
+                  ]}
+                />
+                {/* Expense bar */}
+                <View
+                  style={[
+                    s.bar,
+                    {
+                      height: Math.max((bar.expense / scaledMax) * CHART_H, 2),
+                      width: barWidth,
+                      backgroundColor: '#EF4444',
+                      borderRadius: barWidth / 2,
+                    },
+                  ]}
+                />
+              </View>
+              <AppText style={[s.barLabel, { color: isSelected ? colors.text.primary : colors.text.tertiary, fontWeight: isSelected ? '800' : '600' }]}>
+                {bar.label}
+              </AppText>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
 }
 
-/** Custom trend line built with absolute-positioned dots and connectors */
-function TrendLine({
+// ─── SVG-based Interactive Trend Line Chart ──────────────────────────────────
+
+function TrendLineChart({
   points,
   colors,
   isDark,
+  fmtAmount,
+  chartHeight = 100,
+  chartWidth = SCREEN_W - 80,
+  isFullscreen = false,
 }: {
   points: { label: string; value: number }[];
   colors: any;
   isDark: boolean;
+  fmtAmount: (n: number) => string;
+  chartHeight?: number;
+  chartWidth?: number;
+  isFullscreen?: boolean;
 }) {
-  const CHART_H = 80;
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+
+  const DOT_R = isFullscreen ? 6 : 5;
+  const PADDING_V = isFullscreen ? 24 : 16; // vertical padding inside the chart area
+  const CHART_H = chartHeight;
+  const CHART_W = chartWidth;
+  const DRAW_H = CHART_H - PADDING_V * 2; // drawable height between top/bottom padding
+
   const values = points.map((p) => p.value);
   const minVal = Math.min(...values, 0);
   const maxVal = Math.max(...values, 1);
   const range = maxVal - minVal || 1;
 
-  const getY = (v: number) => CHART_H - ((v - minVal) / range) * CHART_H;
+  // Map value to Y coordinate with vertical padding
+  const getY = (v: number) => PADDING_V + DRAW_H - ((v - minVal) / range) * DRAW_H;
+  // Map index to X coordinate
+  const getX = (i: number) => points.length > 1 ? (i / (points.length - 1)) * CHART_W : CHART_W / 2;
 
   if (points.length < 2) {
     return (
@@ -579,82 +783,181 @@ function TrendLine({
     );
   }
 
-  const segWidth = (SCREEN_W - 80) / (points.length - 1);
+  // Build SVG path for smooth curve
+  const buildPath = () => {
+    let d = `M ${getX(0)} ${getY(points[0].value)}`;
+    for (let i = 1; i < points.length; i++) {
+      const x0 = getX(i - 1), y0 = getY(points[i - 1].value);
+      const x1 = getX(i),     y1 = getY(points[i].value);
+      const cpx = (x0 + x1) / 2;
+      d += ` C ${cpx} ${y0}, ${cpx} ${y1}, ${x1} ${y1}`;
+    }
+    return d;
+  };
+
+  // Build area fill path (same curve + close to bottom)
+  const buildAreaPath = () => {
+    let d = buildPath();
+    d += ` L ${getX(points.length - 1)} ${CHART_H}`;
+    d += ` L ${getX(0)} ${CHART_H} Z`;
+    return d;
+  };
+
+  const linePath = buildPath();
+  const areaPath = buildAreaPath();
+
+  // Zero line Y position
+  const zeroY = getY(0);
+
+  const handleDotTap = useCallback((idx: number) => {
+    Haptics.selectionAsync();
+    setSelectedIdx(selectedIdx === idx ? null : idx);
+  }, [selectedIdx]);
 
   return (
     <View>
-      {/* Zero line */}
-      {minVal < 0 && (
-        <View
-          style={[
-            s.zeroLine,
-            {
-              top: getY(0),
-              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-            },
-          ]}
-        />
+      {/* Selected tooltip */}
+      {selectedIdx !== null && points[selectedIdx] && (
+        <View style={[s.tooltip, {
+          backgroundColor: isDark ? 'rgba(40,40,50,0.96)' : 'rgba(255,255,255,0.96)',
+          borderColor: colors.glass.border,
+          ...Platform.select({
+            ios: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
+            android: { elevation: 6 },
+          }),
+        }]}>
+          <AppText style={{ fontSize: 11, fontWeight: '800', color: colors.text.primary }}>
+            {points[selectedIdx].label}
+          </AppText>
+          <AppText style={{ fontSize: 13, fontWeight: '800', color: points[selectedIdx].value >= 0 ? '#6C63FF' : '#EF4444' }}>
+            {points[selectedIdx].value >= 0 ? '+' : ''}{fmtAmount(points[selectedIdx].value)}
+          </AppText>
+        </View>
       )}
 
-      <View style={[s.trendContainer, { height: CHART_H }]}>
-        {points.map((pt, i) => {
-          const x = i * segWidth;
-          const y = getY(pt.value);
-          const isPositive = pt.value >= 0;
+      <Svg width={CHART_W} height={CHART_H}>
+        <Defs>
+          <SvgGrad id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0%" stopColor="#6C63FF" stopOpacity="0.25" />
+            <Stop offset="100%" stopColor="#6C63FF" stopOpacity="0.02" />
+          </SvgGrad>
+          <SvgGrad id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0%" stopColor="#6C63FF" />
+            <Stop offset="100%" stopColor="#38BDF8" />
+          </SvgGrad>
+        </Defs>
 
+        {/* Grid lines */}
+        {[0.25, 0.5, 0.75].map((pct) => {
+          const y = PADDING_V + DRAW_H - pct * DRAW_H;
           return (
-            <React.Fragment key={i}>
-              {/* Connector line to next point */}
-              {i < points.length - 1 && (() => {
-                const nx = (i + 1) * segWidth;
-                const ny = getY(points[i + 1].value);
-                const dx = nx - x;
-                const dy = ny - y;
-                const length = Math.sqrt(dx * dx + dy * dy);
-                const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-                return (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      left: x + 4,
-                      top: y + 3,
-                      width: length,
-                      height: 2,
-                      backgroundColor: '#6C63FF',
-                      borderRadius: 1,
-                      transform: [{ rotate: `${angle}deg` }],
-                      transformOrigin: 'left center',
-                      opacity: 0.6,
-                    }}
-                  />
-                );
-              })()}
-
-              {/* Dot */}
-              <View
-                style={[
-                  s.trendDot,
-                  {
-                    left: x,
-                    top: y,
-                    backgroundColor: isPositive ? '#6C63FF' : '#EF4444',
-                    borderColor: isDark ? colors.background.primary : '#FFF',
-                  },
-                ]}
-              />
-            </React.Fragment>
+            <Line
+              key={pct}
+              x1={0}
+              y1={y}
+              x2={CHART_W}
+              y2={y}
+              stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}
+              strokeWidth={0.5}
+              strokeDasharray="4,4"
+            />
           );
         })}
-      </View>
+
+        {/* Zero line */}
+        {minVal < 0 && (
+          <Line
+            x1={0}
+            y1={zeroY}
+            x2={CHART_W}
+            y2={zeroY}
+            stroke={isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}
+            strokeWidth={1}
+            strokeDasharray="6,3"
+          />
+        )}
+
+        {/* Area fill */}
+        <Path d={areaPath} fill="url(#areaGrad)" />
+
+        {/* Line */}
+        <Path d={linePath} fill="none" stroke="url(#lineGrad)" strokeWidth={2.5} strokeLinecap="round" />
+
+        {/* Selected vertical indicator line */}
+        {selectedIdx !== null && (
+          <Line
+            x1={getX(selectedIdx)}
+            y1={PADDING_V}
+            x2={getX(selectedIdx)}
+            y2={CHART_H}
+            stroke="#6C63FF"
+            strokeWidth={1}
+            strokeDasharray="4,3"
+            opacity={0.5}
+          />
+        )}
+
+        {/* Dots — rendered last so they're on top */}
+        {points.map((pt, i) => {
+          const cx = getX(i);
+          const cy = getY(pt.value);
+          const isPositive = pt.value >= 0;
+          const isSelected = selectedIdx === i;
+          return (
+            <G key={i}>
+              {/* Larger invisible tap target */}
+              <Rect
+                x={cx - 16}
+                y={cy - 16}
+                width={32}
+                height={32}
+                fill="transparent"
+                onPress={() => handleDotTap(i)}
+              />
+              {/* Outer glow ring when selected */}
+              {isSelected && (
+                <Circle cx={cx} cy={cy} r={DOT_R + 5} fill={isPositive ? '#6C63FF' + '20' : '#EF4444' + '20'} />
+              )}
+              {/* White ring border */}
+              <Circle
+                cx={cx}
+                cy={cy}
+                r={isSelected ? DOT_R + 1 : DOT_R}
+                fill={isDark ? colors.background.primary : '#FFF'}
+              />
+              {/* Colored inner dot */}
+              <Circle
+                cx={cx}
+                cy={cy}
+                r={isSelected ? DOT_R - 1 : DOT_R - 2}
+                fill={isPositive ? '#6C63FF' : '#EF4444'}
+              />
+            </G>
+          );
+        })}
+      </Svg>
 
       {/* Labels */}
       <View style={s.trendLabels}>
-        {points.map((pt, i) => (
-          <AppText key={i} style={[s.barLabel, { color: colors.text.tertiary, width: segWidth, textAlign: 'center' }]}>
-            {pt.label}
-          </AppText>
-        ))}
+        {points.map((pt, i) => {
+          const isSelected = selectedIdx === i;
+          return (
+            <AppText
+              key={i}
+              style={[
+                s.barLabel,
+                {
+                  color: isSelected ? colors.text.primary : colors.text.tertiary,
+                  fontWeight: isSelected ? '800' : '600',
+                  flex: 1,
+                  textAlign: 'center',
+                },
+              ]}
+            >
+              {pt.label}
+            </AppText>
+          );
+        })}
       </View>
     </View>
   );
@@ -664,17 +967,13 @@ function TrendLine({
 function MiniDonut({ slices, size }: { slices: CategorySlice[]; size: number }) {
   const { colors } = useTheme();
   const strokeWidth = 10;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const center = size / 2;
 
   // Build rotation offsets
   let accumulated = 0;
   const segments = slices.map((sl) => {
-    const len = (sl.percentage / 100) * circumference;
     const rotation = (accumulated / 100) * 360 - 90;
     accumulated += sl.percentage;
-    return { ...sl, len, gap: circumference - len, rotation };
+    return { ...sl, rotation };
   });
 
   // Fallback: simple stacked ring using View borders
@@ -860,10 +1159,15 @@ const s = StyleSheet.create({
     padding: Spacing['4'],
     overflow: 'hidden',
   },
+  chartHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing['3'],
+  },
   chartLegend: {
     flexDirection: 'row',
     gap: Spacing['4'],
-    marginBottom: Spacing['3'],
   },
   legendItem: {
     flexDirection: 'row',
@@ -874,6 +1178,13 @@ const s = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  expandBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   /* Bar chart */
@@ -909,29 +1220,24 @@ const s = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  /* Trend line */
-  trendContainer: {
-    position: 'relative',
-    marginHorizontal: 4,
-  },
-  trendDot: {
+  /* Tooltip */
+  tooltip: {
     position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    borderWidth: 2,
-    marginLeft: -4,
-    marginTop: -4,
+    top: 0,
+    alignSelf: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    zIndex: 10,
+    gap: 3,
+    alignItems: 'center',
   },
+
+  /* Trend line */
   trendLabels: {
     flexDirection: 'row',
     marginTop: 8,
-  },
-  zeroLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 1,
   },
 
   /* Category breakdown */
