@@ -16,6 +16,7 @@ expo-env.d.ts
 *.p8
 *.p12
 *.key
+*.keystore
 *.mobileprovision
 
 # Metro
@@ -30,8 +31,12 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# local env & credential files
+.env*
+credentials.json
+release-credentials.json
+*.keystore
+
 
 # typescript
 *.tsbuildinfo
