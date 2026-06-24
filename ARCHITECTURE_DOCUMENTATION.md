@@ -141,3 +141,16 @@ To resolve rendering bugs under high transactional spikes and edge-point clippin
   - **Edge Clipping Fix**: Introduces horizontal padding (`PADDING_H = 20`) to the canvas calculations, mapping the SVG path coordinates within `CHART_W - PADDING_H * 2` to keep boundary circles completely within bounds.
   - **Theme-Aware Halo**: Replaces mismatching white halos with an SVG stroke using `colors.background.secondary` to naturally blend dots over glass cards.
   - **Absolute Label Tracking**: Centers labels directly under each SVG point by computing `left: getX(i) - 30` relative to the parent coordinate map.
+
+### 7. Refactored Analytics Modular Infrastructure
+To improve code reusability, testability, and layout clarity for the Analytics dashboard:
+- **Lean View Shell**: Reduced `src/app/analytics.tsx` to a declarative orchestrator (< 130 lines) rendering modular widgets and utilizing data hooks.
+- **Headless Hook Expansion**: Shifted modal display states (`fullscreenChart`) and custom currency abbreviation text formatting functions (`formatAmount`, `formatFull` linked to `useFormatCurrency`) directly into the custom hook `useAnalyticsScreen.ts`.
+- **Atomic Component Extraction**: Split the massive layout into six typed, self-contained components in `src/components/analytics/`:
+  1. `SectionTitle.tsx`: Unified section header fonts and paddings.
+  2. `GrowthCard.tsx`: Metric presentation and positive/negative trend chevron badges.
+  3. `CashFlowChart.tsx`: Flex column bar pairs, background grid dividers, and tap overlay tooltip triggers.
+  4. `TrendLineChart.tsx`: SVG rendering path calculations, custom definitions, selection anchors, and relative labels.
+  5. `MiniDonut.tsx`: Border-radius based categorization circle rings.
+  6. `FullscreenChart.tsx`: Flexible slide-up modals that accept child charts for widescreen overlays.
+

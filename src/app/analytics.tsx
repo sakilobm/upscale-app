@@ -1,117 +1,48 @@
 /**
  * @file analytics.tsx
- * @architecture Presentation Layer — Screen (View Shell)
- * @description Full-fledged advanced analytics screen with period-switchable
- *   (weekly/monthly/yearly) financial analysis. Features interactive cash-flow bar
- *   charts with tap tooltips, SVG-based savings trend lines with perfect dot-line
- *   alignment, category donut breakdowns, growth metrics, budget health, loan &
- *   ledger summaries, smart insight cards, and fullscreen chart expansion mode.
+ * @architecture Presentation Layer — Lean View Shell
+ * @description Refactored analytics screen view shell. Feeds metrics, trends, and charts
+ *   data from `useAnalyticsScreen` into modular, atomic presentation components.
+ *   Zero headless states, zero inline chart calculations, zero inline formatting functions.
+ * @associatedFiles src/features/analytics/hooks/useAnalyticsScreen.ts,
+ *   src/components/analytics/ (all components)
  */
 
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  Pressable,
-  Dimensions,
-  Modal,
-  StatusBar,
-  Platform,
-} from 'react-native';
+import React from 'react';
+import { View, ScrollView, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Svg, { Path, Circle, Defs, LinearGradient as SvgGrad, Stop, Line, Rect, G } from 'react-native-svg';
 import { AppText } from '@components/AppText';
 import { ProgressBar } from '@components/ProgressBar';
 import { useTheme } from '@hooks/useTheme';
-import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Radius, FontFamily } from '@constants/index';
-import {
-  useAnalyticsScreen,
-  type PeriodMode,
-  type CashFlowBar,
-  type CategorySlice,
-  type GrowthMetric,
-  type SmartInsight,
-} from '@features/analytics/hooks/useAnalyticsScreen';
+import { useAnalyticsScreen } from '@features/analytics/hooks/useAnalyticsScreen';
+
+// Modular Atomic Components
+import { SectionTitle } from '@components/analytics/SectionTitle';
+import { GrowthCard } from '@components/analytics/GrowthCard';
+import { CashFlowChart } from '@components/analytics/CashFlowChart';
+import { TrendLineChart } from '@components/analytics/TrendLineChart';
+import { MiniDonut } from '@components/analytics/MiniDonut';
+import { FullscreenChart } from '@components/analytics/FullscreenChart';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-
-// ─── Period pill config ──────────────────────────────────────────────────────
-const PERIODS: { key: PeriodMode; label: string; icon: string }[] = [
+const PERIODS = [
   { key: 'weekly',  label: 'Week',  icon: 'calendar-outline' },
   { key: 'monthly', label: 'Month', icon: 'today-outline' },
   { key: 'yearly',  label: 'Year',  icon: 'albums-outline' },
-];
-
-// ─── Fullscreen chart modal ──────────────────────────────────────────────────
-interface FullscreenChartProps {
-  visible: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-}
-
-function FullscreenChart({ visible, onClose, title, children }: FullscreenChartProps) {
-  const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
-
-  return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
-      <View style={[fs.root, { backgroundColor: colors.background.primary, paddingTop: insets.top }]}>
-        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-        {/* Header bar */}
-        <View style={fs.header}>
-          <AppText variant="headingSM" color={colors.text.primary} style={{ fontWeight: '700', flex: 1 }}>
-            {title}
-          </AppText>
-          <Pressable
-            onPress={onClose}
-            hitSlop={14}
-            style={[fs.closeBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}
-          >
-            <Ionicons name="close" size={20} color={colors.text.primary} />
-          </Pressable>
-        </View>
-        {/* Chart area */}
-        <View style={fs.chartArea}>
-          {children}
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-const fs = StyleSheet.create({
-  root:     { flex: 1 },
-  header:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, gap: 12 },
-  closeBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  chartArea: { flex: 1, paddingHorizontal: 12, justifyContent: 'center' },
-});
+] as const;
 
 export default function AnalyticsScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { symbol } = useFormatCurrency();
   const analytics = useAnalyticsScreen();
-
-  const [fullscreenChart, setFullscreenChart] = useState<'cashflow' | 'trend' | null>(null);
 
   const cardBg       = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
   const dividerColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
-
-  const fmtAmount = (n: number) => {
-    if (n >= 1_000_000) return `${symbol}${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000)     return `${symbol}${(n / 1_000).toFixed(1)}K`;
-    return `${symbol}${n.toFixed(0)}`;
-  };
-
-  const fmtFull = (n: number) =>
-    `${symbol}${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
     <View style={[s.root, { backgroundColor: colors.background.primary }]}>      
@@ -119,9 +50,7 @@ export default function AnalyticsScreen() {
         contentContainerStyle={[s.scroll, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* ══════════════════════════════════════════════════════════════════
-            HEADER: Back + Title + Period Selector
-           ══════════════════════════════════════════════════════════════════ */}
+        {/* Header bar */}
         <View style={s.header}>
           <Pressable onPress={() => router.back()} hitSlop={12} style={s.backBtn}>
             <Ionicons name="arrow-back" size={22} color={colors.text.primary} />
@@ -134,7 +63,7 @@ export default function AnalyticsScreen() {
           </View>
         </View>
 
-        {/* Period pills */}
+        {/* Period Pills Selector */}
         <View style={s.periodRow}>
           {PERIODS.map((p) => {
             const active = analytics.period === p.key;
@@ -154,13 +83,7 @@ export default function AnalyticsScreen() {
                 ]}
               >
                 <Ionicons name={p.icon as any} size={14} color={active ? '#FFF' : colors.text.secondary} />
-                <AppText
-                  style={{
-                    fontSize: 12,
-                    fontWeight: '700',
-                    color: active ? '#FFF' : colors.text.secondary,
-                  }}
-                >
+                <AppText style={{ fontSize: 12, fontWeight: '700', color: active ? '#FFF' : colors.text.secondary }}>
                   {p.label}
                 </AppText>
               </Pressable>
@@ -168,9 +91,7 @@ export default function AnalyticsScreen() {
           })}
         </View>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            HERO: Overview Summary with Net Worth
-           ══════════════════════════════════════════════════════════════════ */}
+        {/* Overview Summary */}
         <View style={[s.heroCard, { borderColor: colors.brand.primary + '22' }]}>
           <LinearGradient
             colors={isDark ? ['rgba(108,99,255,0.12)', 'rgba(56,189,248,0.06)'] : ['rgba(108,99,255,0.08)', 'rgba(56,189,248,0.04)']}
@@ -178,7 +99,6 @@ export default function AnalyticsScreen() {
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          {/* Accent stripe */}
           <LinearGradient
             colors={['#6C63FF', '#38BDF8']}
             start={{ x: 0, y: 0 }}
@@ -192,56 +112,52 @@ export default function AnalyticsScreen() {
                 NET WORTH
               </AppText>
               <AppText style={[s.heroAmount, { color: colors.text.primary }]}>
-                {fmtFull(analytics.totalBalance)}
+                {analytics.formatFull(analytics.totalBalance)}
               </AppText>
             </View>
-            <View style={[s.heroNetBadge, { backgroundColor: analytics.currentAgg.net >= 0 ? '#10B981' + '18' : '#EF4444' + '18' }]}>
+            <View style={[s.heroNetBadge, { backgroundColor: analytics.currentAgg.net >= 0 ? '#10B98118' : '#EF444418' }]}>
               <Ionicons
                 name={analytics.currentAgg.net >= 0 ? 'trending-up' : 'trending-down'}
                 size={14}
                 color={analytics.currentAgg.net >= 0 ? '#10B981' : '#EF4444'}
               />
               <AppText style={{ fontSize: 11, fontWeight: '800', color: analytics.currentAgg.net >= 0 ? '#10B981' : '#EF4444' }}>
-                {analytics.currentAgg.net >= 0 ? '+' : ''}{fmtAmount(analytics.currentAgg.net)}
+                {analytics.currentAgg.net >= 0 ? '+' : ''}{analytics.formatAmount(analytics.currentAgg.net)}
               </AppText>
             </View>
           </View>
 
-          {/* Quick stat trio */}
+          {/* Quick stat breakdowns */}
           <View style={s.heroStatsRow}>
             <View style={s.heroStat}>
               <View style={[s.heroStatDot, { backgroundColor: '#10B981' }]} />
               <AppText variant="caption" color={colors.text.tertiary}>Income</AppText>
-              <AppText style={[s.heroStatVal, { color: '#10B981' }]}>{fmtAmount(analytics.currentAgg.income)}</AppText>
+              <AppText style={[s.heroStatVal, { color: '#10B981' }]}>{analytics.formatAmount(analytics.currentAgg.income)}</AppText>
             </View>
             <View style={[s.heroStatDivider, { backgroundColor: dividerColor }]} />
             <View style={s.heroStat}>
               <View style={[s.heroStatDot, { backgroundColor: '#EF4444' }]} />
               <AppText variant="caption" color={colors.text.tertiary}>Expenses</AppText>
-              <AppText style={[s.heroStatVal, { color: '#EF4444' }]}>{fmtAmount(analytics.currentAgg.expense)}</AppText>
+              <AppText style={[s.heroStatVal, { color: '#EF4444' }]}>{analytics.formatAmount(analytics.currentAgg.expense)}</AppText>
             </View>
             <View style={[s.heroStatDivider, { backgroundColor: dividerColor }]} />
             <View style={s.heroStat}>
               <View style={[s.heroStatDot, { backgroundColor: '#6C63FF' }]} />
               <AppText variant="caption" color={colors.text.tertiary}>Saved</AppText>
-              <AppText style={[s.heroStatVal, { color: '#6C63FF' }]}>{fmtAmount(analytics.currentAgg.net)}</AppText>
+              <AppText style={[s.heroStatVal, { color: '#6C63FF' }]}>{analytics.formatAmount(analytics.currentAgg.net)}</AppText>
             </View>
           </View>
         </View>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            GROWTH METRICS
-           ══════════════════════════════════════════════════════════════════ */}
+        {/* Growth Metrics Row */}
         <SectionTitle title="GROWTH METRICS" />
         <View style={s.growthRow}>
           {analytics.growthMetrics.map((m) => (
-            <GrowthCard key={m.label} metric={m} cardBg={cardBg} colors={colors} fmtAmount={fmtAmount} />
+            <GrowthCard key={m.label} metric={m} cardBg={cardBg} colors={colors} formatAmount={analytics.formatAmount} />
           ))}
         </View>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            CASH FLOW BAR CHART
-           ══════════════════════════════════════════════════════════════════ */}
+        {/* Cash Flow Section */}
         <SectionTitle title="CASH FLOW" />
         <View style={[s.chartCard, { backgroundColor: cardBg, borderColor: colors.glass.border }]}>
           <View style={s.chartHeader}>
@@ -256,7 +172,7 @@ export default function AnalyticsScreen() {
               </View>
             </View>
             <Pressable
-              onPress={() => { Haptics.selectionAsync(); setFullscreenChart('cashflow'); }}
+              onPress={() => { Haptics.selectionAsync(); analytics.setFullscreenChart('cashflow'); }}
               hitSlop={10}
               style={[s.expandBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}
             >
@@ -267,14 +183,12 @@ export default function AnalyticsScreen() {
             bars={analytics.cashFlowBars}
             colors={colors}
             isDark={isDark}
-            fmtAmount={fmtAmount}
+            formatAmount={analytics.formatAmount}
             chartHeight={140}
           />
         </View>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            SAVINGS TREND LINE
-           ══════════════════════════════════════════════════════════════════ */}
+        {/* Savings Trend Section */}
         <SectionTitle title="SAVINGS TREND" />
         <View style={[s.chartCard, { backgroundColor: cardBg, borderColor: colors.glass.border }]}>
           <View style={s.chartHeader}>
@@ -282,7 +196,7 @@ export default function AnalyticsScreen() {
               Net savings per period
             </AppText>
             <Pressable
-              onPress={() => { Haptics.selectionAsync(); setFullscreenChart('trend'); }}
+              onPress={() => { Haptics.selectionAsync(); analytics.setFullscreenChart('trend'); }}
               hitSlop={10}
               style={[s.expandBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}
             >
@@ -293,20 +207,17 @@ export default function AnalyticsScreen() {
             points={analytics.savingsTrend}
             colors={colors}
             isDark={isDark}
-            fmtAmount={fmtAmount}
+            formatAmount={analytics.formatAmount}
             chartHeight={100}
             chartWidth={SCREEN_W - 80}
           />
         </View>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            CATEGORY BREAKDOWN
-           ══════════════════════════════════════════════════════════════════ */}
+        {/* Category Expense Breakdown */}
         {analytics.categoryBreakdown.length > 0 && (
           <>
             <SectionTitle title="EXPENSE BREAKDOWN" />
             <View style={[s.chartCard, { backgroundColor: cardBg, borderColor: colors.glass.border, padding: 0 }]}>
-              {/* Mini donut */}
               <View style={s.donutRow}>
                 <MiniDonut slices={analytics.categoryBreakdown} size={80} />
                 <View style={{ flex: 1, gap: 6 }}>
@@ -323,7 +234,8 @@ export default function AnalyticsScreen() {
                   ))}
                 </View>
               </View>
-              {/* Full list */}
+
+              {/* Detail category progress list */}
               {analytics.categoryBreakdown.map((cat, i) => (
                 <View
                   key={cat.id}
@@ -346,7 +258,7 @@ export default function AnalyticsScreen() {
                         {cat.label}
                       </AppText>
                       <AppText style={{ fontSize: 13, fontWeight: '700', color: colors.text.primary }}>
-                        {fmtAmount(cat.amount)}
+                        {analytics.formatAmount(cat.amount)}
                       </AppText>
                     </View>
                     <ProgressBar
@@ -369,9 +281,7 @@ export default function AnalyticsScreen() {
           </>
         )}
 
-        {/* ══════════════════════════════════════════════════════════════════
-            BUDGET HEALTH
-           ══════════════════════════════════════════════════════════════════ */}
+        {/* Budget Health overview */}
         {analytics.budgetUtilization.totalLimit > 0 && (
           <>
             <SectionTitle title="BUDGET HEALTH" />
@@ -389,7 +299,7 @@ export default function AnalyticsScreen() {
                     {analytics.budgetUtilization.pct.toFixed(0)}% Budget Used
                   </AppText>
                   <AppText variant="caption" color={colors.text.tertiary}>
-                    {fmtAmount(analytics.budgetUtilization.totalSpent)} of {fmtAmount(analytics.budgetUtilization.totalLimit)}
+                    {analytics.formatAmount(analytics.budgetUtilization.totalSpent)} of {analytics.formatAmount(analytics.budgetUtilization.totalLimit)}
                   </AppText>
                 </View>
                 <AppText style={{ fontSize: 20, fontWeight: '800', color: analytics.budgetUtilization.pct > 90 ? '#EF4444' : '#10B981' }}>
@@ -405,15 +315,13 @@ export default function AnalyticsScreen() {
           </>
         )}
 
-        {/* ══════════════════════════════════════════════════════════════════
-            LOANS & LEDGER SUMMARY
-           ══════════════════════════════════════════════════════════════════ */}
+        {/* Loans & Ledger Overviews */}
         {(analytics.loanSummary.borrowedCount + analytics.loanSummary.lentCount > 0 ||
           analytics.ledgerSummary.activeEntries > 0) && (
           <>
             <SectionTitle title="LOANS & LEDGER" />
             <View style={s.llRow}>
-              {/* Loans */}
+              {/* Loans Summary */}
               {(analytics.loanSummary.borrowedCount + analytics.loanSummary.lentCount > 0) && (
                 <View style={[s.llCard, { backgroundColor: cardBg, borderColor: colors.glass.border }]}>
                   <LinearGradient colors={['#EC4899', '#8B5CF6']} style={s.llAccent} />
@@ -427,25 +335,25 @@ export default function AnalyticsScreen() {
                     <View>
                       <AppText variant="caption" color={colors.text.tertiary}>Borrowed</AppText>
                       <AppText style={{ fontSize: 14, fontWeight: '800', color: '#EF4444' }}>
-                        {fmtAmount(analytics.loanSummary.activeBorrowed)}
+                        {analytics.formatAmount(analytics.loanSummary.activeBorrowed)}
                       </AppText>
                     </View>
                     <View>
                       <AppText variant="caption" color={colors.text.tertiary}>Lent</AppText>
                       <AppText style={{ fontSize: 14, fontWeight: '800', color: '#10B981' }}>
-                        {fmtAmount(analytics.loanSummary.activeLent)}
+                        {analytics.formatAmount(analytics.loanSummary.activeLent)}
                       </AppText>
                     </View>
                   </View>
                   {analytics.loanSummary.monthlyEmi > 0 && (
                     <AppText variant="caption" color={colors.text.tertiary}>
-                      Monthly EMI: <AppText style={{ color: colors.text.primary, fontWeight: '700', fontSize: 11 }}>{fmtAmount(analytics.loanSummary.monthlyEmi)}</AppText>
+                      Monthly EMI: <AppText style={{ color: colors.text.primary, fontWeight: '700', fontSize: 11 }}>{analytics.formatAmount(analytics.loanSummary.monthlyEmi)}</AppText>
                     </AppText>
                   )}
                 </View>
               )}
 
-              {/* Ledger */}
+              {/* Ledger Summary */}
               {analytics.ledgerSummary.activeEntries > 0 && (
                 <View style={[s.llCard, { backgroundColor: cardBg, borderColor: colors.glass.border }]}>
                   <LinearGradient colors={['#3B82F6', '#06B6D4']} style={s.llAccent} />
@@ -459,13 +367,13 @@ export default function AnalyticsScreen() {
                     <View>
                       <AppText variant="caption" color={colors.text.tertiary}>Owed to me</AppText>
                       <AppText style={{ fontSize: 14, fontWeight: '800', color: '#10B981' }}>
-                        {fmtAmount(analytics.ledgerSummary.totalOwedToMe)}
+                        {analytics.formatAmount(analytics.ledgerSummary.totalOwedToMe)}
                       </AppText>
                     </View>
                     <View>
                       <AppText variant="caption" color={colors.text.tertiary}>I owe</AppText>
                       <AppText style={{ fontSize: 14, fontWeight: '800', color: '#EF4444' }}>
-                        {fmtAmount(analytics.ledgerSummary.totalIOwe)}
+                        {analytics.formatAmount(analytics.ledgerSummary.totalIOwe)}
                       </AppText>
                     </View>
                   </View>
@@ -483,9 +391,7 @@ export default function AnalyticsScreen() {
           </>
         )}
 
-        {/* ══════════════════════════════════════════════════════════════════
-            SMART INSIGHTS
-           ══════════════════════════════════════════════════════════════════ */}
+        {/* Smart financial insight alerts */}
         {analytics.insights.length > 0 && (
           <>
             <SectionTitle title="SMART INSIGHTS" />
@@ -510,34 +416,33 @@ export default function AnalyticsScreen() {
         )}
       </ScrollView>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          FULLSCREEN CHART MODALS
-         ══════════════════════════════════════════════════════════════════ */}
+      {/* Expanded Chart Modal: Cash Flow */}
       <FullscreenChart
-        visible={fullscreenChart === 'cashflow'}
-        onClose={() => setFullscreenChart(null)}
+        visible={analytics.fullscreenChart === 'cashflow'}
+        onClose={() => analytics.setFullscreenChart(null)}
         title="Cash Flow"
       >
         <CashFlowChart
           bars={analytics.cashFlowBars}
           colors={colors}
           isDark={isDark}
-          fmtAmount={fmtAmount}
+          formatAmount={analytics.formatAmount}
           chartHeight={SCREEN_H * 0.55}
           isFullscreen
         />
       </FullscreenChart>
 
+      {/* Expanded Chart Modal: Savings Trend */}
       <FullscreenChart
-        visible={fullscreenChart === 'trend'}
-        onClose={() => setFullscreenChart(null)}
+        visible={analytics.fullscreenChart === 'trend'}
+        onClose={() => analytics.setFullscreenChart(null)}
         title="Savings Trend"
       >
         <TrendLineChart
           points={analytics.savingsTrend}
           colors={colors}
           isDark={isDark}
-          fmtAmount={fmtAmount}
+          formatAmount={analytics.formatAmount}
           chartHeight={SCREEN_H * 0.5}
           chartWidth={SCREEN_W - 40}
           isFullscreen
@@ -547,494 +452,11 @@ export default function AnalyticsScreen() {
   );
 }
 
-// ─── Sub-Components ─────────────────────────────────────────────────────────
-
-function SectionTitle({ title }: { title: string }) {
-  const { colors } = useTheme();
-  return (
-    <AppText style={[s.sectionTitle, { color: colors.text.tertiary }]}>
-      {title}
-    </AppText>
-  );
-}
-
-/** Growth metric card */
-function GrowthCard({
-  metric,
-  cardBg,
-  colors,
-  fmtAmount,
-}: {
-  metric: GrowthMetric;
-  cardBg: string;
-  colors: any;
-  fmtAmount: (n: number) => string;
-}) {
-  const accentColor =
-    metric.label === 'Income'   ? '#10B981' :
-    metric.label === 'Expenses' ? '#EF4444' : '#6C63FF';
-
-  return (
-    <View style={[s.growthCard, { backgroundColor: cardBg, borderColor: colors.glass.border }]}>
-      <View style={[s.growthAccent, { backgroundColor: accentColor }]} />
-      <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '600' }}>
-        {metric.label}
-      </AppText>
-      <AppText style={{ fontSize: 17, fontWeight: '800', color: colors.text.primary }}>
-        {fmtAmount(metric.current)}
-      </AppText>
-      <View style={s.growthBadgeRow}>
-        <Ionicons
-          name={metric.direction === 'up' ? 'caret-up' : metric.direction === 'down' ? 'caret-down' : 'remove'}
-          size={10}
-          color={
-            metric.label === 'Expenses'
-              ? (metric.direction === 'up' ? '#EF4444' : '#10B981')
-              : (metric.direction === 'up' ? '#10B981' : '#EF4444')
-          }
-        />
-        <AppText
-          style={{
-            fontSize: 10,
-            fontWeight: '800',
-            color: metric.label === 'Expenses'
-              ? (metric.direction === 'up' ? '#EF4444' : '#10B981')
-              : (metric.direction === 'up' ? '#10B981' : '#EF4444'),
-          }}
-        >
-          {Math.abs(metric.changePct).toFixed(0)}%
-        </AppText>
-      </View>
-    </View>
-  );
-}
-
-// ─── Interactive Cash Flow Bar Chart ─────────────────────────────────────────
-
-function CashFlowChart({
-  bars,
-  colors,
-  isDark,
-  fmtAmount,
-  chartHeight = 140,
-  isFullscreen = false,
-}: {
-  bars: CashFlowBar[];
-  colors: any;
-  isDark: boolean;
-  fmtAmount: (n: number) => string;
-  chartHeight?: number;
-  isFullscreen?: boolean;
-}) {
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const maxVal = Math.max(...bars.map((b) => Math.max(b.income, b.expense)), 1);
-  // Add 20% headroom so bars never touch the container top
-  const scaledMax = maxVal * 1.20;
-  const CHART_H = chartHeight;
-  const barWidth = isFullscreen
-    ? Math.min(32, (SCREEN_W - 64) / bars.length / 2.5)
-    : Math.min(24, (SCREEN_W - 80) / bars.length / 2.5);
-
-  const handleBarTap = useCallback((idx: number) => {
-    Haptics.selectionAsync();
-    setSelectedIdx(selectedIdx === idx ? null : idx);
-  }, [selectedIdx]);
-
-  return (
-    <View style={s.barChartContainer}>
-      {/* Grid lines + Y-axis labels */}
-      {[0.25, 0.5, 0.75, 1].map((pct) => (
-        <View key={pct} style={{ position: 'absolute', bottom: pct * CHART_H + 24, left: 0, right: 0 }}>
-          <View
-            style={[
-              s.gridLine,
-              { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' },
-            ]}
-          />
-          {isFullscreen && (
-            <AppText style={{ position: 'absolute', left: -4, top: -8, fontSize: 8, color: colors.text.tertiary, fontWeight: '600' }}>
-              {fmtAmount(scaledMax * pct)}
-            </AppText>
-          )}
-        </View>
-      ))}
-
-      {/* Selected tooltip */}
-      {selectedIdx !== null && bars[selectedIdx] && (
-        <View style={[s.tooltip, {
-          backgroundColor: isDark ? 'rgba(40,40,50,0.96)' : 'rgba(255,255,255,0.96)',
-          borderColor: colors.glass.border,
-          ...Platform.select({
-            ios: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
-            android: { elevation: 6 },
-          }),
-        }]}>
-          <AppText style={{ fontSize: 11, fontWeight: '800', color: colors.text.primary }}>
-            {bars[selectedIdx].label}
-          </AppText>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#10B981' }} />
-              <AppText style={{ fontSize: 10, fontWeight: '700', color: '#10B981' }}>
-                {fmtAmount(bars[selectedIdx].income)}
-              </AppText>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#EF4444' }} />
-              <AppText style={{ fontSize: 10, fontWeight: '700', color: '#EF4444' }}>
-                {fmtAmount(bars[selectedIdx].expense)}
-              </AppText>
-            </View>
-          </View>
-          <AppText style={{ fontSize: 10, fontWeight: '700', color: bars[selectedIdx].net >= 0 ? '#10B981' : '#EF4444' }}>
-            Net: {bars[selectedIdx].net >= 0 ? '+' : ''}{fmtAmount(bars[selectedIdx].net)}
-          </AppText>
-        </View>
-      )}
-
-      {/* Bar Column Row */}
-      <View style={[s.barChartRow, { height: CHART_H + 24, marginTop: 20 }]}>
-        {bars.map((bar, i) => {
-          const isSelected = selectedIdx === i;
-          return (
-            <Pressable
-              key={i}
-              onPress={() => handleBarTap(i)}
-              style={[s.barColumn, { opacity: selectedIdx !== null && !isSelected ? 0.4 : 1 }]}
-            >
-              <View style={[s.barsContainer, { height: CHART_H }]}>
-                <View style={s.barPair}>
-                  {/* Income bar */}
-                  <View
-                    style={[
-                      s.bar,
-                      {
-                        height: Math.max((bar.income / scaledMax) * CHART_H, 2),
-                        width: barWidth,
-                        backgroundColor: '#10B981',
-                        borderRadius: barWidth / 2,
-                      },
-                    ]}
-                  />
-                  {/* Expense bar */}
-                  <View
-                    style={[
-                      s.bar,
-                      {
-                        height: Math.max((bar.expense / scaledMax) * CHART_H, 2),
-                        width: barWidth,
-                        backgroundColor: '#EF4444',
-                        borderRadius: barWidth / 2,
-                      },
-                    ]}
-                  />
-                </View>
-              </View>
-              <AppText style={[s.barLabel, { color: isSelected ? colors.text.primary : colors.text.tertiary, fontWeight: isSelected ? '800' : '600', marginTop: 6 }]}>
-                {bar.label}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-// ─── SVG-based Interactive Trend Line Chart ──────────────────────────────────
-
-function TrendLineChart({
-  points,
-  colors,
-  isDark,
-  fmtAmount,
-  chartHeight = 100,
-  chartWidth = SCREEN_W - 80,
-  isFullscreen = false,
-}: {
-  points: { label: string; value: number }[];
-  colors: any;
-  isDark: boolean;
-  fmtAmount: (n: number) => string;
-  chartHeight?: number;
-  chartWidth?: number;
-  isFullscreen?: boolean;
-}) {
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-
-  const DOT_R = isFullscreen ? 6 : 5;
-  const PADDING_V = isFullscreen ? 24 : 16; // vertical padding inside the chart area
-  const PADDING_H = 20; // horizontal padding to prevent edge dot clipping
-  const CHART_H = chartHeight;
-  const CHART_W = chartWidth;
-  const DRAW_H = CHART_H - PADDING_V * 2; // drawable height between top/bottom padding
-  const DRAW_W = CHART_W - PADDING_H * 2; // drawable width inside the padding
-
-  const values = points.map((p) => p.value);
-  const minVal = Math.min(...values, 0);
-  const maxVal = Math.max(...values, 1);
-  const range = maxVal - minVal || 1;
-
-  // Map value to Y coordinate with vertical padding
-  const getY = (v: number) => PADDING_V + DRAW_H - ((v - minVal) / range) * DRAW_H;
-  // Map index to X coordinate with horizontal padding to prevent edge clipping
-  const getX = (i: number) => points.length > 1 ? PADDING_H + (i / (points.length - 1)) * DRAW_W : CHART_W / 2;
-
-  const handleDotTap = useCallback((idx: number) => {
-    Haptics.selectionAsync();
-    setSelectedIdx(selectedIdx === idx ? null : idx);
-  }, [selectedIdx]);
-
-  if (points.length < 2) {
-    return (
-      <View style={{ height: CHART_H, alignItems: 'center', justifyContent: 'center' }}>
-        <AppText variant="caption" color={colors.text.tertiary}>Not enough data for trend</AppText>
-      </View>
-    );
-  }
-
-  // Build SVG path for smooth curve
-  const buildPath = () => {
-    let d = `M ${getX(0)} ${getY(points[0].value)}`;
-    for (let i = 1; i < points.length; i++) {
-      const x0 = getX(i - 1), y0 = getY(points[i - 1].value);
-      const x1 = getX(i),     y1 = getY(points[i].value);
-      const cpx = (x0 + x1) / 2;
-      d += ` C ${cpx} ${y0}, ${cpx} ${y1}, ${x1} ${y1}`;
-    }
-    return d;
-  };
-
-  // Build area fill path (same curve + close to bottom of chart area)
-  const buildAreaPath = () => {
-    let d = buildPath();
-    d += ` L ${getX(points.length - 1)} ${CHART_H}`;
-    d += ` L ${getX(0)} ${CHART_H} Z`;
-    return d;
-  };
-
-  const linePath = buildPath();
-  const areaPath = buildAreaPath();
-
-  // Zero line Y position
-  const zeroY = getY(0);
-
-  return (
-    <View>
-      {/* Selected tooltip */}
-      {selectedIdx !== null && points[selectedIdx] && (
-        <View style={[s.tooltip, {
-          backgroundColor: isDark ? 'rgba(40,40,50,0.96)' : 'rgba(255,255,255,0.96)',
-          borderColor: colors.glass.border,
-          ...Platform.select({
-            ios: { shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
-            android: { elevation: 6 },
-          }),
-        }]}>
-          <AppText style={{ fontSize: 11, fontWeight: '800', color: colors.text.primary }}>
-            {points[selectedIdx].label}
-          </AppText>
-          <AppText style={{ fontSize: 13, fontWeight: '800', color: points[selectedIdx].value >= 0 ? '#6C63FF' : '#EF4444' }}>
-            {points[selectedIdx].value >= 0 ? '+' : ''}{fmtAmount(points[selectedIdx].value)}
-          </AppText>
-        </View>
-      )}
-
-      <Svg width={CHART_W} height={CHART_H}>
-        <Defs>
-          <SvgGrad id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor="#6C63FF" stopOpacity="0.25" />
-            <Stop offset="100%" stopColor="#6C63FF" stopOpacity="0.02" />
-          </SvgGrad>
-          <SvgGrad id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0%" stopColor="#6C63FF" />
-            <Stop offset="100%" stopColor="#38BDF8" />
-          </SvgGrad>
-        </Defs>
-
-        {/* Grid lines */}
-        {[0.25, 0.5, 0.75].map((pct) => {
-          const y = PADDING_V + DRAW_H - pct * DRAW_H;
-          return (
-            <Line
-              key={pct}
-              x1={0}
-              y1={y}
-              x2={CHART_W}
-              y2={y}
-              stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}
-              strokeWidth={0.5}
-              strokeDasharray="4,4"
-            />
-          );
-        })}
-
-        {/* Zero line */}
-        {minVal < 0 && (
-          <Line
-            x1={0}
-            y1={zeroY}
-            x2={CHART_W}
-            y2={zeroY}
-            stroke={isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}
-            strokeWidth={1}
-            strokeDasharray="6,3"
-          />
-        )}
-
-        {/* Area fill */}
-        <Path d={areaPath} fill="url(#areaGrad)" />
-
-        {/* Line */}
-        <Path d={linePath} fill="none" stroke="url(#lineGrad)" strokeWidth={2.5} strokeLinecap="round" />
-
-        {/* Selected vertical indicator line */}
-        {selectedIdx !== null && (
-          <Line
-            x1={getX(selectedIdx)}
-            y1={PADDING_V}
-            x2={getX(selectedIdx)}
-            y2={CHART_H}
-            stroke="#6C63FF"
-            strokeWidth={1}
-            strokeDasharray="4,3"
-            opacity={0.5}
-          />
-        )}
-
-        {/* Dots — rendered last so they're on top */}
-        {points.map((pt, i) => {
-          const cx = getX(i);
-          const cy = getY(pt.value);
-          const isPositive = pt.value >= 0;
-          const isSelected = selectedIdx === i;
-          return (
-            <G key={i}>
-              {/* Larger invisible tap target */}
-              <Rect
-                x={cx - 16}
-                y={cy - 16}
-                width={32}
-                height={32}
-                fill="transparent"
-                onPress={() => handleDotTap(i)}
-              />
-              {/* Outer glow ring when selected */}
-              {isSelected && (
-                <Circle cx={cx} cy={cy} r={DOT_R + 5} fill={isPositive ? '#6C63FF' + '20' : '#EF4444' + '20'} />
-              )}
-              {/* Premium main dot with theme-aware stroke to prevent color mismatch */}
-              <Circle
-                cx={cx}
-                cy={cy}
-                r={isSelected ? DOT_R : DOT_R - 1}
-                fill={isPositive ? '#6C63FF' : '#EF4444'}
-                stroke={colors.background.secondary}
-                strokeWidth={2}
-              />
-            </G>
-          );
-        })}
-      </Svg>
-
-      {/* Labels — absolutely positioned to guarantee center alignment under dots */}
-      <View style={[s.trendLabels, { height: 24, position: 'relative', width: CHART_W }]}>
-        {points.map((pt, i) => {
-          const cx = getX(i);
-          const isSelected = selectedIdx === i;
-          return (
-            <View
-              key={i}
-              style={{
-                position: 'absolute',
-                left: cx - 30,
-                width: 60,
-                alignItems: 'center',
-              }}
-            >
-              <AppText
-                style={[
-                  s.barLabel,
-                  {
-                    color: isSelected ? colors.text.primary : colors.text.tertiary,
-                    fontWeight: isSelected ? '800' : '600',
-                    fontSize: 9,
-                  },
-                ]}
-              >
-                {pt.label}
-              </AppText>
-            </View>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-/** Mini donut chart using border-based ring segments */
-function MiniDonut({ slices, size }: { slices: CategorySlice[]; size: number }) {
-  const { colors } = useTheme();
-  const strokeWidth = 10;
-
-  // Build rotation offsets
-  let accumulated = 0;
-  const segments = slices.map((sl) => {
-    const rotation = (accumulated / 100) * 360 - 90;
-    accumulated += sl.percentage;
-    return { ...sl, rotation };
-  });
-
-  // Fallback: simple stacked ring using View borders
-  // Since RN doesn't have SVG by default, we'll use a simpler visual
-  return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      {/* Background ring */}
-      <View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          borderWidth: strokeWidth,
-          borderColor: colors.glass.backgroundMid,
-          position: 'absolute',
-        }}
-      />
-      {/* Overlay colored arcs (approximation using rotated half-circles) */}
-      {segments.slice(0, 4).map((seg, i) => (
-        <View
-          key={seg.id}
-          style={{
-            position: 'absolute',
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderWidth: strokeWidth,
-            borderColor: 'transparent',
-            borderTopColor: seg.color,
-            borderRightColor: seg.percentage > 25 ? seg.color : 'transparent',
-            transform: [{ rotate: `${seg.rotation}deg` }],
-          }}
-        />
-      ))}
-      {/* Center label */}
-      <AppText style={{ fontSize: 14, fontWeight: '800', color: colors.text.primary }}>
-        {slices.length}
-      </AppText>
-      <AppText style={{ fontSize: 8, fontWeight: '600', color: colors.text.tertiary }}>
-        categories
-      </AppText>
-    </View>
-  );
-}
-
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
   root: { flex: 1 },
   scroll: { paddingHorizontal: Spacing['5'], gap: Spacing['3'] },
-
-  /* Header */
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1048,8 +470,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  /* Period pills */
   periodRow: {
     flexDirection: 'row',
     gap: Spacing['2'],
@@ -1064,8 +484,6 @@ const s = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
   },
-
-  /* Hero card */
   heroCard: {
     borderRadius: Radius.xl,
     borderWidth: 1,
@@ -1124,44 +542,10 @@ const s = StyleSheet.create({
     width: 1,
     height: 32,
   },
-
-  /* Section title */
-  sectionTitle: {
-    fontSize: 9.5,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    paddingLeft: 4,
-    marginTop: Spacing['2'],
-  },
-
-  /* Growth cards */
   growthRow: {
     flexDirection: 'row',
     gap: Spacing['2'],
   },
-  growthCard: {
-    flex: 1,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    overflow: 'hidden',
-    padding: Spacing['3'],
-    gap: 3,
-  },
-  growthAccent: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 2.5,
-  },
-  growthBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    marginTop: 2,
-  },
-
-  /* Chart card */
   chartCard: {
     borderRadius: Radius.xl,
     borderWidth: 1,
@@ -1195,64 +579,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  /* Bar chart */
-  barChartContainer: {
-    position: 'relative',
-  },
-  barChartRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-around',
-  },
-  gridLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: StyleSheet.hairlineWidth,
-  },
-  barColumn: {
-    alignItems: 'center',
-  },
-  barsContainer: {
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  barPair: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 3,
-  },
-  bar: {
-    minHeight: 2,
-  },
-  barLabel: {
-    fontSize: 9,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-
-  /* Tooltip */
-  tooltip: {
-    position: 'absolute',
-    top: 0,
-    alignSelf: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    zIndex: 10,
-    gap: 3,
-    alignItems: 'center',
-  },
-
-  /* Trend line */
-  trendLabels: {
-    flexDirection: 'row',
-    marginTop: 8,
-  },
-
-  /* Category breakdown */
   donutRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1296,8 +622,6 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-
-  /* Budget */
   budgetCard: {
     borderRadius: Radius.xl,
     borderWidth: 1,
@@ -1316,8 +640,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  /* Loans & Ledger */
   llRow: {
     flexDirection: 'row',
     gap: Spacing['2'],
@@ -1358,8 +680,6 @@ const s = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: Radius.xs,
   },
-
-  /* Insights */
   insightsGrid: {
     gap: Spacing['2'],
   },

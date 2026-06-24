@@ -31,6 +31,7 @@ import { useBudgetStore } from '@store/budgetStore';
 import { useLoansStore } from '@store/loansStore';
 import { useLedgerStore } from '@store/ledgerStore';
 import { getCategoryById } from '@store/categoryStore';
+import { useFormatCurrency } from '@hooks/useFormatCurrency';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -103,6 +104,18 @@ export interface SmartInsight {
 
 export function useAnalyticsScreen() {
   const [period, setPeriod] = useState<PeriodMode>('monthly');
+  const [fullscreenChart, setFullscreenChart] = useState<'cashflow' | 'trend' | null>(null);
+
+  const { symbol } = useFormatCurrency();
+
+  const formatAmount = useMemo(() => (n: number) => {
+    if (Math.abs(n) >= 1_000_000) return `${symbol}${(n / 1_000_000).toFixed(1)}M`;
+    if (Math.abs(n) >= 1_000)     return `${symbol}${(n / 1_000).toFixed(1)}K`;
+    return `${symbol}${n.toFixed(0)}`;
+  }, [symbol]);
+
+  const formatFull = useMemo(() => (n: number) =>
+    `${symbol}${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, [symbol]);
 
   const transactions = useTransactionStore((s) => s.transactions);
   const accounts     = useAccountStore((s) => s.accounts);
@@ -409,6 +422,12 @@ export function useAnalyticsScreen() {
     period,
     setPeriod,
     periodLabel,
+    fullscreenChart,
+    setFullscreenChart,
+
+    // Formatting helpers
+    formatAmount,
+    formatFull,
 
     // Summaries
     currentAgg,
