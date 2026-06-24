@@ -92,7 +92,7 @@ export default function OnboardingScreen() {
         {/* ── Keyboard-aware wrapper: carousel + bottom shrink together ── */}
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           {/* ── Slide carousel ── */}
           <View style={s.carouselClip}>

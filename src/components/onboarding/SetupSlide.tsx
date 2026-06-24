@@ -1,5 +1,6 @@
 import { useRef } from 'react';
-import { View, Text, TextInput, StyleSheet, Pressable, ScrollView, Platform, Dimensions } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Pressable, Platform, Dimensions } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -117,9 +118,18 @@ export function SetupSlide({
                   s.pickerItemWrap,
                   {
                     borderColor: active ? preset.gradient[0] : 'transparent',
-                    opacity:     pressed ? 0.7 : 1,
+                    opacity:     pressed ? 0.7 : (active ? 1 : 0.5),
                     transform:   [{ scale: active ? 1.1 : 1 }],
-                    shadowColor: colors.black,
+                    backgroundColor: 'transparent',
+                    ...(active ? Platform.select({
+                      ios: {
+                        shadowColor: colors.black,
+                        shadowOffset:  { width: 0, height: 3 },
+                        shadowOpacity: 0.15,
+                        shadowRadius:  5,
+                      },
+                      android: { elevation: 3 },
+                    }) : {}),
                   },
                 ]}
               >
@@ -127,7 +137,7 @@ export function SetupSlide({
                   colors={preset.gradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={[s.pickerCircle, !active && { opacity: 0.4 }]}
+                  style={s.pickerCircle}
                 >
                   <Text style={s.pickerEmoji}>{preset.emoji}</Text>
                 </LinearGradient>
@@ -161,7 +171,8 @@ export function SetupSlide({
         <AppText variant="labelMD" color={colors.text.secondary} style={s.fieldLabel}>
           Your Name
         </AppText>
-        <View
+        <Pressable
+          onPress={() => inputRef.current?.focus()}
           style={[
             s.inputWrap,
             {
@@ -193,7 +204,7 @@ export function SetupSlide({
               <Ionicons name="close-circle" size={20} color={colors.text.tertiary} />
             </Pressable>
           )}
-        </View>
+        </Pressable>
       </Animated.View>
 
       {/* ── Currency ── */}
@@ -206,30 +217,67 @@ export function SetupSlide({
           Base Currency
         </AppText>
         <View style={s.currencyGrid}>
-          {CURRENCY_OPTIONS.map(({ code, symbol }) => {
+          {CURRENCY_OPTIONS.map(({ code, symbol, name: currencyName }, index) => {
             const active = currency === code;
+            const isLast = index === CURRENCY_OPTIONS.length - 1;
             return (
               <Pressable
                 key={code}
                 onPress={() => onCurrencyChange(code)}
                 style={({ pressed }) => [
                   s.currencyChip,
+                  isLast && s.currencyChipLast,
                   {
-                    backgroundColor: active ? accent + '16' : inputBg,
-                    borderColor:     active ? accent + '70' : inputBorder,
-                    opacity:         pressed ? 0.75 : 1,
+                    backgroundColor: active ? accent + '0D' : inputBg,
+                    borderColor:     active ? accent : inputBorder,
+                    opacity:         pressed ? 0.85 : 1,
+                    shadowColor:     active ? accent : 'transparent',
+                    shadowOpacity:   active ? 0.12 : 0,
                   },
                 ]}
               >
-                <AppText style={{ fontSize: 16, fontWeight: '600', color: active ? accent : colors.text.secondary }}>
-                  {symbol}
-                </AppText>
-                <AppText
-                  variant="caption"
-                  style={{ fontSize: 11, fontWeight: active ? '700' : '500', color: active ? accent : colors.text.tertiary }}
-                >
-                  {code}
-                </AppText>
+                <View style={[
+                  s.currencySymbolCircle,
+                  {
+                    backgroundColor: active ? accent : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                  }
+                ]}>
+                  <Text style={[
+                    s.currencySymbol,
+                    {
+                      color: active ? colors.white : colors.text.secondary,
+                    }
+                  ]}>
+                    {symbol}
+                  </Text>
+                </View>
+                <View style={s.currencyDetails}>
+                  <AppText style={[
+                    s.currencyCode,
+                    {
+                      color: active ? colors.text.primary : colors.text.secondary,
+                      fontWeight: active ? '700' : '600',
+                    }
+                  ]}>
+                    {code}
+                  </AppText>
+                  <AppText
+                    variant="caption"
+                    style={{
+                      color: active ? accent : colors.text.tertiary,
+                      fontSize: 10,
+                      fontWeight: '500',
+                    }}
+                    numberOfLines={1}
+                  >
+                    {currencyName}
+                  </AppText>
+                </View>
+                {active && (
+                  <View style={[s.checkBadge, { backgroundColor: accent, borderColor: colors.background.primary }]}>
+                    <Ionicons name="checkmark" size={10} color={colors.white} />
+                  </View>
+                )}
               </Pressable>
             );
           })}
@@ -315,14 +363,6 @@ const s = StyleSheet.create({
     borderWidth:  2.5,
     borderRadius: 18,
     padding:       3,
-    ...Platform.select({
-      ios: {
-        shadowOffset:  { width: 0, height: 2 },
-        shadowOpacity: 0.10,
-        shadowRadius:  4,
-      },
-      android: { elevation: 2 },
-    }),
   },
   pickerCircle: {
     width:          52,
@@ -359,15 +399,53 @@ const s = StyleSheet.create({
   },
   input: { flex: 1, fontSize: 16, fontWeight: '500', paddingVertical: 0 },
 
-  currencyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  currencyGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
   currencyChip: {
-    flexDirection:  'column',
+    flexDirection:  'row',
     alignItems:     'center',
-    justifyContent: 'center',
-    width:          (SW - 24 * 2 - 8 * 3) / 4,
-    height:          56,
-    borderRadius:    14,
+    width:          (SW - 24 * 2 - 10) / 2,
+    height:         60,
+    borderRadius:    16,
     borderWidth:     1.5,
-    gap:              3,
+    paddingHorizontal: 12,
+    gap:             10,
+    position:        'relative',
+  },
+  currencyChipLast: {
+    width: SW - 24 * 2,
+  },
+  currencySymbolCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  currencySymbol: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  currencyDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  currencyCode: {
+    fontSize: 14,
+    letterSpacing: -0.2,
+  },
+  checkBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
   },
 });

@@ -70,20 +70,15 @@ export default function RootLayout() {
 
   const handleSplashDismiss = () => {
     setShowSplash(false);
-    // Guard against the edge case where the Zustand store hasn't finished
-    // rehydrating from AsyncStorage yet. If still loading, the useEffect
-    // below will handle routing once isLoading settles to false.
-    if (!isLoading && !isAuthenticated) {
-      router.replace('/onboarding');
-    }
   };
 
   return (
     <GestureHandlerRootView style={[styles.root, { backgroundColor: colors.background.primary }]}>
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)"     options={{ animation: 'fade' }} />
+        <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" options={{ animation: 'fade', gestureEnabled: false }} />
+        <Stack.Screen name="(tabs)"     options={{ animation: 'fade' }} />
         <Stack.Screen name="accounts"      options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
         <Stack.Screen name="categories"    options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
         <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
