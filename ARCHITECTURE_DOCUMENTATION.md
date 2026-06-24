@@ -124,10 +124,12 @@ To support advanced full-featured loan tracking, EMI installments, and local not
 ### 5. Multi-Source Financial Import Engine
 To support loading large transactional datasets from spreadsheets and format configurations:
 - **Presentation Layer**: The component `ImportSheet.tsx` exposes a beautiful, animated multi-step configuration:
-  1. **Source Selection**: High-end linear gradient cards for CSV, JSON backup, and bank statement mapping. Includes an inline interactive CSV schema quick reference grid.
-  2. **Data Pasteurization**: Fast TextInput pastes CSV/JSON with live line counts, errors handling, and clear utilities.
-  3. **Mapping & Ingestion**: Converts files synchronously, maps bank fields (handling `date`, `amount`, `memo`, `category`, and `type`), filters invalid transactions, formats double-entry fields, and increments state variables in loop boundaries.
-  4. **Done Confirmation**: Success cards showing transaction counts, badge indicators of source type, and haptic confirmations.
+  1. **Source Selection**: High-end linear gradient cards for CSV, JSON backup, bank statement mapping, or text pasting. Includes an inline interactive CSV schema quick reference grid.
+  2. **Storage Permission Shield**: A secure glassmorphic illustration page explaining why local file access is needed, providing an interactive toggle button with tactile feedback before initializing the device document picker.
+  3. **Local File Ingestion**: Seamless integration of `expo-document-picker` and `expo-file-system` to pick files from device storage, enforce extensions (`.csv`, `.json`), read files into memory, and calculate file statistics.
+  4. **Data Preview & Verification**: Performs a dry-run parsing phase before committing data, displaying an interactive dashboard card of the import payload (Total count, Incomes, Expenses) and rendering a preview list of the first three transactions with status badges.
+  5. **Immersive Loading Screen**: Covers the import process with a glowing overlay featuring dual-ring rotating spinners, a liquid progress bar, and dynamic status updates ("Reading bytes...", "Mapping columns...", "Saving to database...") transitioning on timers alongside soft haptic vibrations.
+  6. **Import Done Feed**: Renders a success spring animation alongside stats and a scrollable confirmation list of the successfully written transactions.
 - **Headless Wiring**: Mounted directly under `profile.tsx` settings card, state-controlled via `useProfileScreen` hooks.
 
 ### 6. High-Performance Alignment-Correct Chart System
