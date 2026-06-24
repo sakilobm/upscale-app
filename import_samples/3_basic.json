@@ -1,0 +1,23 @@
+[
+  {
+    "date": "2023-12-01",
+    "amount": 1500,
+    "category": "Freelance",
+    "type": "income",
+    "memo": "Website project"
+  },
+  {
+    "date": "2023-12-05",
+    "amount": 25.99,
+    "category": "Food",
+    "type": "expense",
+    "memo": "Dinner"
+  },
+  {
+    "date": "2023-12-08",
+    "amount": -60.00,
+    "category": "Utilities",
+    "type": "expense",
+    "memo": "Internet Bill"
+  }
+]

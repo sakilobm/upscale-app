@@ -1,0 +1,6 @@
+Date,Amount,Category,Type,Note
+2023-10-01,2500.00,Salary,income,October Salary
+2023-10-02,45.50,Food,expense,Lunch at Cafe
+2023-10-05,120.00,Transport,expense,Gas Station
+2023-10-10,500.00,Rent,expense,Monthly Rent
+2023-10-15,-20.00,Entertainment,expense,Movie Ticket

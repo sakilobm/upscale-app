@@ -1,0 +1,24 @@
+{
+  "account": "Checking 1234",
+  "exportDate": "2023-12-31T23:59:59Z",
+  "transactions": [
+    {
+      "txn_date": "2023-12-15",
+      "amount": "4500.00",
+      "description": "ACH CREDIT - EMPLOYER INC",
+      "status": "cleared"
+    },
+    {
+      "txn_date": "2023-12-16",
+      "amount": "-12.50",
+      "description": "DEBIT CARD - NETFLIX",
+      "status": "cleared"
+    },
+    {
+      "txn_date": "2023-12-20",
+      "amount": "-45.00",
+      "description": "DEBIT CARD - SHELL OIL",
+      "status": "pending"
+    }
+  ]
+}

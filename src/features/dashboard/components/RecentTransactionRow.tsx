@@ -26,7 +26,16 @@ export const RecentTransactionRow = memo(function RecentTransactionRow({
   const { symbol, format: formatCurrencyVal } = useFormatCurrency();
   const accounts = useAccountStore((s) => s.accounts);
   const account = accounts.find((a) => a.id === transaction.accountId);
-  const formattedDate = format(new Date(transaction.date), 'MMM d');
+  
+  let formattedDate = 'Recent';
+  try {
+    const parsedDate = new Date(transaction.date);
+    if (!isNaN(parsedDate.getTime())) {
+      formattedDate = format(parsedDate, 'MMM d');
+    }
+  } catch {
+    // Safe fallback
+  }
 
   const isRedundant = transaction.description.trim().toLowerCase() === transaction.category.trim().toLowerCase();
   const subtitle = isRedundant

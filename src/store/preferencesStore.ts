@@ -32,11 +32,13 @@ interface PreferencesState {
   hapticsEnabledButtonTaps: boolean;
   hapticsEnabledActions: boolean;
   notifPrefs: NotifPrefs;
+  storagePermissionGranted: boolean;
   setHapticLevel: (level: HapticLevel) => void;
   setHapticsEnabledOnboarding: (enabled: boolean) => void;
   setHapticsEnabledButtonTaps: (enabled: boolean) => void;
   setHapticsEnabledActions: (enabled: boolean) => void;
   setNotifPrefs: (prefs: Partial<NotifPrefs>) => void;
+  setStoragePermissionGranted: (granted: boolean) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -47,12 +49,14 @@ export const usePreferencesStore = create<PreferencesState>()(
       hapticsEnabledButtonTaps: true,
       hapticsEnabledActions: true,
       notifPrefs: DEFAULT_NOTIF_PREFS,
+      storagePermissionGranted: false,
 
       setHapticLevel: (hapticLevel) => set({ hapticLevel }),
       setHapticsEnabledOnboarding: (hapticsEnabledOnboarding) => set({ hapticsEnabledOnboarding }),
       setHapticsEnabledButtonTaps: (hapticsEnabledButtonTaps) => set({ hapticsEnabledButtonTaps }),
       setHapticsEnabledActions: (hapticsEnabledActions) => set({ hapticsEnabledActions }),
       setNotifPrefs: (prefs) => set((state) => ({ notifPrefs: { ...state.notifPrefs, ...prefs } })),
+      setStoragePermissionGranted: (storagePermissionGranted) => set({ storagePermissionGranted }),
     }),
     {
       name: 'wc-preferences',

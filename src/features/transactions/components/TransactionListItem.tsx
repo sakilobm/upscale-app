@@ -22,7 +22,16 @@ export const TransactionListItem = memo(function TransactionListItem({
   const { symbol, format: formatCurrencyVal } = useFormatCurrency();
   const accounts = useAccountStore((s) => s.accounts);
   const account = accounts.find((a) => a.id === transaction.accountId);
-  const date = format(new Date(transaction.date), 'h:mm a');
+  
+  let date = 'Recent';
+  try {
+    const parsedDate = new Date(transaction.date);
+    if (!isNaN(parsedDate.getTime())) {
+      date = format(parsedDate, 'h:mm a');
+    }
+  } catch {
+    // Safe fallback
+  }
   const isIncome = transaction.type === 'income';
 
   const isRedundant = transaction.description.trim().toLowerCase() === transaction.category.trim().toLowerCase();

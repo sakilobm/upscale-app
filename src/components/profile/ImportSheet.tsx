@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -41,6 +41,7 @@ import { Spacing, Radius } from '@constants/index';
 import { useTransactionStore } from '@store/transactionStore';
 import { useAuthStore } from '@store/authStore';
 import { toast } from '@store/toastStore';
+import { usePreferencesStore } from '@store/preferencesStore';
 import type { ComponentProps } from 'react';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
@@ -105,6 +106,63 @@ const CSV_GUIDE: FormatGuide[] = [
   { icon: 'chatbubble-outline', label: 'Description', desc: 'Memo / note' },
 ];
 
+/**
+ * Normalizes custom date formats (like MM/DD/YYYY, MM-DD-YYYY, etc.) to YYYY-MM-DD
+ */
+const normalizeDate = (rawDate: string): string => {
+  const clean = rawDate.trim();
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (!clean) return todayStr;
+
+  let candidate = '';
+
+  // 1. YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
+    candidate = clean;
+  }
+  // 2. MM/DD/YYYY or M/D/YY
+  else if (clean.includes('/')) {
+    const parts = clean.split('/');
+    if (parts.length === 3) {
+      const m = parts[0].padStart(2, '0');
+      const d = parts[1].padStart(2, '0');
+      let y = parts[2];
+      if (y.length === 2) y = '20' + y;
+      candidate = `${y}-${m}-${d}`;
+    }
+  }
+  // 3. DD-MM-YYYY or MM-DD-YYYY
+  else if (clean.includes('-')) {
+    const parts = clean.split('-');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        candidate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+      } else {
+        const m = parts[0].padStart(2, '0');
+        const d = parts[1].padStart(2, '0');
+        let y = parts[2];
+        if (y.length === 2) y = '20' + y;
+        candidate = `${y}-${m}-${d}`;
+      }
+    }
+  }
+
+  if (candidate) {
+    const parsed = new Date(candidate);
+    if (!isNaN(parsed.getTime())) {
+      return candidate;
+    }
+  }
+
+  // Fallback to standard JS parsing
+  const parsed = new Date(clean);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split('T')[0];
+  }
+
+  return todayStr;
+};
+
 interface Props {
   onClose: () => void;
 }
@@ -134,7 +192,8 @@ export function ImportSheet({ onClose }: Props) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Storage access variables
-  const [storageGranted, setStorageGranted] = useState(false);
+  const storageGranted = usePreferencesStore((s) => s.storagePermissionGranted);
+  const setStorageGranted = usePreferencesStore((s) => s.setStoragePermissionGranted);
   const [fileMeta, setFileMeta] = useState<FileMetadata | null>(null);
   const [parsedTxns, setParsedTxns] = useState<ParsedTransaction[]>([]);
   const [importStats, setImportStats] = useState({
@@ -297,12 +356,13 @@ export function ImportSheet({ onClose }: Props) {
         const txType: 'income' | 'expense' = isExp ? 'expense' : 'income';
 
         const rawDate = record.date || record.Date || '';
-        const isValidDate = /\d{4}/.test(rawDate);
+        const normalized = normalizeDate(rawDate);
+        const hasValidDate = rawDate.trim().length > 0 && !isNaN(new Date(normalized).getTime()) && !/invalid/i.test(rawDate);
 
         const category = record.category || record.Category || 'Other';
         const description = record.description || record.Description || record.memo || 'Imported Transaction';
 
-        const isValid = hasValidAmount && isValidDate;
+        const isValid = hasValidAmount && hasValidDate;
         if (isValid) {
           validCount++;
           const absAmt = Math.abs(amount);
@@ -316,7 +376,7 @@ export function ImportSheet({ onClose }: Props) {
         }
 
         parsedList.push({
-          date: isValidDate ? rawDate : 'Invalid Date',
+          date: isValid ? normalized : 'Invalid Date',
           amount: Math.abs(amount),
           type: txType,
           category,
