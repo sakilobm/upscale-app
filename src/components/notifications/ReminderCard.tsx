@@ -37,7 +37,7 @@ interface Props {
 
 export function ReminderCard({ reminder, index, onToggle, onDelete }: Props) {
   const { colors } = useTheme();
-  const accent = colors.brand.secondary;
+  const accent = colors.status.savings;
 
   return (
     <Animated.View

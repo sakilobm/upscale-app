@@ -81,8 +81,8 @@ function TimeStepper({ label, display, onInc, onDec }: {
 const ts = StyleSheet.create({
   wrap: { alignItems: 'center', gap: 4 },
   btn: { width: 44, height: 36, alignItems: 'center', justifyContent: 'center' },
-  display: { width: 78, height: 64, borderRadius: 18, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  value: { fontSize: 32, fontWeight: '800', letterSpacing: -1.5 },
+  display: { width: 80, height: 74, borderRadius: 18, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  value: { fontSize: 34, fontWeight: '800', letterSpacing: -1, includeFontPadding: false, textAlignVertical: 'center', lineHeight: Platform.OS === 'ios' ? 38 : undefined },
   lbl: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, marginTop: 2 },
 });
 

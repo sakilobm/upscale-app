@@ -7,6 +7,7 @@ import { useAuth } from '@hooks/useAuth';
 import { useTransactionStore } from '@store/transactionStore';
 import { toast } from '@store/toastStore';
 import { resetAllStores } from '@store/resetAllStores';
+import { seedDemoData, undoDemoData } from '@store/seedDemoData';
 import type { CurrencyCode } from '@store/types';
 
 export function useProfile() {
@@ -87,6 +88,22 @@ export function useProfile() {
     toast.success('All data cleared successfully');
   }, []);
 
+  const handleSeedDemoData = useCallback(async () => {
+    await seedDemoData();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    toast.success('Play Store demo data populated!');
+  }, []);
+
+  const handleUndoDemoData = useCallback(async () => {
+    const success = await undoDemoData();
+    if (success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      toast.success('Demo data undone. Original state restored!');
+    } else {
+      toast.error('No snapshot found to undo demo data.');
+    }
+  }, []);
+
   const handleSignOut = useCallback(() => {
     signOut();
     router.replace('/onboarding');
@@ -102,6 +119,8 @@ export function useProfile() {
     handleExport,
     handleBackup,
     handleClearAllData,
+    handleSeedDemoData,
+    handleUndoDemoData,
     handleSignOut,
   };
 }

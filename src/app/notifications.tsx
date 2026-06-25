@@ -65,7 +65,7 @@ export default function NotificationsScreen() {
       label: 'Reminders',
       sub: 'Scheduled personal reminders',
       icon: 'alarm' as IoniconName,
-      color: colors.brand.secondary,
+      color: colors.status.savings,
     },
   ];
 
@@ -393,9 +393,9 @@ const s = StyleSheet.create({
   badge: {
     minWidth: 18, height: 18, borderRadius: 9,
     alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
   },
-  badgeText: { fontSize: 10, fontWeight: '800' },
+  badgeText: { fontSize: 9, fontWeight: '900', lineHeight: 11, textAlign: 'center', includeFontPadding: false, textAlignVertical: 'center' },
 
   // Settings card
   settingsCard: {

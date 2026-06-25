@@ -17,6 +17,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useHomeScreen } from '@features/dashboard/hooks/useHomeScreen';
 import { useNotificationStore } from '@store/notificationStore';
 import { getAvatar } from '@constants/avatars';
@@ -268,23 +269,27 @@ export default function HomeScreen() {
           </View>
 
           <Pressable
-            onPress={() => router.push('/notifications')}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/notifications');
+            }}
             style={({ pressed }) => [
               s.headerAction,
               {
-                backgroundColor: isDark ? colors.glass.backgroundMid : colors.background.secondary,
-                borderColor: isDark ? colors.glass.border : colors.glass.borderStrong,
-                opacity: pressed ? 0.65 : 1,
-                ...Platform.select({
-                  ios: { shadowColor: colors.black, shadowOffset: { width: 0, height: 2 }, shadowOpacity: isDark ? 0 : 0.07, shadowRadius: 6 },
-                  android: { elevation: isDark ? 0 : 2 },
-                }),
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.03)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+                opacity: pressed ? 0.85 : 1,
+                transform: [{ scale: pressed ? 0.94 : 1 }],
               },
             ]}
           >
-            <Ionicons name={unreadCount > 0 ? 'notifications' : 'notifications-outline'} size={19} color={colors.text.primary} />
+            <Ionicons
+              name={unreadCount > 0 ? 'notifications' : 'notifications-outline'}
+              size={20}
+              color={unreadCount > 0 ? colors.brand.primary : colors.text.primary}
+            />
             {unreadCount > 0 && (
-              <View style={[s.bellBadge, { backgroundColor: colors.status.expense }]}>
+              <View style={[s.bellBadge, { backgroundColor: colors.status.expense, borderColor: colors.background.primary }]}>
                 <AppText style={[s.bellBadgeText, { color: colors.white }]}>{unreadCount > 9 ? '9+' : unreadCount}</AppText>
               </View>
             )}
@@ -470,9 +475,9 @@ const s = StyleSheet.create({
   avatarEmoji: { fontSize: 24, lineHeight: 30 },
   greetingBlock: { flex: 1, gap: 1 },
   greetingName: { lineHeight: 22 },
-  headerAction: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  bellBadge: { position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
-  bellBadgeText: { fontSize: 9, fontWeight: '800' },
+  headerAction: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  bellBadge: { position: 'absolute', top: -1, right: -1, minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2, borderWidth: 1.5 },
+  bellBadgeText: { fontSize: 8, fontWeight: '900', lineHeight: 10, textAlign: 'center', includeFontPadding: false, textAlignVertical: 'center' },
 
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing['3'] },
 

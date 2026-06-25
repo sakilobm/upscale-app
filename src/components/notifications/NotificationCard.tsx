@@ -22,7 +22,7 @@ const TYPE_COLOR: Record<NotificationType, (c: AppTheme) => string> = {
   budget_exceeded: (c) => c.status.expense,
   budget_warning:  (c) => c.status.warning,
   payment_due:     (c) => c.status.info,
-  reminder:        (c) => c.brand.secondary,
+  reminder:        (c) => c.status.savings,
   system:          (c) => c.text.secondary,
 };
 

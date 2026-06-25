@@ -8,8 +8,9 @@
  * @associatedFiles src/features/profile/hooks/useProfile.ts, src/app/(tabs)/profile.tsx
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { toast } from '@store/toastStore';
 import { useProfile } from './useProfile';
 import { usePreferencesStore } from '@store/preferencesStore';
@@ -54,7 +55,7 @@ export function useProfileScreen() {
     user, txCount, memberSince, initials,
     handleEditName, handleCurrencySelect: currencySelect,
     handleExport: exportData, handleBackup,
-    handleClearAllData: clearAllData, handleSignOut,
+    handleClearAllData: clearAllData, handleSeedDemoData, handleUndoDemoData, handleSignOut,
   } = useProfile();
 
   // ── Sheet visibility ──
@@ -70,7 +71,11 @@ export function useProfileScreen() {
   // ── Confirm dialogs ──
   const [signOutConfirm,   setSignOutConfirm]   = useState(false);
   const [clearDataConfirm, setClearDataConfirm] = useState(false);
+  const [seedDataConfirm,  setSeedDataConfirm]  = useState(false);
+  const [undoDataConfirm,  setUndoDataConfirm]  = useState(false);
   const [rateConfirm,      setRateConfirm]      = useState(false);
+
+  const [hasSnapshot, setHasSnapshot] = useState(false);
 
   const [secPrefs, setSecPrefs] = useState<SecPrefs>({
     biometric: false, autoLock: true, hideBalance: false,
@@ -79,6 +84,13 @@ export function useProfileScreen() {
   const hapticLevel = usePreferencesStore((s) => s.hapticLevel);
   const notifPrefs = usePreferencesStore((s) => s.notifPrefs);
   const setNotifPrefs = usePreferencesStore((s) => s.setNotifPrefs);
+
+  // Check on mount if a demo snapshot is available to undo
+  useEffect(() => {
+    AsyncStorage.getItem('wc_demo_snapshot_data').then((val) => {
+      setHasSnapshot(!!val);
+    });
+  }, []);
 
   // ── Handlers that close sheets before delegating ──
   const handleSelectCurrency = useCallback((code: CurrencyCode) => {
@@ -99,7 +111,20 @@ export function useProfileScreen() {
   const confirmClearData = useCallback(async () => {
     setClearDataConfirm(false);
     await clearAllData();
+    setHasSnapshot(false);
   }, [clearAllData]);
+
+  const confirmSeedData = useCallback(async () => {
+    setSeedDataConfirm(false);
+    await handleSeedDemoData();
+    setHasSnapshot(true);
+  }, [handleSeedDemoData]);
+
+  const confirmUndoData = useCallback(async () => {
+    setUndoDataConfirm(false);
+    await handleUndoDemoData();
+    setHasSnapshot(false);
+  }, [handleUndoDemoData]);
 
   const confirmRate = useCallback(() => {
     setRateConfirm(false);
@@ -107,6 +132,7 @@ export function useProfileScreen() {
   }, []);
 
   return {
+    hasSnapshot,
     data: { user, txCount, memberSince, initials },
 
     sheets: {
@@ -164,6 +190,18 @@ export function useProfileScreen() {
         show:    () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); setClearDataConfirm(true); },
         dismiss: () => setClearDataConfirm(false),
         confirm: confirmClearData,
+      } satisfies ConfirmHandle,
+      seedData: {
+        isVisible: seedDataConfirm,
+        show:    () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setSeedDataConfirm(true); },
+        dismiss: () => setSeedDataConfirm(false),
+        confirm: confirmSeedData,
+      } satisfies ConfirmHandle,
+      undoData: {
+        isVisible: undoDataConfirm,
+        show:    () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setUndoDataConfirm(true); },
+        dismiss: () => setUndoDataConfirm(false),
+        confirm: confirmUndoData,
       } satisfies ConfirmHandle,
       rate: {
         isVisible: rateConfirm,

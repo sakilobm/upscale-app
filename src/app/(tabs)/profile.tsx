@@ -119,7 +119,11 @@ export default function ProfileScreen() {
           />
           <SettingRow animDelay={40}  icon="download-outline" iconColor={colors.brand.secondary} label="Export Data"   subtitle={`${data.txCount} transactions ready`}      onPress={sheets.export.open} />
           <SettingRow animDelay={80}  icon="cloud-upload-outline" iconColor={colors.brand.primary} label="Import Data" subtitle="Import transactions from CSV or JSON" onPress={sheets.import.open} />
-          <SettingRow animDelay={120} icon="trash-outline"    iconColor={colors.status.expense} label="Clear All Data" subtitle="Permanently erase all app data"             onPress={confirms.clearData.show} isLast />
+          <SettingRow animDelay={120} icon="sparkles-outline" iconColor={colors.brand.secondary} label="Load Play Store Demo" subtitle="Populate mock data for screenshots" onPress={confirms.seedData.show} />
+          {screen.hasSnapshot && (
+            <SettingRow animDelay={140} icon="refresh-outline" iconColor={colors.status.warning} label="Undo Play Store Demo" subtitle="Restore original data state" onPress={confirms.undoData.show} />
+          )}
+          <SettingRow animDelay={180} icon="trash-outline"    iconColor={colors.status.expense} label="Clear All Data" subtitle="Permanently erase all app data"             onPress={confirms.clearData.show} isLast />
         </SectionCard>
 
         <SectionCard title="Support" delay={320} accentColor={colors.brand.accent}>
@@ -198,6 +202,22 @@ export default function ProfileScreen() {
         confirmLabel="Clear Everything" cancelLabel="Cancel" danger icon="trash-outline"
         onConfirm={confirms.clearData.confirm}
         onCancel={confirms.clearData.dismiss}
+      />
+      <ConfirmModal
+        visible={confirms.seedData.isVisible}
+        title="Load Screenshot Demo?"
+        message="This will populate your accounts, transactions, budgets, planned payments, loans, and ledger entries with professional mock data for screenshots. Ideal for Play Store preparation."
+        confirmLabel="Load Demo Data" cancelLabel="Cancel" icon="sparkles-outline"
+        onConfirm={confirms.seedData.confirm}
+        onCancel={confirms.seedData.dismiss}
+      />
+      <ConfirmModal
+        visible={confirms.undoData.isVisible}
+        title="Undo Demo Data?"
+        message="This will restore all your previous logs, transactions, accounts, budgets, and settings to the exact state they were in before you clicked 'Load Play Store Demo'. This cannot be undone."
+        confirmLabel="Undo & Restore" cancelLabel="Cancel" danger icon="refresh-outline"
+        onConfirm={confirms.undoData.confirm}
+        onCancel={confirms.undoData.dismiss}
       />
       <ConfirmModal
         visible={confirms.rate.isVisible}
