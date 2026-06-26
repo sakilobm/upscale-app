@@ -19,6 +19,11 @@
             "command": "adb install -r android/app/build/outputs/apk/debug/app-debug.apk"
         },
         {
+            "label": "Prebuild Clean Android No Install",
+            "type": "shell",
+            "command": "npx expo prebuild --clean --platform android --no-install"
+        },
+        {
             "label": "Supabase Start",
             "type": "shell",
             "command": "supabase start"
