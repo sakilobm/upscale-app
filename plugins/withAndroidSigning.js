@@ -23,7 +23,7 @@ function addSigningConfig(buildGradle) {
 
   // Resolve keystore path relative to android/app/ where gradle executes
   let gradleKeystorePath = keystorePath;
-  if (!path.isAbsolute(keystorePath)) {
+  if (!path.isAbsolute(keystorePath) && !keystorePath.startsWith('..')) {
     gradleKeystorePath = `../../${keystorePath}`;
   }
 
@@ -36,7 +36,7 @@ function addSigningConfig(buildGradle) {
         }`;
 
   // 1. Inject release signing configuration inside signingConfigs
-  if (buildGradle.includes('signingConfigs {') && !buildGradle.includes('release {') && buildGradle.includes('debug {')) {
+  if (buildGradle.includes('signingConfigs {') && !/signingConfigs\s*\{\s*release\s*\{/.test(buildGradle) && buildGradle.includes('debug {')) {
     buildGradle = buildGradle.replace(
       /signingConfigs\s*\{/,
       `signingConfigs {${releaseSigningBlock}`
@@ -45,7 +45,7 @@ function addSigningConfig(buildGradle) {
   }
 
   // 2. Change release buildTypes to use release signing config
-  const releaseBuildTypeRegex = /(release\s*\{[\s\S]*?signingConfig\s+signingConfigs\.)debug/;
+  const releaseBuildTypeRegex = /(buildTypes\s*\{[\s\S]*?release\s*\{[\s\S]*?signingConfig\s+signingConfigs\.)debug/;
   if (releaseBuildTypeRegex.test(buildGradle)) {
     buildGradle = buildGradle.replace(releaseBuildTypeRegex, '$1release');
     console.log('[withAndroidSigning] Successfully updated buildTypes.release to use signingConfigs.release');
