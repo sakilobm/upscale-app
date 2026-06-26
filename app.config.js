@@ -15,10 +15,10 @@ function loadEnvFile(fileName) {
     if (match) {
       const key = match[1];
       let value = match[2] || '';
-      
+
       if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
       if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
-      
+
       process.env[key] = value.trim();
     }
   });
@@ -49,9 +49,9 @@ module.exports = {
       bundleIdentifier: process.env.APP_PACKAGE || "com.wherecash.app"
     },
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/app-icon/splash-Icon.png",
       resizeMode: "contain",
-      backgroundColor: "#080C14"
+      backgroundColor: "#FAFAF0"
     },
     android: {
       adaptiveIcon: {
