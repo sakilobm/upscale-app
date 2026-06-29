@@ -9,6 +9,8 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import { Linking } from 'react-native';
+import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { toast } from '@store/toastStore';
@@ -128,7 +130,20 @@ export function useProfileScreen() {
 
   const confirmRate = useCallback(() => {
     setRateConfirm(false);
-    toast.success('Thank you for your support! ⭐');
+    toast.success('Redirecting to Play Store... ⭐');
+    const pkg = Constants.expoConfig?.android?.package ?? 'com.wherecash.app';
+    const playStoreUrl = `https://play.google.com/store/apps/details?id=${pkg}`;
+    Linking.canOpenURL(playStoreUrl)
+      .then((supported) => {
+        if (supported) {
+          Linking.openURL(playStoreUrl);
+        } else {
+          Linking.openURL(`market://details?id=${pkg}`);
+        }
+      })
+      .catch(() => {
+        Linking.openURL(playStoreUrl);
+      });
   }, []);
 
   return {

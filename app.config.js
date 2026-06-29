@@ -39,7 +39,7 @@ module.exports = {
   expo: {
     name: process.env.APP_NAME || "WhereCash",
     slug: "WhereCash",
-    version: "1.0.5",
+    version: "1.0.8",
     orientation: "portrait",
     icon: "./assets/app-icon/Icon-512x512.png",
     userInterfaceStyle: "dark",
@@ -49,19 +49,19 @@ module.exports = {
       bundleIdentifier: process.env.APP_PACKAGE || "com.wherecash.app"
     },
     splash: {
-      image: "./assets/app-icon/splash-Icon.png",
+      image: "./assets/app-icon/Icon-512x512.png",
       resizeMode: "contain",
-      backgroundColor: "#FAFAF0"
+      backgroundColor: "#F7F8F2"
     },
     android: {
       adaptiveIcon: {
-        backgroundColor: "#FAFAF0",
+        backgroundColor: "#F7F8F2",
         foregroundImage: "./assets/app-icon/Icon-foreground.png",
         backgroundImage: "./assets/android-icon-background.png",
         monochromeImage: "./assets/app-icon/Icon-Monochrome.png"
       },
       package: process.env.APP_PACKAGE || "com.wherecash.app",
-      versionCode: 5,
+      versionCode: 8,
       predictiveBackGestureEnabled: false
     },
     web: {

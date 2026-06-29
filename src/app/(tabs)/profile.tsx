@@ -18,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView } from 'react-native';
+import Constants from 'expo-constants';
 import { useProfileScreen } from '@features/profile/hooks/useProfileScreen';
 import { ProfileHero } from '@components/profile/ProfileHero';
 import { SectionCard } from '@components/profile/SectionCard';
@@ -52,6 +53,9 @@ export default function ProfileScreen() {
   const { colors, isDark, toggle } = useTheme();
   const screen = useProfileScreen();
   const { data, sheets, confirms, preferences, handlers } = screen;
+
+  const appVersion = Constants.expoConfig?.version ?? '1.0.0';
+  const buildNumber = Constants.expoConfig?.android?.versionCode ?? 1;
 
   const activeNotifs = [
     preferences.notifications.transactions,
@@ -129,7 +133,7 @@ export default function ProfileScreen() {
         <SectionCard title="Support" delay={320} accentColor={colors.brand.accent}>
           <SettingRow animDelay={0}   icon="help-circle-outline"        iconColor={colors.brand.accent}          label="Help & Support" subtitle="FAQs and contact"    onPress={sheets.help.open} />
           <SettingRow animDelay={40}  icon="star-outline"               iconColor={colors.status.warning}        label="Rate WhereCash" subtitle="Share your feedback"  onPress={confirms.rate.show} />
-          <SettingRow animDelay={80}  icon="information-circle-outline" iconColor={colors.text.tertiary} label="About"         subtitle="v1.0.0 · Build 100"  onPress={() => toast.info('WhereCash v1.0.0 — Built with Expo & React Native')} isLast />
+          <SettingRow animDelay={80}  icon="information-circle-outline" iconColor={colors.text.tertiary} label="About"         subtitle={`v${appVersion} · Build ${buildNumber}`}  onPress={() => toast.info(`WhereCash v${appVersion} — Built with Expo & React Native`)} isLast />
         </SectionCard>
 
         <Animated.View style={useEntrance(400)}>
@@ -148,41 +152,41 @@ export default function ProfileScreen() {
             <AppText variant="labelLG" style={{ color: colors.status.expense }}>Sign Out</AppText>
           </Pressable>
           <AppText variant="caption" color={colors.text.tertiary} align="center" style={{ marginTop: Spacing['3'] }}>
-            WhereCash v1.0.0 · Made with ♥
+            WhereCash v{appVersion} · Made with ♥
           </AppText>
         </Animated.View>
       </ScrollView>
 
       {/* ── Bottom Sheets ── */}
-      <ProfileBottomSheet visible={sheets.currency.isOpen}      onClose={sheets.currency.close}      title="Currency & Region"    snapHeight={520}>
+      <ProfileBottomSheet visible={sheets.currency.isOpen}      onClose={sheets.currency.close}      title="Currency & Region">
         <CurrencySheet current={data.user?.currency ?? 'USD'} onSelect={handlers.selectCurrency} />
       </ProfileBottomSheet>
 
-      <ProfileBottomSheet visible={sheets.notifications.isOpen} onClose={sheets.notifications.close} title="Notifications"        snapHeight={600}>
+      <ProfileBottomSheet visible={sheets.notifications.isOpen} onClose={sheets.notifications.close} title="Notifications">
         <NotifSheet prefs={preferences.notifications} onChange={preferences.updateNotification} onClose={sheets.notifications.close} />
       </ProfileBottomSheet>
 
-      <ProfileBottomSheet visible={sheets.security.isOpen}      onClose={sheets.security.close}      title="Security & Privacy"  snapHeight={420}>
+      <ProfileBottomSheet visible={sheets.security.isOpen}      onClose={sheets.security.close}      title="Security & Privacy">
         <SecuritySheet prefs={preferences.security} onChange={preferences.updateSecurity} />
       </ProfileBottomSheet>
 
-      <ProfileBottomSheet visible={sheets.haptics.isOpen}       onClose={sheets.haptics.close}      title="Vibration & Haptics"  snapHeight={560}>
+      <ProfileBottomSheet visible={sheets.haptics.isOpen}       onClose={sheets.haptics.close}      title="Vibration & Haptics">
         <HapticSettingsSheet />
       </ProfileBottomSheet>
 
-      <ProfileBottomSheet visible={sheets.export.isOpen}        onClose={sheets.export.close}        title="Export Data"          snapHeight={340}>
+      <ProfileBottomSheet visible={sheets.export.isOpen}        onClose={sheets.export.close}        title="Export Data">
         <ExportSheet onExport={handlers.exportData} />
       </ProfileBottomSheet>
 
-      <ProfileBottomSheet visible={sheets.help.isOpen}          onClose={sheets.help.close}          title="Help & Support"       snapHeight={560}>
+      <ProfileBottomSheet visible={sheets.help.isOpen}          onClose={sheets.help.close}          title="Help & Support">
         <HelpSheet />
       </ProfileBottomSheet>
 
-      <ProfileBottomSheet visible={sheets.backup.isOpen}        onClose={sheets.backup.close}        title="Backup & Sync"        snapHeight={580}>
+      <ProfileBottomSheet visible={sheets.backup.isOpen}        onClose={sheets.backup.close}        title="Backup & Sync">
         <BackupSyncSheet onClose={sheets.backup.close} />
       </ProfileBottomSheet>
 
-      <ProfileBottomSheet visible={sheets.import.isOpen}        onClose={sheets.import.close}        title="Import Data"          snapHeight={600}>
+      <ProfileBottomSheet visible={sheets.import.isOpen}        onClose={sheets.import.close}        title="Import Data">
         <ImportSheet onClose={sheets.import.close} />
       </ProfileBottomSheet>
 

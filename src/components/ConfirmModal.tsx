@@ -22,15 +22,15 @@ import { Radius, Spacing } from '@constants/index';
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 export interface ConfirmModalProps {
-  visible:       boolean;
-  title:         string;
-  message?:      string;
+  visible: boolean;
+  title: string;
+  message?: string;
   confirmLabel?: string;
-  cancelLabel?:  string;
-  onConfirm:     () => void;
-  onCancel:      () => void;
-  danger?:       boolean;
-  icon?:         IoniconName;
+  cancelLabel?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  danger?: boolean;
+  icon?: IoniconName;
 }
 
 export function ConfirmModal({
@@ -38,38 +38,38 @@ export function ConfirmModal({
   title,
   message,
   confirmLabel = 'Confirm',
-  cancelLabel  = 'Cancel',
+  cancelLabel = 'Cancel',
   onConfirm,
   onCancel,
-  danger  = false,
+  danger = false,
   icon,
 }: ConfirmModalProps) {
   const { colors, isDark } = useTheme();
 
-  const scale   = useSharedValue(0.82);
+  const scale = useSharedValue(0.82);
   const opacity = useSharedValue(0);
   const dimOpacity = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      dimOpacity.value = withTiming(1,  { duration: 220 });
-      opacity.value    = withTiming(1,  { duration: 200 });
-      scale.value      = withSpring(1,  { damping: 20, stiffness: 260, mass: 0.8 });
+      dimOpacity.value = withTiming(1, { duration: 220 });
+      opacity.value = withTiming(1, { duration: 200 });
+      scale.value = withSpring(1, { damping: 20, stiffness: 260, mass: 0.8 });
     } else {
       dimOpacity.value = withTiming(0, { duration: 180 });
-      opacity.value    = withTiming(0, { duration: 160 });
-      scale.value      = withTiming(0.88, { duration: 180 });
+      opacity.value = withTiming(0, { duration: 160 });
+      scale.value = withTiming(0.88, { duration: 180 });
     }
   }, [visible]);
 
-  const cardStyle    = useAnimatedStyle(() => ({
-    opacity:   opacity.value,
+  const cardStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
     transform: [{ scale: scale.value }],
   }));
   const backdropStyle = useAnimatedStyle(() => ({ opacity: dimOpacity.value }));
 
-  const accentColor  = danger ? colors.status.expense : colors.brand.primary;
+  const accentColor = danger ? colors.status.expense : colors.brand.primary;
   const iconName: IoniconName = icon ?? (danger ? 'warning' : 'information-circle');
   const cardBg = colors.surface.sheet;
 
@@ -96,8 +96,8 @@ export function ConfirmModal({
             cardStyle,
             {
               backgroundColor: cardBg,
-              borderColor:     colors.glass.background,
-              shadowColor:     colors.black,
+              borderColor: colors.glass.background,
+              shadowColor: colors.black,
             },
           ]}
         >
@@ -138,7 +138,7 @@ export function ConfirmModal({
                 styles.cancelBtn,
                 {
                   backgroundColor: colors.glass.background,
-                  borderColor:     colors.glass.backgroundMid,
+                  borderColor: colors.glass.backgroundMid,
                   opacity: pressed ? 0.7 : 1,
                 },
               ]}
@@ -191,58 +191,58 @@ export function ConfirmModal({
 
 const styles = StyleSheet.create({
   overlay: {
-    flex:            1,
-    justifyContent:  'center',
-    alignItems:      'center',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 32,
   },
   dimLayer: {},
   card: {
-    width:          '100%',
-    maxWidth:       360,
-    borderRadius:   Radius['2xl'],
-    borderWidth:    1,
-    padding:        Spacing['6'],
-    alignItems:     'center',
-    gap:            Spacing['3'],
-    zIndex:         1,
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: Radius['2xl'],
+    borderWidth: 1,
+    padding: Spacing['6'],
+    alignItems: 'center',
+    gap: Spacing['3'],
+    zIndex: 1,
     ...Platform.select({
       ios: {
-        shadowOffset:  { width: 0, height: 20 },
+        shadowOffset: { width: 0, height: 20 },
         shadowOpacity: 0.22,
-        shadowRadius:  32,
+        shadowRadius: 32,
       },
       android: { elevation: 24 },
     }),
   },
   iconCircle: {
-    width:          66,
-    height:         66,
-    borderRadius:   33,
-    alignItems:     'center',
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    alignItems: 'center',
     justifyContent: 'center',
-    marginBottom:   Spacing['1'],
+    marginBottom: Spacing['1'],
   },
   title: {
     fontWeight: '800',
     lineHeight: 26,
   },
   message: {
-    lineHeight:  22,
-    opacity:     0.85,
+    lineHeight: 22,
+    opacity: 0.85,
     marginBottom: Spacing['2'],
   },
   btnRow: {
-    flexDirection:  'row',
-    gap:            Spacing['3'],
-    width:          '100%',
-    marginTop:      Spacing['2'],
+    flexDirection: 'row',
+    gap: Spacing['3'],
+    width: '100%',
+    marginTop: Spacing['2'],
   },
   btn: {
-    flex:           1,
-    height:         48,
-    borderRadius:   Radius.xl,
-    alignItems:     'center',
+    flex: 1,
+    height: 48,
+    borderRadius: Radius.xl,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   cancelBtn: {
