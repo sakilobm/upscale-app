@@ -33,6 +33,16 @@ export default function RootLayout() {
 
   useEffect(() => {
     loadCompletedTours();
+    
+    // Safety check: if the app previously crashed or was closed during an onboarding tutorial,
+    // restore the user's original data state.
+    import('@store/seedDemoData').then(({ hasDemoSnapshot, undoDemoData }) => {
+      hasDemoSnapshot().then((hasSnapshot) => {
+        if (hasSnapshot) {
+          undoDemoData();
+        }
+      });
+    });
   }, []);
 
   // Setup notifications lazily. notificationService.ts guards its own

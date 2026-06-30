@@ -8,10 +8,11 @@
 
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { seedDemoData, undoDemoData } from '@store/seedDemoData';
 
 export type TourId = 'home' | 'ledger' | 'budget' | 'analytics' | 'profile';
 
-export type SpotlightArea = 'header-card' | 'quick-add' | 'stats-card' | 'list-row' | 'summary-card' | 'chart-area';
+export type SpotlightArea = 'header-card' | 'quick-add' | 'stats-card' | 'list-row' | 'summary-card' | 'chart-area' | 'manage-btn' | 'analytics-cta';
 
 export interface TourStep {
   title:         string;
@@ -33,17 +34,22 @@ export const TOUR_DEFINITIONS: Record<TourId, { name: string; icon: string; step
         spotlightArea: 'header-card',
       },
       {
+        title: 'Manage Accounts',
+        description: 'Tap Manage to create, edit, or customize your banking cards and wallets.',
+        targetLabel: 'MANAGE CARD',
+        spotlightArea: 'manage-btn',
+      },
+      {
         title: 'Income & Expenses',
         description: 'Track your total incoming cash flow and monthly spending habits at a glance.',
         targetLabel: 'THIS MONTH STATS',
         spotlightArea: 'stats-card',
       },
       {
-        title: 'Recent Activity',
-        description: 'Swipe left on any transaction row to quickly edit or delete it.',
-        gestureHint: 'swipe-left',
-        targetLabel: 'RECENT ACTIVITY',
-        spotlightArea: 'list-row',
+        title: 'Financial Analytics',
+        description: 'Dive deep into interactive category spending charts and savings progress graphs.',
+        targetLabel: 'FULL ANALYTICS',
+        spotlightArea: 'analytics-cta',
       },
     ],
   },
@@ -115,13 +121,14 @@ interface TutorialState {
   completedTours: Record<TourId, boolean>;
   activeTourId:   TourId | null;
   currentStepIndex: number;
+  isLaunching:    boolean;
   
   // Actions
   loadCompletedTours: () => Promise<void>;
-  startTour:         (tourId: TourId) => void;
-  nextStep:          () => void;
+  startTour:         (tourId: TourId) => Promise<void>;
+  nextStep:          () => Promise<void>;
   prevStep:          () => void;
-  skipTour:          () => void;
+  skipTour:          () => Promise<void>;
   resetAllTours:     () => Promise<void>;
 }
 
@@ -137,6 +144,7 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
   },
   activeTourId: null,
   currentStepIndex: 0,
+  isLaunching: false,
 
   loadCompletedTours: async () => {
     try {
@@ -149,8 +157,18 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
     }
   },
 
-  startTour: (tourId: TourId) => {
-    set({ activeTourId: tourId, currentStepIndex: 0 });
+  startTour: async (tourId: TourId) => {
+    // 1. Enter launching state to trigger the global transitions overlay
+    set({ isLaunching: true, activeTourId: null, currentStepIndex: 0 });
+    
+    // 2. Allow navigation routing animations (e.g. router.push) to complete smoothly
+    await new Promise((resolve) => setTimeout(resolve, 600));
+
+    // 3. Seed demo data asynchronously
+    await seedDemoData();
+
+    // 4. End launching state and activate the tour spotlight modal
+    set({ isLaunching: false, activeTourId: tourId, currentStepIndex: 0 });
   },
 
   nextStep: async () => {
@@ -161,7 +179,8 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
     if (currentStepIndex + 1 < totalSteps) {
       set({ currentStepIndex: currentStepIndex + 1 });
     } else {
-      // Tour finished!
+      // Tour finished! Restore the user's original data state
+      await undoDemoData();
       const updated = { ...completedTours, [activeTourId]: true };
       set({ activeTourId: null, currentStepIndex: 0, completedTours: updated });
       try {
@@ -181,6 +200,8 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
 
   skipTour: async () => {
     const { activeTourId, completedTours } = get();
+    // Restore the user's original data state on skip
+    await undoDemoData();
     if (activeTourId) {
       const updated = { ...completedTours, [activeTourId]: true };
       set({ activeTourId: null, currentStepIndex: 0, completedTours: updated });
@@ -195,6 +216,8 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
   },
 
   resetAllTours: async () => {
+    // Safety undo if active
+    await undoDemoData();
     const resetState = {
       home: false, ledger: false, budget: false, analytics: false, profile: false,
     };
