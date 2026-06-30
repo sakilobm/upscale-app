@@ -9,6 +9,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { seedDemoData, undoDemoData } from '@store/seedDemoData';
+import { router } from 'expo-router';
 
 export type TourId = 'home' | 'ledger' | 'budget' | 'analytics' | 'profile';
 
@@ -69,6 +70,12 @@ export const TOUR_DEFINITIONS: Record<TourId, { name: string; icon: string; step
         gestureHint: 'swipe-right',
         targetLabel: 'CONTACT CARD',
         spotlightArea: 'list-row',
+      },
+      {
+        title: 'Add New Record',
+        description: 'Tap the Add Entry button to record a new loan, cash debt, or friend split instantly.',
+        targetLabel: 'ADD ENTRY',
+        spotlightArea: 'quick-add',
       },
     ],
   },
@@ -188,6 +195,9 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
       } catch (e) {
         console.warn('Failed to save tutorial completion state', e);
       }
+
+      // Auto-redirect back to Profile screen and reopen the guides sheet
+      router.push('/(tabs)/profile?openGuides=true');
     }
   },
 
@@ -210,6 +220,9 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
       } catch (e) {
         console.warn('Failed to save tutorial skip state', e);
       }
+
+      // Auto-redirect back to Profile screen and reopen the guides sheet
+      router.push('/(tabs)/profile?openGuides=true');
     } else {
       set({ activeTourId: null, currentStepIndex: 0 });
     }

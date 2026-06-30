@@ -47,12 +47,10 @@ export function useInteractiveGuides(onClose?: () => void): UseInteractiveGuides
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onClose?.();
     
-    // Delayed routing transition to allow sheets to slide down smoothly
+    // Navigate immediately and start the tour loader transition
     setTimeout(() => {
       router.push(route as any);
-      setTimeout(() => {
-        startTour(tourId);
-      }, 300);
+      startTour(tourId);
     }, 250);
   };
 

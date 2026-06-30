@@ -13,6 +13,7 @@ import { Linking } from 'react-native';
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSearchParams, router } from 'expo-router';
 import { toast } from '@store/toastStore';
 import { useProfile } from './useProfile';
 import { usePreferencesStore } from '@store/preferencesStore';
@@ -94,6 +95,17 @@ export function useProfileScreen() {
       setHasSnapshot(!!val);
     });
   }, []);
+
+  const params = useLocalSearchParams<{ openGuides?: string }>();
+
+  // Open interactive guides sheet automatically if redirecting back from tutorial
+  useEffect(() => {
+    if (params.openGuides === 'true') {
+      setGuidesSheet(true);
+      // Clean up the URL search params so it doesn't reopen on reload
+      router.setParams({ openGuides: undefined });
+    }
+  }, [params.openGuides]);
 
   // ── Handlers that close sheets before delegating ──
   const handleSelectCurrency = useCallback((code: CurrencyCode) => {

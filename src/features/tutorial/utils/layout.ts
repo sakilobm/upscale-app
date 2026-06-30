@@ -22,6 +22,14 @@ export interface SpotlightStyle {
 export interface LayoutConfig {
   spotlightStyle: SpotlightStyle;
   cardTopPosition: number;
+  badgeStyle?: {
+    top?: number;
+    bottom?: number;
+    left?: number;
+    right?: number;
+    width?: number;
+    justifyContent?: 'center' | 'flex-start' | 'flex-end';
+  };
 }
 
 /**
@@ -54,6 +62,23 @@ export const getSpotlightLayoutConfig = (
           },
           cardTopPosition: insetsTop + 305,
         };
+      case 'manage-btn':
+        return {
+          spotlightStyle: {
+            top: insetsTop + 73,
+            left: screenWidth - 81,
+            width: 68,
+            height: 28,
+            borderRadius: Radius.md,
+          },
+          cardTopPosition: insetsTop + 120,
+          badgeStyle: {
+            top: -28,
+            left: -36,
+            width: 100,
+            justifyContent: 'center',
+          },
+        };
       case 'stats-card':
         return {
           spotlightStyle: {
@@ -65,7 +90,19 @@ export const getSpotlightLayoutConfig = (
           },
           cardTopPosition: insetsTop + 415,
         };
+      case 'analytics-cta':
+        return {
+          spotlightStyle: {
+            top: insetsTop + 580,
+            left: 16,
+            width: screenWidth - 32,
+            height: 76,
+            borderRadius: Radius.xl,
+          },
+          cardTopPosition: insetsTop + 140,
+        };
       case 'list-row':
+      default:
         return {
           spotlightStyle: {
             top: insetsTop + 670,
@@ -85,24 +122,41 @@ export const getSpotlightLayoutConfig = (
       case 'summary-card':
         return {
           spotlightStyle: {
-            top: insetsTop + 70,
+            top: insetsTop + 140,
             left: 16,
             width: screenWidth - 32,
             height: 140,
             borderRadius: Radius['2xl'],
           },
-          cardTopPosition: insetsTop + 230,
+          cardTopPosition: insetsTop + 300,
         };
       case 'list-row':
         return {
           spotlightStyle: {
-            top: insetsTop + 230,
+            top: insetsTop + 470,
             left: 16,
             width: screenWidth - 32,
             height: 110,
             borderRadius: Radius.xl,
           },
-          cardTopPosition: insetsTop + 360,
+          cardTopPosition: insetsTop + 60,
+        };
+      case 'quick-add':
+        return {
+          spotlightStyle: {
+            bottom: 100,
+            right: 20,
+            width: 135,
+            height: 52,
+            borderRadius: Radius.full,
+          },
+          cardTopPosition: insetsTop + 420,
+          badgeStyle: {
+            top: -28,
+            left: 12,
+            width: 110,
+            justifyContent: 'center',
+          },
         };
     }
   }
@@ -158,6 +212,12 @@ export const getSpotlightLayoutConfig = (
           borderRadius: 34,
         },
         cardTopPosition: insetsTop + 130,
+        badgeStyle: {
+          top: -28,
+          left: -20,
+          width: 108,
+          justifyContent: 'center',
+        },
       };
     case 'stats-card':
       return {

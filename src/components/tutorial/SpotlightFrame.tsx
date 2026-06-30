@@ -20,6 +20,7 @@ interface SpotlightFrameProps {
   spotlightStyle: SpotlightStyle;
   targetLabel: string;
   spotlightArea: SpotlightArea;
+  badgeStyle?: any;
 }
 
 export const SpotlightFrame = React.memo(({
@@ -28,6 +29,7 @@ export const SpotlightFrame = React.memo(({
   spotlightStyle,
   targetLabel,
   spotlightArea,
+  badgeStyle,
 }: SpotlightFrameProps) => {
   return (
     <Animated.View
@@ -47,7 +49,7 @@ export const SpotlightFrame = React.memo(({
         style={[
           s.targetBadge,
           { backgroundColor: colors.brand.primary },
-          spotlightArea === 'quick-add' && { top: -28, left: -20, width: 108, justifyContent: 'center' },
+          badgeStyle,
         ]}
       >
         <Ionicons name="sparkles" size={11} color={colors.white} />
