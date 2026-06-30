@@ -9,6 +9,8 @@ import { useThemeStore } from '@store/themeStore';
 import { useNotificationStore } from '@store/notificationStore';
 import { SplashOverlay } from '@components/SplashOverlay';
 import { ToastContainer } from '@components/Toast';
+import { TutorialSpotlightModal } from '@components/tutorial/TutorialSpotlightModal';
+import { useTutorialStore } from '@features/tutorial/store/tutorialStore';
 import { DarkTheme, LightTheme } from '@constants/themes';
 import { applyGlobalHapticPatch } from '@/services/hapticsService';
 
@@ -25,8 +27,13 @@ export default function RootLayout() {
 
   const addNotification = useNotificationStore((s) => s.addNotification);
   const setPermission   = useNotificationStore((s) => s.setPermission);
+  const loadCompletedTours = useTutorialStore((s) => s.loadCompletedTours);
 
   const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    loadCompletedTours();
+  }, []);
 
   // Setup notifications lazily. notificationService.ts guards its own
   // import('expo-notifications') behind an IS_EXPO_GO check, so the
@@ -85,6 +92,7 @@ export default function RootLayout() {
         <Stack.Screen name="analytics"     options={{ animation: 'slide_from_right' }} />
       </Stack>
       <ToastContainer />
+      <TutorialSpotlightModal />
       {showSplash && (
         <SplashOverlay isDark={themeMode === 'dark'} onDismiss={handleSplashDismiss} />
       )}

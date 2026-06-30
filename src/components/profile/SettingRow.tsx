@@ -34,7 +34,6 @@ export function SettingRow({ icon, iconColor, label, subtitle, onPress, right, i
 
   return (
     <Animated.View
-      entering={FadeInDown.springify().damping(24).stiffness(200).delay(animDelay)}
       style={[
         rowAnim,
         !isLast && {

@@ -32,6 +32,7 @@ import { HelpSheet } from '@components/profile/HelpSheet';
 import { HapticSettingsSheet } from '@components/profile/HapticSettingsSheet';
 import { BackupSyncSheet } from '@components/profile/BackupSyncSheet';
 import { ImportSheet } from '@components/profile/ImportSheet';
+import { InteractiveGuidesSheet } from '@components/profile/InteractiveGuidesSheet';
 import { ConfirmModal } from '@components/ConfirmModal';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
@@ -132,8 +133,9 @@ export default function ProfileScreen() {
 
         <SectionCard title="Support" delay={320} accentColor={colors.brand.accent}>
           <SettingRow animDelay={0}   icon="help-circle-outline"        iconColor={colors.brand.accent}          label="Help & Support" subtitle="FAQs and contact"    onPress={sheets.help.open} />
-          <SettingRow animDelay={40}  icon="star-outline"               iconColor={colors.status.warning}        label="Rate WhereCash" subtitle="Share your feedback"  onPress={confirms.rate.show} />
-          <SettingRow animDelay={80}  icon="information-circle-outline" iconColor={colors.text.tertiary} label="About"         subtitle={`v${appVersion} · Build ${buildNumber}`}  onPress={() => toast.info(`WhereCash v${appVersion} — Built with Expo & React Native`)} isLast />
+          <SettingRow animDelay={40}  icon="compass-outline"            iconColor={colors.brand.primary}         label="Interactive Guides" subtitle="Replay screen walkthroughs" onPress={sheets.guides.open} />
+          <SettingRow animDelay={80}  icon="star-outline"               iconColor={colors.status.warning}        label="Rate WhereCash" subtitle="Share your feedback"  onPress={confirms.rate.show} />
+          <SettingRow animDelay={120} icon="information-circle-outline" iconColor={colors.text.tertiary} label="About"         subtitle={`v${appVersion} · Build ${buildNumber}`}  onPress={() => toast.info(`WhereCash v${appVersion} — Built with Expo & React Native`)} isLast />
         </SectionCard>
 
         <Animated.View style={useEntrance(400)}>
@@ -188,6 +190,10 @@ export default function ProfileScreen() {
 
       <ProfileBottomSheet visible={sheets.import.isOpen}        onClose={sheets.import.close}        title="Import Data">
         <ImportSheet onClose={sheets.import.close} />
+      </ProfileBottomSheet>
+
+      <ProfileBottomSheet visible={sheets.guides.isOpen}        onClose={sheets.guides.close}        title="Interactive Guides">
+        <InteractiveGuidesSheet onClose={sheets.guides.close} />
       </ProfileBottomSheet>
 
       {/* ── Confirm Modals ── */}

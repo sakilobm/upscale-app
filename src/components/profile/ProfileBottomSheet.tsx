@@ -6,7 +6,7 @@
  * @associatedFiles src/app/(tabs)/profile.tsx, src/features/profile/hooks/useProfileScreen.ts
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, StyleSheet, Modal, Pressable, Platform, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -53,36 +53,44 @@ export function ProfileBottomSheet({ visible, onClose, title, children }: Props)
     }
   }, [visible, screenHeight]);
 
-  const panGesture = Gesture.Pan()
-    .onStart(() => {
-      startY.value = ty.value;
-    })
-    .onUpdate((e) => {
-      const newY = startY.value + e.translationY;
-      if (newY < 0) {
-        ty.value = newY * 0.2; // Rubber-band resistance when pulling up
-      } else {
-        ty.value = newY;
-      }
-    })
-    .onEnd((e) => {
-      if (ty.value > 120 || e.velocityY > 500) {
-        dimOpacity.value = withTiming(0, { duration: 180 });
-        ty.value = withTiming(screenHeight, { duration: 200 }, (finished) => {
-          if (finished) {
-            runOnJS(onClose)();
-          }
-        });
-      } else {
-        ty.value = withSpring(0, { damping: 26, stiffness: 220 });
-      }
-    });
+  const panGesture = useMemo(() => {
+    return Gesture.Pan()
+      .onStart(() => {
+        startY.value = ty.value;
+      })
+      .onUpdate((e) => {
+        const newY = startY.value + e.translationY;
+        if (newY < 0) {
+          ty.value = newY * 0.2; // Rubber-band resistance when pulling up
+        } else {
+          ty.value = newY;
+        }
+      })
+      .onEnd((e) => {
+        if (ty.value > 120 || e.velocityY > 500) {
+          dimOpacity.value = withTiming(0, { duration: 180 });
+          ty.value = withTiming(screenHeight, { duration: 200 }, (finished) => {
+            if (finished) {
+              runOnJS(onClose)();
+            }
+          });
+        } else {
+          ty.value = withSpring(0, { damping: 26, stiffness: 220 });
+        }
+      });
+  }, [onClose, screenHeight]);
 
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value }] }));
   const backdropStyle = useAnimatedStyle(() => ({ opacity: dimOpacity.value }));
 
   return (
-    <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
+    <Modal
+      transparent
+      visible={visible}
+      statusBarTranslucent
+      animationType="none"
+      onRequestClose={onClose}
+    >
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         <Animated.View style={[s.backdrop, { backgroundColor: colors.overlay.heavy }, backdropStyle]} pointerEvents={visible ? 'auto' : 'none'}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
@@ -115,7 +123,7 @@ export function ProfileBottomSheet({ visible, onClose, title, children }: Props)
             </Animated.View>
           </GestureDetector>
 
-          <View style={s.contentContainer}>
+          <View style={[s.contentContainer, { maxHeight: maxAllowedHeight - 80 }]}>
             {children}
           </View>
         </Animated.View>
@@ -157,7 +165,6 @@ const s = StyleSheet.create({
   },
   closeBtn: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   contentContainer: {
-    flex: 1,
-    flexShrink: 1,
+    width: '100%',
   },
 });
