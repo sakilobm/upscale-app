@@ -160,4 +160,18 @@ To support high-performance infinite scrolling with 10,000+ entries and zero flo
 - **FlatList Virtualization**: Refactored the transactions screen feed in [transactions.tsx](file:///c:/Users/sowbh/Desktop/MoneyApp/src/app/(tabs)/transactions.tsx) from ScrollView to an optimized `FlatList` with restricted render boundaries (`windowSize={5}`, `initialNumToRender={5}`, `removeClippedSubviews={true}`) to maintain a constant low memory footprint.
 - **Synchronous Fast Caching**: Employs query caches and pre-hydrated account balances to ensure instant 0ms app start times, avoiding parsing massive historical datasets on initialization.
 
+### 9. Interactive Walkthrough & Spotlight Engine
+To decouple layout calculations, animation state, and visual presentation within the interactive tutorial system:
+- **Layout Logic Extraction**: Absolute coordinate configurations for each screen tour step are isolated as a pure layout config calculator in [layout.ts](file:///c:/Users/sowbh/Desktop/MoneyApp/src/features/tutorial/utils/layout.ts).
+- **Headless Feature Hooks**:
+  - `useTutorialSpotlight`: In [useTutorialSpotlight.ts](file:///c:/Users/sowbh/Desktop/MoneyApp/src/features/tutorial/hooks/useTutorialSpotlight.ts), manages the spotlight Reanimated shared value drivers (`pulseScale`, `scale`, `opacity`), tracks active store steps, handles device haptic impulses, and maps coordinates.
+  - `useInteractiveGuides`: In [useInteractiveGuides.ts](file:///c:/Users/sowbh/Desktop/MoneyApp/src/features/tutorial/hooks/useInteractiveGuides.ts), coordinates tour launch triggers, reset states, and delayed screen transitions for sheets.
+- **Atomic Presentation Components**: 
+  - [SpotlightFrame.tsx](file:///c:/Users/sowbh/Desktop/MoneyApp/src/components/tutorial/SpotlightFrame.tsx): Renders the pulsing SVG-like glowing spotlight ring and target text label badge.
+  - [TutorialStepCard.tsx](file:///c:/Users/sowbh/Desktop/MoneyApp/src/components/tutorial/TutorialStepCard.tsx): Houses step details, progress indicator dots, back/next/skip control buttons, and gesture swipe hands.
+- **Lean Component Shells**:
+  - [TutorialSpotlightModal.tsx](file:///c:/Users/sowbh/Desktop/MoneyApp/src/components/tutorial/TutorialSpotlightModal.tsx): Reduced to a declarative modal shell (< 80 lines) delegating state and sub-components.
+  - [InteractiveGuidesSheet.tsx](file:///c:/Users/sowbh/Desktop/MoneyApp/src/components/profile/InteractiveGuidesSheet.tsx): Simplified component rendering mapped tour listings and start/reset triggers.
+
+
 

@@ -23,9 +23,9 @@ interface Props {
 }
 
 const SETUP_STEPS: { icon: 'wallet-outline' | 'receipt-outline' | 'bar-chart-outline'; colorKey: 'savings' | 'income' | 'warning'; title: string; subtitle: string; action: 'accounts' | 'transaction' | 'budget' }[] = [
-  { icon: 'wallet-outline',    colorKey: 'savings', title: 'Add your first account',    subtitle: 'Link a bank, cash wallet, or savings account',         action: 'accounts'    },
-  { icon: 'receipt-outline',   colorKey: 'income',  title: 'Log an expense or income',  subtitle: 'Track where your money comes and goes',                 action: 'transaction' },
-  { icon: 'bar-chart-outline', colorKey: 'warning', title: 'Set a monthly budget',       subtitle: 'Limit spending per category and hit your goals',        action: 'budget'      },
+  { icon: 'wallet-outline', colorKey: 'savings', title: 'Add your first account', subtitle: 'Link a bank, cash wallet, or savings account', action: 'accounts' },
+  { icon: 'receipt-outline', colorKey: 'income', title: 'Log an expense or income', subtitle: 'Track where your money comes and goes', action: 'transaction' },
+  { icon: 'bar-chart-outline', colorKey: 'warning', title: 'Set a monthly budget', subtitle: 'Limit spending per category and hit your goals', action: 'budget' },
 ];
 
 export function HomeSetupPrompt({ onLogExpense }: Props) {
@@ -34,9 +34,9 @@ export function HomeSetupPrompt({ onLogExpense }: Props) {
 
   const handleStep = (action: 'accounts' | 'transaction' | 'budget') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (action === 'accounts')    router.push('/accounts');
+    if (action === 'accounts') router.push('/accounts');
     else if (action === 'budget') router.push('/(tabs)/budget');
-    else                          onLogExpense();
+    else onLogExpense();
   };
 
   return (
@@ -71,29 +71,29 @@ export function HomeSetupPrompt({ onLogExpense }: Props) {
         {SETUP_STEPS.map((step, i) => {
           const stepColor = colors.status[step.colorKey];
           return (
-          <Animated.View
-            key={step.title}
-            entering={FadeInDown.springify().damping(20).stiffness(140).delay(160 + i * 70)}
-          >
-            <Pressable
-              onPress={() => handleStep(step.action)}
-              style={({ pressed }) => [
-                s.stepRow,
-                { backgroundColor: colors.surface.sheet, borderColor: stepColor + '22', shadowColor: colors.black, opacity: pressed ? 0.82 : 1 },
-              ]}
+            <Animated.View
+              key={step.title}
+              entering={FadeInDown.springify().damping(20).stiffness(140).delay(160 + i * 70)}
             >
-              <View style={[s.stepIcon, { backgroundColor: stepColor + '15' }]}>
-                <Ionicons name={step.icon} size={16} color={stepColor} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <AppText variant="labelMD" color={colors.text.primary}>{step.title}</AppText>
-                <AppText variant="caption" color={colors.text.secondary} style={{ lineHeight: 17, marginTop: 1 }}>
-                  {step.subtitle}
-                </AppText>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
-            </Pressable>
-          </Animated.View>
+              <Pressable
+                onPress={() => handleStep(step.action)}
+                style={({ pressed }) => [
+                  s.stepRow,
+                  { backgroundColor: colors.surface.sheet, borderColor: stepColor + '22', shadowColor: colors.black, opacity: pressed ? 0.82 : 1 },
+                ]}
+              >
+                <View style={[s.stepIcon, { backgroundColor: stepColor + '15' }]}>
+                  <Ionicons name={step.icon} size={16} color={stepColor} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <AppText variant="labelMD" color={colors.text.primary}>{step.title}</AppText>
+                  <AppText variant="caption" color={colors.text.secondary} style={{ lineHeight: 17, marginTop: 1 }}>
+                    {step.subtitle}
+                  </AppText>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.text.tertiary} />
+              </Pressable>
+            </Animated.View>
           );
         })}
       </View>
@@ -113,26 +113,26 @@ export function HomeSetupPrompt({ onLogExpense }: Props) {
 }
 
 const s = StyleSheet.create({
-  root:      { alignItems: 'center', paddingHorizontal: Spacing['5'], paddingTop: Spacing['2'], gap: Spacing['4'] },
-  heroWrap:  { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
+  root: { alignItems: 'center', paddingHorizontal: Spacing['5'], paddingTop: Spacing['2'], gap: Spacing['4'] },
+  heroWrap: { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
   outerRing: { position: 'absolute', width: 118, height: 118, borderRadius: 59, borderWidth: 1.5, borderStyle: 'dashed' },
   iconCircle: {
     width: 82, height: 82, borderRadius: 41,
     alignItems: 'center', justifyContent: 'center',
     ...Platform.select({
-      ios:     { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
+      ios: { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 18 },
       android: { elevation: 12 },
     }),
   },
-  badge:     { position: 'absolute', bottom: 14, right: 10, width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  badge: { position: 'absolute', bottom: 14, right: 10, width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   textBlock: { alignItems: 'center', gap: Spacing['2'] },
-  subtitle:  { maxWidth: 280, lineHeight: 20 },
-  stepsCol:  { alignSelf: 'stretch', gap: Spacing['2'] },
+  subtitle: { maxWidth: 280, lineHeight: 20 },
+  stepsCol: { alignSelf: 'stretch', gap: Spacing['2'] },
   stepRow: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing['3'],
     padding: Spacing['3'], borderRadius: Radius.lg, borderWidth: 1,
     ...Platform.select({
-      ios:     { shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
+      ios: { shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 6 },
       android: { elevation: 1 },
     }),
   },

@@ -2,52 +2,31 @@
  * @file InteractiveGuidesSheet.tsx
  * @architecture Presentation Layer — UI Component
  * @description Interactive screen tour hub rendered inside ProfileBottomSheet.
- *   Allows users to preview and replay screen tutorials (Home, Ledger, Budget, etc.) at any time.
- * @associatedFiles src/components/profile/ProfileBottomSheet.tsx, src/features/tutorial/store/tutorialStore.ts
+ *   Consumes the useInteractiveGuides custom hook to start, preview, and reset tours.
+ * @associatedFiles src/components/profile/ProfileBottomSheet.tsx, src/features/tutorial/hooks/useInteractiveGuides.ts
  */
 
 import React from 'react';
 import { View, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
 import { AppText } from '@components/AppText';
-import { useTheme } from '@hooks/useTheme';
-import { useTutorialStore, TOUR_DEFINITIONS, TourId } from '@features/tutorial/store/tutorialStore';
+import { useInteractiveGuides } from '@features/tutorial/hooks/useInteractiveGuides';
+import { TOUR_DEFINITIONS } from '@features/tutorial/store/tutorialStore';
 import { Spacing, Radius } from '@constants/index';
-
-const TOURS: { id: TourId; route: string }[] = [
-  { id: 'home', route: '/(tabs)' },
-  { id: 'ledger', route: '/(tabs)/ledger' },
-  { id: 'budget', route: '/(tabs)/budget' },
-  { id: 'analytics', route: '/analytics' },
-];
 
 interface Props {
   onClose?: () => void;
 }
 
 export function InteractiveGuidesSheet({ onClose }: Props) {
-  const { colors, isDark } = useTheme();
-  const completedTours = useTutorialStore((s) => s.completedTours);
-  const startTour = useTutorialStore((s) => s.startTour);
-  const resetAllTours = useTutorialStore((s) => s.resetAllTours);
-
-  const handleLaunchTour = (tourId: TourId, route: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onClose?.();
-    setTimeout(() => {
-      router.push(route as any);
-      setTimeout(() => {
-        startTour(tourId);
-      }, 300);
-    }, 250);
-  };
-
-  const handleReset = async () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    await resetAllTours();
-  };
+  const {
+    colors,
+    isDark,
+    completedTours,
+    toursList,
+    handleLaunchTour,
+    handleReset,
+  } = useInteractiveGuides(onClose);
 
   return (
     <View style={s.container}>
@@ -57,7 +36,7 @@ export function InteractiveGuidesSheet({ onClose }: Props) {
         </AppText>
 
         <View style={s.list}>
-          {TOURS.map((t) => {
+          {toursList.map((t) => {
             const def = TOUR_DEFINITIONS[t.id];
             const isDone = completedTours?.[t.id] ?? false;
             return (
