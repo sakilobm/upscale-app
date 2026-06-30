@@ -45,6 +45,7 @@ export interface UseTutorialSpotlightReturn {
   handleNext: () => void;
   handlePrev: () => void;
   handleSkip: () => void;
+  transitionToTour: (nextTourId: TourId, route: string) => Promise<void>;
 }
 
 /**
@@ -62,6 +63,7 @@ export function useTutorialSpotlight(): UseTutorialSpotlightReturn {
   const nextStep = useTutorialStore((s) => s.nextStep);
   const prevStep = useTutorialStore((s) => s.prevStep);
   const skipTour = useTutorialStore((s) => s.skipTour);
+  const transitionToTour = useTutorialStore((s) => s.transitionToTour);
 
   // Animations shared values
   const opacity = useSharedValue(0);
@@ -146,5 +148,6 @@ export function useTutorialSpotlight(): UseTutorialSpotlightReturn {
     handleNext,
     handlePrev,
     handleSkip,
+    transitionToTour,
   };
 }

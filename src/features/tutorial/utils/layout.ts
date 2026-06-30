@@ -167,24 +167,56 @@ export const getSpotlightLayoutConfig = (
       case 'summary-card':
         return {
           spotlightStyle: {
-            top: insetsTop + 70,
+            top: insetsTop + 100,
             left: 16,
             width: screenWidth - 32,
-            height: 160,
+            height: 260,
             borderRadius: Radius['2xl'],
           },
-          cardTopPosition: insetsTop + 250,
+          cardTopPosition: insetsTop + 380,
         };
       case 'list-row':
         return {
           spotlightStyle: {
-            top: insetsTop + 340,
+            top: insetsTop + 410,
             left: 16,
             width: screenWidth - 32,
-            height: 100,
+            height: 240,
             borderRadius: Radius.xl,
           },
-          cardTopPosition: insetsTop + 120,
+          cardTopPosition: insetsTop + 30,
+        };
+      case 'payment-row':
+        return {
+          spotlightStyle: {
+            top: insetsTop + 490,
+            left: 16,
+            width: screenWidth - 32,
+            height: 82,
+            borderRadius: Radius.xl,
+          },
+          cardTopPosition: insetsTop + 190,
+          badgeStyle: {
+            top: -28,
+            left: 16,
+          },
+        };
+      case 'quick-add':
+        return {
+          spotlightStyle: {
+            bottom: 85,
+            right: 20,
+            width: 125,
+            height: 52,
+            borderRadius: Radius.full,
+          },
+          cardTopPosition: insetsTop + 140,
+          badgeStyle: {
+            top: -28,
+            left: 12,
+            width: 110,
+            justifyContent: 'center',
+          },
         };
     }
   }

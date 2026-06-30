@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 
 export type TourId = 'home' | 'ledger' | 'budget' | 'analytics' | 'profile';
 
-export type SpotlightArea = 'header-card' | 'quick-add' | 'stats-card' | 'list-row' | 'summary-card' | 'chart-area' | 'manage-btn' | 'analytics-cta';
+export type SpotlightArea = 'header-card' | 'quick-add' | 'stats-card' | 'list-row' | 'summary-card' | 'chart-area' | 'manage-btn' | 'analytics-cta' | 'payment-row';
 
 export interface TourStep {
   title:         string;
@@ -96,6 +96,19 @@ export const TOUR_DEFINITIONS: Record<TourId, { name: string; icon: string; step
         targetLabel: 'PLANNED DUES',
         spotlightArea: 'list-row',
       },
+      {
+        title: 'Pay & Settle Bills',
+        description: 'Long-press to unlock, then swipe right on any bill row to mark it as fully paid instantly.',
+        gestureHint: 'swipe-right',
+        targetLabel: 'SETTLE BILL',
+        spotlightArea: 'payment-row',
+      },
+      {
+        title: 'Add Upcoming Bills',
+        description: 'Tap Add Bill to plan electricity, rent, or Netflix subscription dues ahead of time.',
+        targetLabel: 'ADD BILL',
+        spotlightArea: 'quick-add',
+      },
     ],
   },
   analytics: {
@@ -124,6 +137,8 @@ export const TOUR_DEFINITIONS: Record<TourId, { name: string; icon: string; step
   },
 };
 
+export const TOUR_SEQUENCE: TourId[] = ['home', 'ledger', 'budget', 'analytics', 'profile'];
+
 interface TutorialState {
   completedTours: Record<TourId, boolean>;
   activeTourId:   TourId | null;
@@ -137,6 +152,7 @@ interface TutorialState {
   prevStep:          () => void;
   skipTour:          () => Promise<void>;
   resetAllTours:     () => Promise<void>;
+  transitionToTour:  (nextTourId: TourId, route: string) => Promise<void>;
 }
 
 const STORAGE_KEY = 'wc_completed_tours_v1';
@@ -176,6 +192,17 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
 
     // 4. End launching state and activate the tour spotlight modal
     set({ isLaunching: false, activeTourId: tourId, currentStepIndex: 0 });
+  },
+
+  transitionToTour: async (nextTourId: TourId, route: string) => {
+    // 1. Clean up current demo data
+    await undoDemoData();
+    // 2. Clear current tour state
+    set({ activeTourId: null, currentStepIndex: 0 });
+    // 3. Navigate directly to the next screen route
+    router.push(route as any);
+    // 4. Start the next tour (triggers loading overlay internally)
+    await get().startTour(nextTourId);
   },
 
   nextStep: async () => {

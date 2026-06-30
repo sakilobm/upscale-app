@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, FadeInDown,
 } from 'react-native-reanimated';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useBudgetScreen } from '@features/budget/hooks/useBudgetScreen';
@@ -32,6 +32,7 @@ import { AppText } from '@components/AppText';
 import { FAB } from '@components/FAB';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
+import { useTutorialStore } from '@features/tutorial/store/tutorialStore';
 import { Spacing, Layout, Radius } from '@constants/index';
 import type { PlannedPayment } from '@store/plannedPaymentsStore';
 
@@ -51,6 +52,22 @@ const FILTER_CATEGORIES = [
 export default function BudgetScreen() {
   const { colors } = useTheme();
   const { symbol } = useFormatCurrency();
+  
+  const scrollRef = useRef<ScrollView>(null);
+  const activeTourId = useTutorialStore((s) => s.activeTourId);
+  const currentStepIndex = useTutorialStore((s) => s.currentStepIndex);
+
+  useEffect(() => {
+    if (activeTourId === 'budget') {
+      if (currentStepIndex === 2 || currentStepIndex === 3) {
+        // Scroll down to reveal planned payments timeline
+        scrollRef.current?.scrollTo({ y: 360, animated: true });
+      } else {
+        // Scroll back to top for overview card/limits list
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+      }
+    }
+  }, [activeTourId, currentStepIndex]);
   
   const {
     budgets, isLoading, refresh, summary,
@@ -135,6 +152,7 @@ export default function BudgetScreen() {
   return (
     <SafeAreaView style={[s.safeArea, { backgroundColor: colors.background.primary }]} edges={['top']}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[s.scroll, { paddingBottom: Layout.tabBarHeight + Spacing['8'] }]}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refresh} tintColor={colors.brand.primary} />}
