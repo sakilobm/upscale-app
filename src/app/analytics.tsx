@@ -20,6 +20,7 @@ import { ProgressBar } from '@components/ProgressBar';
 import { useTheme } from '@hooks/useTheme';
 import { Spacing, Radius, FontFamily } from '@constants/index';
 import { useAnalyticsScreen } from '@features/analytics/hooks/useAnalyticsScreen';
+import { useTutorialStore } from '@features/tutorial/store/tutorialStore';
 
 // Modular Atomic Components
 import { SectionTitle } from '@components/analytics/SectionTitle';
@@ -31,9 +32,9 @@ import { FullscreenChart } from '@components/analytics/FullscreenChart';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const PERIODS = [
-  { key: 'weekly',  label: 'Week',  icon: 'calendar-outline' },
+  { key: 'weekly', label: 'Week', icon: 'calendar-outline' },
   { key: 'monthly', label: 'Month', icon: 'today-outline' },
-  { key: 'yearly',  label: 'Year',  icon: 'albums-outline' },
+  { key: 'yearly', label: 'Year', icon: 'albums-outline' },
 ] as const;
 
 export default function AnalyticsScreen() {
@@ -41,12 +42,31 @@ export default function AnalyticsScreen() {
   const insets = useSafeAreaInsets();
   const analytics = useAnalyticsScreen();
 
-  const cardBg       = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
+  const scrollRef = React.useRef<ScrollView>(null);
+  const activeTourId = useTutorialStore((s) => s.activeTourId);
+  const currentStepIndex = useTutorialStore((s) => s.currentStepIndex);
+
+  React.useEffect(() => {
+    if (activeTourId === 'analytics') {
+      if (currentStepIndex === 0) {
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+      } else if (currentStepIndex === 1) {
+        scrollRef.current?.scrollTo({ y: 150, animated: true });
+      } else if (currentStepIndex === 2) {
+        scrollRef.current?.scrollTo({ y: 340, animated: true });
+      } else if (currentStepIndex === 3) {
+        scrollRef.current?.scrollTo({ y: 740, animated: true });
+      }
+    }
+  }, [activeTourId, currentStepIndex]);
+
+  const cardBg = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
   const dividerColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
 
   return (
-    <View style={[s.root, { backgroundColor: colors.background.primary }]}>      
+    <View style={[s.root, { backgroundColor: colors.background.primary }]}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[s.scroll, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
@@ -318,78 +338,78 @@ export default function AnalyticsScreen() {
         {/* Loans & Ledger Overviews */}
         {(analytics.loanSummary.borrowedCount + analytics.loanSummary.lentCount > 0 ||
           analytics.ledgerSummary.activeEntries > 0) && (
-          <>
-            <SectionTitle title="LOANS & LEDGER" />
-            <View style={s.llRow}>
-              {/* Loans Summary */}
-              {(analytics.loanSummary.borrowedCount + analytics.loanSummary.lentCount > 0) && (
-                <View style={[s.llCard, { backgroundColor: cardBg, borderColor: colors.glass.border }]}>
-                  <LinearGradient colors={['#EC4899', '#8B5CF6']} style={s.llAccent} />
-                  <View style={[s.llIconWrap, { backgroundColor: '#EC489918' }]}>
-                    <Ionicons name="cash-outline" size={16} color="#EC4899" />
-                  </View>
-                  <AppText style={{ fontSize: 11, fontWeight: '700', color: colors.text.tertiary, letterSpacing: 0.6 }}>
-                    LOANS
-                  </AppText>
-                  <View style={s.llStatRow}>
-                    <View>
-                      <AppText variant="caption" color={colors.text.tertiary}>Borrowed</AppText>
-                      <AppText style={{ fontSize: 14, fontWeight: '800', color: '#EF4444' }}>
-                        {analytics.formatAmount(analytics.loanSummary.activeBorrowed)}
-                      </AppText>
+            <>
+              <SectionTitle title="LOANS & LEDGER" />
+              <View style={s.llRow}>
+                {/* Loans Summary */}
+                {(analytics.loanSummary.borrowedCount + analytics.loanSummary.lentCount > 0) && (
+                  <View style={[s.llCard, { backgroundColor: cardBg, borderColor: colors.glass.border }]}>
+                    <LinearGradient colors={['#EC4899', '#8B5CF6']} style={s.llAccent} />
+                    <View style={[s.llIconWrap, { backgroundColor: '#EC489918' }]}>
+                      <Ionicons name="cash-outline" size={16} color="#EC4899" />
                     </View>
-                    <View>
-                      <AppText variant="caption" color={colors.text.tertiary}>Lent</AppText>
-                      <AppText style={{ fontSize: 14, fontWeight: '800', color: '#10B981' }}>
-                        {analytics.formatAmount(analytics.loanSummary.activeLent)}
-                      </AppText>
-                    </View>
-                  </View>
-                  {analytics.loanSummary.monthlyEmi > 0 && (
-                    <AppText variant="caption" color={colors.text.tertiary}>
-                      Monthly EMI: <AppText style={{ color: colors.text.primary, fontWeight: '700', fontSize: 11 }}>{analytics.formatAmount(analytics.loanSummary.monthlyEmi)}</AppText>
+                    <AppText style={{ fontSize: 11, fontWeight: '700', color: colors.text.tertiary, letterSpacing: 0.6 }}>
+                      LOANS
                     </AppText>
-                  )}
-                </View>
-              )}
+                    <View style={s.llStatRow}>
+                      <View>
+                        <AppText variant="caption" color={colors.text.tertiary}>Borrowed</AppText>
+                        <AppText style={{ fontSize: 14, fontWeight: '800', color: '#EF4444' }}>
+                          {analytics.formatAmount(analytics.loanSummary.activeBorrowed)}
+                        </AppText>
+                      </View>
+                      <View>
+                        <AppText variant="caption" color={colors.text.tertiary}>Lent</AppText>
+                        <AppText style={{ fontSize: 14, fontWeight: '800', color: '#10B981' }}>
+                          {analytics.formatAmount(analytics.loanSummary.activeLent)}
+                        </AppText>
+                      </View>
+                    </View>
+                    {analytics.loanSummary.monthlyEmi > 0 && (
+                      <AppText variant="caption" color={colors.text.tertiary}>
+                        Monthly EMI: <AppText style={{ color: colors.text.primary, fontWeight: '700', fontSize: 11 }}>{analytics.formatAmount(analytics.loanSummary.monthlyEmi)}</AppText>
+                      </AppText>
+                    )}
+                  </View>
+                )}
 
-              {/* Ledger Summary */}
-              {analytics.ledgerSummary.activeEntries > 0 && (
-                <View style={[s.llCard, { backgroundColor: cardBg, borderColor: colors.glass.border }]}>
-                  <LinearGradient colors={['#3B82F6', '#06B6D4']} style={s.llAccent} />
-                  <View style={[s.llIconWrap, { backgroundColor: '#3B82F618' }]}>
-                    <Ionicons name="people-outline" size={16} color="#3B82F6" />
+                {/* Ledger Summary */}
+                {analytics.ledgerSummary.activeEntries > 0 && (
+                  <View style={[s.llCard, { backgroundColor: cardBg, borderColor: colors.glass.border }]}>
+                    <LinearGradient colors={['#3B82F6', '#06B6D4']} style={s.llAccent} />
+                    <View style={[s.llIconWrap, { backgroundColor: '#3B82F618' }]}>
+                      <Ionicons name="people-outline" size={16} color="#3B82F6" />
+                    </View>
+                    <AppText style={{ fontSize: 11, fontWeight: '700', color: colors.text.tertiary, letterSpacing: 0.6 }}>
+                      LEDGER
+                    </AppText>
+                    <View style={s.llStatRow}>
+                      <View>
+                        <AppText variant="caption" color={colors.text.tertiary}>Owed to me</AppText>
+                        <AppText style={{ fontSize: 14, fontWeight: '800', color: '#10B981' }}>
+                          {analytics.formatAmount(analytics.ledgerSummary.totalOwedToMe)}
+                        </AppText>
+                      </View>
+                      <View>
+                        <AppText variant="caption" color={colors.text.tertiary}>I owe</AppText>
+                        <AppText style={{ fontSize: 14, fontWeight: '800', color: '#EF4444' }}>
+                          {analytics.formatAmount(analytics.ledgerSummary.totalIOwe)}
+                        </AppText>
+                      </View>
+                    </View>
+                    {analytics.ledgerSummary.overdueEntries > 0 && (
+                      <View style={s.llOverdueBadge}>
+                        <Ionicons name="alert-circle" size={10} color="#EF4444" />
+                        <AppText style={{ fontSize: 10, fontWeight: '700', color: '#EF4444' }}>
+                          {analytics.ledgerSummary.overdueEntries} Overdue
+                        </AppText>
+                      </View>
+                    )}
                   </View>
-                  <AppText style={{ fontSize: 11, fontWeight: '700', color: colors.text.tertiary, letterSpacing: 0.6 }}>
-                    LEDGER
-                  </AppText>
-                  <View style={s.llStatRow}>
-                    <View>
-                      <AppText variant="caption" color={colors.text.tertiary}>Owed to me</AppText>
-                      <AppText style={{ fontSize: 14, fontWeight: '800', color: '#10B981' }}>
-                        {analytics.formatAmount(analytics.ledgerSummary.totalOwedToMe)}
-                      </AppText>
-                    </View>
-                    <View>
-                      <AppText variant="caption" color={colors.text.tertiary}>I owe</AppText>
-                      <AppText style={{ fontSize: 14, fontWeight: '800', color: '#EF4444' }}>
-                        {analytics.formatAmount(analytics.ledgerSummary.totalIOwe)}
-                      </AppText>
-                    </View>
-                  </View>
-                  {analytics.ledgerSummary.overdueEntries > 0 && (
-                    <View style={s.llOverdueBadge}>
-                      <Ionicons name="alert-circle" size={10} color="#EF4444" />
-                      <AppText style={{ fontSize: 10, fontWeight: '700', color: '#EF4444' }}>
-                        {analytics.ledgerSummary.overdueEntries} Overdue
-                      </AppText>
-                    </View>
-                  )}
-                </View>
-              )}
-            </View>
-          </>
-        )}
+                )}
+              </View>
+            </>
+          )}
 
         {/* Smart financial insight alerts */}
         {analytics.insights.length > 0 && (

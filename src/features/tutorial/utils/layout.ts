@@ -232,7 +232,57 @@ export const getSpotlightLayoutConfig = (
     }
   }
 
-  // 4. Fallback coordinates for shared components (analytics, profile, etc.)
+  // 4. Analytics screen specific coordinates
+  if (tourId === 'analytics') {
+    switch (area) {
+      case 'header-card':
+        return {
+          spotlightStyle: {
+            top: insetsTop + 120,
+            left: 16,
+            width: screenWidth - 32,
+            height: 160,
+            borderRadius: Radius['2xl'],
+          },
+          cardTopPosition: insetsTop + 290,
+        };
+      case 'growth-metrics':
+        return {
+          spotlightStyle: {
+            top: insetsTop + 160,
+            left: 16,
+            width: screenWidth - 32,
+            height: 100,
+            borderRadius: Radius.xl,
+          },
+          cardTopPosition: insetsTop + 270,
+        };
+      case 'cashflow-chart':
+        return {
+          spotlightStyle: {
+            top: insetsTop + 110,
+            left: 16,
+            width: screenWidth - 32,
+            height: 300,
+            borderRadius: Radius.xl,
+          },
+          cardTopPosition: insetsTop + 420,
+        };
+      case 'expense-breakdown':
+        return {
+          spotlightStyle: {
+            top: insetsTop + 320,
+            left: 16,
+            width: screenWidth - 32,
+            height: 465,
+            borderRadius: Radius.xl,
+          },
+          cardTopPosition: insetsTop + 30,
+        };
+    }
+  }
+
+  // 5. Fallback coordinates for shared components (analytics, profile, etc.)
   switch (area) {
     case 'header-card':
       return {

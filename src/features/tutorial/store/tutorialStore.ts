@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 
 export type TourId = 'home' | 'ledger' | 'budget' | 'analytics' | 'profile';
 
-export type SpotlightArea = 'header-card' | 'quick-add' | 'stats-card' | 'list-row' | 'summary-card' | 'chart-area' | 'manage-btn' | 'analytics-cta' | 'payment-row' | 'segment-tabs';
+export type SpotlightArea = 'header-card' | 'quick-add' | 'stats-card' | 'list-row' | 'summary-card' | 'chart-area' | 'manage-btn' | 'analytics-cta' | 'payment-row' | 'segment-tabs' | 'growth-metrics' | 'cashflow-chart' | 'expense-breakdown';
 
 export interface TourStep {
   title:         string;
@@ -122,10 +122,28 @@ export const TOUR_DEFINITIONS: Record<TourId, { name: string; icon: string; step
     icon: 'stats-chart-outline',
     steps: [
       {
-        title: 'Financial Health Score',
-        description: 'Monitor your savings rate, expense breakdown, and monthly cash flow trends.',
-        targetLabel: 'FINANCIAL HEALTH',
-        spotlightArea: 'chart-area',
+        title: 'Net Worth & Aggregates',
+        description: 'Track your total Net Worth, monthly Income, Expense, and net Saved amounts at a glance.',
+        targetLabel: 'BALANCES SUMMARY',
+        spotlightArea: 'header-card',
+      },
+      {
+        title: 'Growth Indicators',
+        description: 'Review cash flow health ratios, savings rates, and month-over-month progress metrics.',
+        targetLabel: 'GROWTH HEALTH',
+        spotlightArea: 'growth-metrics',
+      },
+      {
+        title: 'Cash Flow Trends',
+        description: 'Compare periodic income vs expenses on a bar chart to verify positive cash flow.',
+        targetLabel: 'CASH FLOW CHART',
+        spotlightArea: 'cashflow-chart',
+      },
+      {
+        title: 'Expense Breakdown',
+        description: 'Analyze category progress bars and mini donut slices to optimize your spending.',
+        targetLabel: 'SPENDING CATEGORIES',
+        spotlightArea: 'expense-breakdown',
       },
     ],
   },
@@ -201,10 +219,10 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
   },
 
   transitionToTour: async (nextTourId: TourId, route: string) => {
-    // 1. Clean up current demo data
+    // 1. Enter launching state immediately for instant visual feedback
+    set({ isLaunching: true, activeTourId: null, currentStepIndex: 0 });
+    // 2. Clean up current demo data
     await undoDemoData();
-    // 2. Clear current tour state
-    set({ activeTourId: null, currentStepIndex: 0 });
     // 3. Navigate directly to the next screen route
     router.push(route as any);
     // 4. Start the next tour (triggers loading overlay internally)
@@ -243,7 +261,9 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
 
   skipTour: async () => {
     const { activeTourId, completedTours } = get();
-    // Restore the user's original data state on skip
+    // 1. Enter launching state immediately for instant visual feedback
+    set({ isLaunching: true });
+    // 2. Restore the user's original data state on skip
     await undoDemoData();
     if (activeTourId) {
       const updated = { ...completedTours, [activeTourId]: true };
@@ -256,8 +276,12 @@ export const useTutorialStore = create<TutorialState>((set, get) => ({
 
       // Auto-redirect back to Profile screen and reopen the guides sheet
       router.push('/(tabs)/profile?openGuides=true');
+      
+      // Wait for navigation animation to finish, then dismiss loader
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      set({ isLaunching: false });
     } else {
-      set({ activeTourId: null, currentStepIndex: 0 });
+      set({ activeTourId: null, currentStepIndex: 0, isLaunching: false });
     }
   },
 

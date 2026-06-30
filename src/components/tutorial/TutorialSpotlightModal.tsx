@@ -81,12 +81,14 @@ export function TutorialSpotlightModal() {
   };
 
   const handleStartNextTour = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     if (nextTourId && nextTourRoute) {
       transitionToTour(nextTourId, nextTourRoute);
     }
   };
 
   const handleExitTour = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     handleSkip(); // Cleans up demo data and navigates back to Profile/Guides list
   };
 
