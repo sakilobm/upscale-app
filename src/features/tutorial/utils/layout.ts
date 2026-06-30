@@ -130,6 +130,17 @@ export const getSpotlightLayoutConfig = (
           },
           cardTopPosition: insetsTop + 300,
         };
+      case 'segment-tabs':
+        return {
+          spotlightStyle: {
+            top: insetsTop + 310,
+            left: 20,
+            width: screenWidth - 40,
+            height: 46,
+            borderRadius: Radius.lg,
+          },
+          cardTopPosition: insetsTop + 370,
+        };
       case 'list-row':
         return {
           spotlightStyle: {
@@ -189,13 +200,13 @@ export const getSpotlightLayoutConfig = (
       case 'payment-row':
         return {
           spotlightStyle: {
-            top: insetsTop + 490,
+            top: insetsTop + 580,
             left: 16,
             width: screenWidth - 32,
             height: 82,
             borderRadius: Radius.xl,
           },
-          cardTopPosition: insetsTop + 190,
+          cardTopPosition: insetsTop + 180,
           badgeStyle: {
             top: -28,
             left: 16,
@@ -204,13 +215,13 @@ export const getSpotlightLayoutConfig = (
       case 'quick-add':
         return {
           spotlightStyle: {
-            bottom: 85,
+            bottom: 98,
             right: 20,
-            width: 125,
+            width: 135,
             height: 52,
             borderRadius: Radius.full,
           },
-          cardTopPosition: insetsTop + 140,
+          cardTopPosition: insetsTop + 430,
           badgeStyle: {
             top: -28,
             left: 12,

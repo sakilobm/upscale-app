@@ -29,6 +29,10 @@ interface TutorialLoaderProps {
 export const TutorialLoader = React.memo(({ colors, isDark }: TutorialLoaderProps) => {
   const scale = useSharedValue(1);
   const glowOpacity = useSharedValue(0.3);
+  const [status, setStatus] = React.useState({
+    title: 'Preparing Walkthrough...',
+    subtitle: 'Initializing sandbox container...',
+  });
 
   useEffect(() => {
     // Pulse animation for the loader elements
@@ -50,9 +54,34 @@ export const TutorialLoader = React.memo(({ colors, isDark }: TutorialLoaderProp
       true
     );
 
+    // Status cycle timeouts
+    const t1 = setTimeout(() => {
+      setStatus({
+        title: 'Adding Mock Data...',
+        subtitle: 'Populating playground accounts...',
+      });
+    }, 280);
+
+    const t2 = setTimeout(() => {
+      setStatus({
+        title: 'Loading Sandbox...',
+        subtitle: 'Configuring interactive guide elements...',
+      });
+    }, 550);
+
+    const t3 = setTimeout(() => {
+      setStatus({
+        title: 'Almost Ready...',
+        subtitle: 'Activating spotlight overlay...',
+      });
+    }, 850);
+
     return () => {
       cancelAnimation(scale);
       cancelAnimation(glowOpacity);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
     };
   }, []);
 
@@ -106,14 +135,14 @@ export const TutorialLoader = React.memo(({ colors, isDark }: TutorialLoaderProp
               color={colors.text.primary} 
               style={{ fontWeight: '800', textAlign: 'center' }}
             >
-              Preparing Walkthrough...
+              {status.title}
             </AppText>
             <AppText 
               variant="caption" 
               color={colors.text.tertiary} 
               style={{ textAlign: 'center', fontSize: 12, lineHeight: 18 }}
             >
-              Populating sandbox environment data
+              {status.subtitle}
             </AppText>
           </View>
         </View>

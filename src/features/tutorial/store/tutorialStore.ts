@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 
 export type TourId = 'home' | 'ledger' | 'budget' | 'analytics' | 'profile';
 
-export type SpotlightArea = 'header-card' | 'quick-add' | 'stats-card' | 'list-row' | 'summary-card' | 'chart-area' | 'manage-btn' | 'analytics-cta' | 'payment-row';
+export type SpotlightArea = 'header-card' | 'quick-add' | 'stats-card' | 'list-row' | 'summary-card' | 'chart-area' | 'manage-btn' | 'analytics-cta' | 'payment-row' | 'segment-tabs';
 
 export interface TourStep {
   title:         string;
@@ -63,6 +63,12 @@ export const TOUR_DEFINITIONS: Record<TourId, { name: string; icon: string; step
         description: 'Track money you lent to friends or borrowed from family effortlessly.',
         targetLabel: 'LOAN SUMMARY',
         spotlightArea: 'summary-card',
+      },
+      {
+        title: 'Lent & Borrowed Tabs',
+        description: 'Toggle between Owed to Me, I Owe, and Installment Loans to organize your ledger.',
+        targetLabel: 'LEDGER TABS',
+        spotlightArea: 'segment-tabs',
       },
       {
         title: 'Settle & Manage',
