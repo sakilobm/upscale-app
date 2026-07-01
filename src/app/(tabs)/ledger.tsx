@@ -11,7 +11,8 @@
  *   src/features/ledger/components/LedgerEntrySheet.tsx
  */
 
-import { View, ScrollView, StyleSheet, Pressable, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, ScrollView, StyleSheet, Pressable, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { AppText } from '@components/AppText';
@@ -47,6 +48,12 @@ export default function LedgerScreen() {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
 
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    const handle = requestIdleCallback(() => setIsReady(true));
+    return () => cancelIdleCallback(handle);
+  }, []);
+
   const {
     activeTab, setActiveTab,
     sheetVisible, sheetMode, sheetEntry,
@@ -77,130 +84,136 @@ export default function LedgerScreen() {
           noPadding
         />
 
-        <SettleUpHero totalOwedToMe={totalOwedToMe} totalIOwe={totalIOwe} />
-
-        <View style={s.segmentWrapper}>
-          <SegmentedControl
-            segments={SEGMENTS as { key: string; label: string }[]}
-            activeKey={activeTab}
-            onChange={(k) => setActiveTab(k as LedgerTab)}
-          />
-        </View>
-
-        {/* Swipe hint */}
-        {activeTab !== 'loans' && activeEntries.length > 0 && (
-          <View style={[s.swipeHint, {
-            backgroundColor: colors.glass.background,
-            borderColor: colors.glass.border,
-          }]}>
-            <Ionicons name="arrow-back-outline" size={13} color={colors.text.tertiary} />
-            <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '500', fontSize: 11 }}>
-              Swipe left to settle or delete · Tap for details
-            </AppText>
-          </View>
-        )}
-
-        {/* Main content */}
-        {activeTab === 'loans' ? (
-          <View style={s.loansSection}>
-            {loans.length === 0 ? (
-              <LedgerEmptyState variant="loans" />
-            ) : (
-              <>
-                <DebtHorizonStack
-                  loans={loans}
-                  onRecordPayment={recordPayment}
-                  onPressCard={openLoanInfoSheet}
-                />
-                
-                <View style={s.loansVerticalSection}>
-                  <AppText variant="labelSM" color={colors.text.tertiary} style={s.sectionLabel}>
-                    ALL INSTALLMENTS
-                  </AppText>
-                  {loans.map((loan) => {
-                    const progress = loanProgress(loan);
-                    const days = daysUntilPayment(loan);
-                    const remaining = loan.principalAmount - loan.amountPaid;
-                    const isLate = days < 0;
-                    const statusColor = isLate
-                      ? colors.status.expense
-                      : days <= 7
-                      ? colors.status.warning
-                      : colors.status.income;
-                    return (
-                      <Pressable
-                        key={loan.id}
-                        onPress={() => openLoanInfoSheet(loan)}
-                        style={({ pressed }) => [
-                          s.loanItemCard,
-                          {
-                            backgroundColor: colors.background.secondary,
-                            borderColor: colors.glass.border,
-                            opacity: pressed ? 0.8 : 1,
-                          },
-                        ]}
-                      >
-                        <View style={s.loanItemHeader}>
-                          <View style={[s.loanDot, { backgroundColor: loan.color }]} />
-                          <View style={{ flex: 1 }}>
-                            <AppText variant="bodySM" color={colors.text.primary} style={{ fontWeight: '700' }}>
-                              {loan.name}
-                            </AppText>
-                            <AppText variant="caption" color={colors.text.tertiary}>
-                              with {loan.counterparty} · {loan.type === 'BORROWED' ? 'Borrowed' : 'Lent'}
-                            </AppText>
-                          </View>
-                          <View style={{ alignItems: 'flex-end' }}>
-                            <AppText variant="bodySM" color={colors.text.primary} style={{ fontWeight: '700' }}>
-                              {symbol}{loan.emiAmount.toLocaleString()}
-                            </AppText>
-                            <AppText variant="caption" color={colors.text.tertiary}>
-                              EMI Amount
-                            </AppText>
-                          </View>
-                        </View>
-
-                        <View style={s.loanItemProgress}>
-                          <View style={[s.loanItemTrack, { backgroundColor: colors.glass.background }]}>
-                            <View style={[s.loanItemFill, { width: `${progress * 100}%` as any, backgroundColor: loan.color }]} />
-                          </View>
-                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                            <AppText variant="caption" color={colors.text.tertiary} style={s.loanItemProgressLabel}>
-                              {loan.completedPayments} of {loan.totalPayments} paid
-                            </AppText>
-                            <AppText variant="caption" color={statusColor} style={{ fontWeight: '600' }}>
-                              {isLate ? `${Math.abs(days)}d late` : days === 0 ? 'Due today' : `Due in ${days}d`}
-                            </AppText>
-                          </View>
-                        </View>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </>
-            )}
-          </View>
-        ) : sections.length === 0 ? (
-          <LedgerEmptyState variant={activeTab} />
+        {!isReady ? (
+          <ActivityIndicator color={colors.brand.primary} style={{ marginTop: 60 }} />
         ) : (
-          <View style={s.listSection}>
-            {sections.map((section) => (
-              <View key={section.title} style={s.sectionBlock}>
-                <AppText variant="labelSM" color={colors.text.tertiary} style={s.sectionLabel}>
-                  {section.title.toUpperCase()}
+          <>
+            <SettleUpHero totalOwedToMe={totalOwedToMe} totalIOwe={totalIOwe} />
+
+            <View style={s.segmentWrapper}>
+              <SegmentedControl
+                segments={SEGMENTS as { key: string; label: string }[]}
+                activeKey={activeTab}
+                onChange={(k) => setActiveTab(k as LedgerTab)}
+              />
+            </View>
+
+            {/* Swipe hint */}
+            {activeTab !== 'loans' && activeEntries.length > 0 && (
+              <View style={[s.swipeHint, {
+                backgroundColor: colors.glass.background,
+                borderColor: colors.glass.border,
+              }]}>
+                <Ionicons name="arrow-back-outline" size={13} color={colors.text.tertiary} />
+                <AppText variant="caption" color={colors.text.tertiary} style={{ fontWeight: '500', fontSize: 11 }}>
+                  Swipe left to settle or delete · Tap for details
                 </AppText>
-                {section.data.map((entry) => (
-                  <PersonLedgerCard
-                    key={entry.id}
-                    entry={entry}
-                    onPress={openInfoSheet}
-                    onSettle={deleteEntry}
-                    onDelete={deleteEntry}
-                  />
+              </View>
+            )}
+
+            {/* Main content */}
+            {activeTab === 'loans' ? (
+              <View style={s.loansSection}>
+                {loans.length === 0 ? (
+                  <LedgerEmptyState variant="loans" />
+                ) : (
+                  <>
+                    <DebtHorizonStack
+                      loans={loans}
+                      onRecordPayment={recordPayment}
+                      onPressCard={openLoanInfoSheet}
+                    />
+                    
+                    <View style={s.loansVerticalSection}>
+                      <AppText variant="labelSM" color={colors.text.tertiary} style={s.sectionLabel}>
+                        ALL INSTALLMENTS
+                      </AppText>
+                      {loans.map((loan) => {
+                        const progress = loanProgress(loan);
+                        const days = daysUntilPayment(loan);
+                        const remaining = loan.principalAmount - loan.amountPaid;
+                        const isLate = days < 0;
+                        const statusColor = isLate
+                          ? colors.status.expense
+                          : days <= 7
+                          ? colors.status.warning
+                          : colors.status.income;
+                        return (
+                          <Pressable
+                            key={loan.id}
+                            onPress={() => openLoanInfoSheet(loan)}
+                            style={({ pressed }) => [
+                              s.loanItemCard,
+                              {
+                                backgroundColor: colors.background.secondary,
+                                borderColor: colors.glass.border,
+                                opacity: pressed ? 0.8 : 1,
+                              },
+                            ]}
+                          >
+                            <View style={s.loanItemHeader}>
+                              <View style={[s.loanDot, { backgroundColor: loan.color }]} />
+                              <View style={{ flex: 1 }}>
+                                <AppText variant="bodySM" color={colors.text.primary} style={{ fontWeight: '700' }}>
+                                  {loan.name}
+                                </AppText>
+                                <AppText variant="caption" color={colors.text.tertiary}>
+                                  with {loan.counterparty} · {loan.type === 'BORROWED' ? 'Borrowed' : 'Lent'}
+                                </AppText>
+                              </View>
+                              <View style={{ alignItems: 'flex-end' }}>
+                                <AppText variant="bodySM" color={colors.text.primary} style={{ fontWeight: '700' }}>
+                                  {symbol}{loan.emiAmount.toLocaleString()}
+                                </AppText>
+                                <AppText variant="caption" color={colors.text.tertiary}>
+                                  EMI Amount
+                                </AppText>
+                              </View>
+                            </View>
+
+                            <View style={s.loanItemProgress}>
+                              <View style={[s.loanItemTrack, { backgroundColor: colors.glass.background }]}>
+                                <View style={[s.loanItemFill, { width: `${progress * 100}%` as any, backgroundColor: loan.color }]} />
+                              </View>
+                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+                                <AppText variant="caption" color={colors.text.tertiary} style={s.loanItemProgressLabel}>
+                                  {loan.completedPayments} of {loan.totalPayments} paid
+                                </AppText>
+                                <AppText variant="caption" color={statusColor} style={{ fontWeight: '600' }}>
+                                  {isLate ? `${Math.abs(days)}d late` : days === 0 ? 'Due today' : `Due in ${days}d`}
+                                </AppText>
+                              </View>
+                            </View>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </>
+                )}
+              </View>
+            ) : sections.length === 0 ? (
+              <LedgerEmptyState variant={activeTab} />
+            ) : (
+              <View style={s.listSection}>
+                {sections.map((section) => (
+                  <View key={section.title} style={s.sectionBlock}>
+                    <AppText variant="labelSM" color={colors.text.tertiary} style={s.sectionLabel}>
+                      {section.title.toUpperCase()}
+                    </AppText>
+                    {section.data.map((entry) => (
+                      <PersonLedgerCard
+                        key={entry.id}
+                        entry={entry}
+                        onPress={openInfoSheet}
+                        onSettle={deleteEntry}
+                        onDelete={deleteEntry}
+                      />
+                    ))}
+                  </View>
                 ))}
               </View>
-            ))}
-          </View>
+            )}
+          </>
         )}
       </ScrollView>
 

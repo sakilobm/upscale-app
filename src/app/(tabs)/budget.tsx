@@ -57,6 +57,12 @@ export default function BudgetScreen() {
   const activeTourId = useTutorialStore((s) => s.activeTourId);
   const currentStepIndex = useTutorialStore((s) => s.currentStepIndex);
 
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    const handle = requestIdleCallback(() => setIsReady(true));
+    return () => cancelIdleCallback(handle);
+  }, []);
+
   useEffect(() => {
     if (activeTourId === 'budget') {
       if (currentStepIndex === 2 || currentStepIndex === 3) {
@@ -166,133 +172,139 @@ export default function BudgetScreen() {
           noPadding
         />
 
-        {/* 1. Overview Card (Only when budgets exist) */}
-        {summary && (
-          <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120)}>
-            <GlassCard
-              padding={Spacing['5']} borderRadius={Radius.xl}
-              borderGlow={isOver || isWarning}
-              style={[s.overviewCard, { borderColor: dynamicBorderColor }]}
-            >
-              <View style={s.cardHeader}>
-                <View style={s.cardHeaderLeft}>
-                  <AnimatedIcon iconName={iconName} iconColor={iconColor} badgeBg={badgeBg} isOver={isOver} />
-                  <View>
-                    <AppText variant="labelMD" color={colors.text.secondary}>Monthly Overview</AppText>
-                    <AppText variant="caption" color={colors.text.tertiary}>Tracking period: Current Month</AppText>
-                  </View>
-                </View>
-                <AppText
-                  variant="headingMD"
-                  color={isOver ? colors.status.expense : isWarning ? colors.status.warning : colors.status.income}
-                >
-                  {summary.percentUsed.toFixed(0)}%
-                </AppText>
-              </View>
-
-              <View style={s.metricsRow}>
-                <View>
-                  <AppText variant="numericLG" color={colors.text.primary}>{symbol}{summary.totalSpent.toFixed(0)}</AppText>
-                  <AppText variant="caption" color={colors.text.secondary}>spent of {symbol}{summary.totalLimit.toFixed(0)}</AppText>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <AppText variant="numeric" color={isOver ? colors.status.expense : colors.status.income}>
-                    {isOver ? '-' : ''}{symbol}{Math.abs(remaining).toFixed(0)}
-                  </AppText>
-                  <AppText variant="caption" color={colors.text.secondary}>{isOver ? 'over budget' : 'remaining'}</AppText>
-                </View>
-              </View>
-
-              <View style={[s.progressContainer, { backgroundColor: colors.glass.backgroundMid }]}>
-                <Animated.View style={[s.progressBarFill, animatedProgressStyle]}>
-                  <LinearGradient colors={overviewGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
-                </Animated.View>
-              </View>
-
-              {summary.overBudgetCount > 0 && (
-                <View style={s.cardFooter}>
-                  <Ionicons name="warning" size={14} color={colors.status.expense} />
-                  <AppText variant="caption" style={{ color: colors.status.expense, fontWeight: '600' }}>
-                    {summary.overBudgetCount} category budget{summary.overBudgetCount > 1 ? 's' : ''} exceeded
-                  </AppText>
-                </View>
-              )}
-            </GlassCard>
-          </Animated.View>
-        )}
-
-        {/* 2. Main content states */}
-        {isLoading && !spendingBreakdown.length && !payments.length ? (
-          <ActivityIndicator color={colors.brand.primary} style={s.loader} />
-        ) : isScreenEmpty ? (
-          <BudgetEmptyState onSetBudget={() => handleSetLimit('food')} />
+        {!isReady ? (
+          <ActivityIndicator color={colors.brand.primary} style={{ marginTop: 60 }} />
         ) : (
-          <View style={{ gap: Spacing['4'] }}>
-            {/* 1. Category Spending Breakdown and Budget Limits List */}
-            {filteredBreakdown.length > 0 && (
-              <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120).delay(100)}>
-                <BudgetCategoryList
-                  breakdown={filteredBreakdown}
-                  viewMode={viewMode}
-                  onToggleViewMode={() => setViewMode(viewMode === 'grid' ? 'capsules' : 'grid')}
-                  onDeleteBudget={deleteBudget}
-                  onSetBudgetLimit={handleSetLimit}
-                />
+          <>
+            {/* 1. Overview Card (Only when budgets exist) */}
+            {summary && (
+              <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120)}>
+                <GlassCard
+                  padding={Spacing['5']} borderRadius={Radius.xl}
+                  borderGlow={isOver || isWarning}
+                  style={[s.overviewCard, { borderColor: dynamicBorderColor }]}
+                >
+                  <View style={s.cardHeader}>
+                    <View style={s.cardHeaderLeft}>
+                      <AnimatedIcon iconName={iconName} iconColor={iconColor} badgeBg={badgeBg} isOver={isOver} />
+                      <View>
+                        <AppText variant="labelMD" color={colors.text.secondary}>Monthly Overview</AppText>
+                        <AppText variant="caption" color={colors.text.tertiary}>Tracking period: Current Month</AppText>
+                      </View>
+                    </View>
+                    <AppText
+                      variant="headingMD"
+                      color={isOver ? colors.status.expense : isWarning ? colors.status.warning : colors.status.income}
+                    >
+                      {summary.percentUsed.toFixed(0)}%
+                    </AppText>
+                  </View>
+
+                  <View style={s.metricsRow}>
+                    <View>
+                      <AppText variant="numericLG" color={colors.text.primary}>{symbol}{summary.totalSpent.toFixed(0)}</AppText>
+                      <AppText variant="caption" color={colors.text.secondary}>spent of {symbol}{summary.totalLimit.toFixed(0)}</AppText>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <AppText variant="numeric" color={isOver ? colors.status.expense : colors.status.income}>
+                        {isOver ? '-' : ''}{symbol}{Math.abs(remaining).toFixed(0)}
+                      </AppText>
+                      <AppText variant="caption" color={colors.text.secondary}>{isOver ? 'over budget' : 'remaining'}</AppText>
+                    </View>
+                  </View>
+
+                  <View style={[s.progressContainer, { backgroundColor: colors.glass.backgroundMid }]}>
+                    <Animated.View style={[s.progressBarFill, animatedProgressStyle]}>
+                      <LinearGradient colors={overviewGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+                    </Animated.View>
+                  </View>
+
+                  {summary.overBudgetCount > 0 && (
+                    <View style={s.cardFooter}>
+                      <Ionicons name="warning" size={14} color={colors.status.expense} />
+                      <AppText variant="caption" style={{ color: colors.status.expense, fontWeight: '600' }}>
+                        {summary.overBudgetCount} category budget{summary.overBudgetCount > 1 ? 's' : ''} exceeded
+                      </AppText>
+                    </View>
+                  )}
+                </GlassCard>
               </Animated.View>
             )}
 
-            {/* 2. Category Filter Scroll View */}
-            <View style={{ marginTop: Spacing['1'] }}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={s.categoryFilterBar}
-              >
-                {FILTER_CATEGORIES.map((cat) => {
-                  const active = selectedCategory === cat.id;
-                  const activeBg = cat.color + '18';
-                  const activeBorder = cat.color + '4D';
-                  return (
-                    <Pressable
-                      key={cat.id}
-                      onPress={() => setSelectedCategory(cat.id)}
-                      style={[
-                        s.categoryTab,
-                        {
-                          backgroundColor: active ? activeBg : colors.glass.background,
-                          borderColor: active ? activeBorder : colors.glass.border,
-                        },
-                      ]}
-                    >
-                      <Ionicons
-                        name={cat.icon as any}
-                        size={14}
-                        color={active ? cat.color : colors.text.secondary}
-                      />
-                      <AppText
-                        style={[
-                          s.categoryTabText,
-                          { color: active ? cat.color : colors.text.secondary }
-                        ]}
-                      >
-                        {cat.label}
-                      </AppText>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
+            {/* 2. Main content states */}
+            {isLoading && !spendingBreakdown.length && !payments.length ? (
+              <ActivityIndicator color={colors.brand.primary} style={s.loader} />
+            ) : isScreenEmpty ? (
+              <BudgetEmptyState onSetBudget={() => handleSetLimit('food')} />
+            ) : (
+              <View style={{ gap: Spacing['4'] }}>
+                {/* 1. Category Spending Breakdown and Budget Limits List */}
+                {filteredBreakdown.length > 0 && (
+                  <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120).delay(100)}>
+                    <BudgetCategoryList
+                      breakdown={filteredBreakdown}
+                      viewMode={viewMode}
+                      onToggleViewMode={() => setViewMode(viewMode === 'grid' ? 'capsules' : 'grid')}
+                      onDeleteBudget={deleteBudget}
+                      onSetBudgetLimit={handleSetLimit}
+                    />
+                  </Animated.View>
+                )}
 
-            {/* 3. Planned Payments Timeline */}
-            <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120).delay(200)}>
-              <PlannedPaymentsTimeline
-                payments={filteredPayments}
-                onSettle={settlePayment}
-                onDelete={deletePayment}
-                onPress={setActivePartialPayment}
-              />
-            </Animated.View>
-          </View>
+                {/* 2. Category Filter Scroll View */}
+                <View style={{ marginTop: Spacing['1'] }}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={s.categoryFilterBar}
+                  >
+                    {FILTER_CATEGORIES.map((cat) => {
+                      const active = selectedCategory === cat.id;
+                      const activeBg = cat.color + '18';
+                      const activeBorder = cat.color + '4D';
+                      return (
+                        <Pressable
+                          key={cat.id}
+                          onPress={() => setSelectedCategory(cat.id)}
+                          style={[
+                            s.categoryTab,
+                            {
+                              backgroundColor: active ? activeBg : colors.glass.background,
+                              borderColor: active ? activeBorder : colors.glass.border,
+                            },
+                          ]}
+                        >
+                          <Ionicons
+                            name={cat.icon as any}
+                            size={14}
+                            color={active ? cat.color : colors.text.secondary}
+                          />
+                          <AppText
+                            style={[
+                              s.categoryTabText,
+                              { color: active ? cat.color : colors.text.secondary }
+                            ]}
+                          >
+                            {cat.label}
+                          </AppText>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+
+                {/* 3. Planned Payments Timeline */}
+                <Animated.View entering={FadeInDown.springify().damping(16).stiffness(120).delay(200)}>
+                  <PlannedPaymentsTimeline
+                    payments={filteredPayments}
+                    onSettle={settlePayment}
+                    onDelete={deletePayment}
+                    onPress={setActivePartialPayment}
+                  />
+                </Animated.View>
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
 

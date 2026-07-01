@@ -18,9 +18,12 @@ function useEntrance(delay: number) {
   const opacity = useSharedValue(0);
   const ty      = useSharedValue(20);
   useEffect(() => {
-    opacity.value = withDelay(delay, withTiming(1, { duration: 380 }));
-    ty.value      = withDelay(delay, withSpring(0, { damping: 24, stiffness: 180 }));
-  }, []);
+    const handle = requestIdleCallback(() => {
+      opacity.value = withDelay(delay, withTiming(1, { duration: 380 }));
+      ty.value      = withDelay(delay, withSpring(0, { damping: 24, stiffness: 180 }));
+    });
+    return () => cancelIdleCallback(handle);
+  }, [delay]);
   return useAnimatedStyle(() => ({
     opacity:   opacity.value,
     transform: [{ translateY: ty.value }],

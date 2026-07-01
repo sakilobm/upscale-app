@@ -25,11 +25,18 @@ import { LoadingScreen } from '@components/LoadingScreen';
 import { useTheme } from '@hooks/useTheme';
 import { useFormatCurrency } from '@hooks/useFormatCurrency';
 import { Spacing, Layout, Radius, Typography } from '@constants/index';
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 
 export default function TransactionsScreen() {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
+  const [isReady, setIsReady] = useState(false);
+  
+  useEffect(() => {
+    const handle = requestIdleCallback(() => setIsReady(true));
+    return () => cancelIdleCallback(handle);
+  }, []);
+
   const {
     groups, isLoading, isEmpty, refresh, removeTransaction, formatDateHeader,
     filters, setFilters, selectedAccount, summary, monthLabel, handleTransactionPress,
@@ -179,7 +186,7 @@ export default function TransactionsScreen() {
     monthLabel,
   ]);
 
-  if (isLoading && !groups) return <LoadingScreen message="Loading transactions..." />;
+  if (!isReady || (isLoading && !groups)) return <LoadingScreen message="Loading transactions..." />;
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: colors.background.primary }]} edges={['top']}>
