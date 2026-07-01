@@ -7,6 +7,7 @@ import { useCachedFonts } from '@hooks/useCachedFonts';
 import { useAuthStore } from '@store/authStore';
 import { useThemeStore } from '@store/themeStore';
 import { useNotificationStore } from '@store/notificationStore';
+import { useSplashStore } from '@store/splashStore';
 import { SplashOverlay } from '@components/SplashOverlay';
 import { ToastContainer } from '@components/Toast';
 import { TutorialSpotlightModal } from '@components/tutorial/TutorialSpotlightModal';
@@ -29,7 +30,8 @@ export default function RootLayout() {
   const setPermission   = useNotificationStore((s) => s.setPermission);
   const loadCompletedTours = useTutorialStore((s) => s.loadCompletedTours);
 
-  const [showSplash, setShowSplash] = useState(true);
+  const showSplash = useSplashStore((s) => s.showSplash);
+  const dismissSplash = useSplashStore((s) => s.dismissSplash);
 
   useEffect(() => {
     loadCompletedTours();
@@ -86,7 +88,7 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   const handleSplashDismiss = () => {
-    setShowSplash(false);
+    dismissSplash();
   };
 
   return (
