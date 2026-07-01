@@ -27,12 +27,19 @@ import { FeatureSlide } from '@components/onboarding/FeatureSlide';
 import { SetupSlide } from '@components/onboarding/SetupSlide';
 import { AppText } from '@components/AppText';
 import { useTheme } from '@hooks/useTheme';
+import { useSplashStore } from '@store/splashStore';
 
 const { width: SW } = Dimensions.get('window');
 const SLIDE_W       = SW;
 
 export default function OnboardingScreen() {
   const { colors } = useTheme();
+  const setAppReady = useSplashStore((s) => s.setAppReady);
+
+  useEffect(() => {
+    setAppReady(true);
+  }, [setAppReady]);
+
   const {
     step, isSetupStep, name, currency, setName, setCurrency,
     avatarId, setAvatarId, handlers,

@@ -32,6 +32,8 @@ export default function RootLayout() {
 
   const showSplash = useSplashStore((s) => s.showSplash);
   const dismissSplash = useSplashStore((s) => s.dismissSplash);
+  const appReady = useSplashStore((s) => s.appReady);
+  const [animationFinished, setAnimationFinished] = useState(false);
 
   useEffect(() => {
     loadCompletedTours();
@@ -74,9 +76,17 @@ export default function RootLayout() {
     return () => sub?.remove();
   }, []);
 
+  // 1. Hide native splash screen immediately on mount so the custom animated splash shows instantly
   useEffect(() => {
-    if (fontsLoaded || fontError) SplashScreen.hideAsync();
-  }, [fontsLoaded, fontError]);
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
+
+  // Dismiss splash only when BOTH the custom splash animation finishes AND fonts are loaded AND target screen is ready!
+  useEffect(() => {
+    if (animationFinished && (fontsLoaded || fontError) && appReady) {
+      dismissSplash();
+    }
+  }, [animationFinished, fontsLoaded, fontError, appReady]);
 
   // Redirect to onboarding after sign-out (when the app is already running)
   useEffect(() => {
@@ -85,15 +95,14 @@ export default function RootLayout() {
     }
   }, [isAuthenticated, isLoading, showSplash]);
 
-  if (!fontsLoaded && !fontError) return null;
-
   const handleSplashDismiss = () => {
-    dismissSplash();
+    setAnimationFinished(true);
   };
 
   return (
     <GestureHandlerRootView style={[styles.root, { backgroundColor: colors.background.primary }]}>
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
+      
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" options={{ animation: 'fade', gestureEnabled: false }} />
@@ -105,8 +114,13 @@ export default function RootLayout() {
       </Stack>
       <ToastContainer />
       <TutorialSpotlightModal />
-      {showSplash && (
-        <SplashOverlay isDark={themeMode === 'dark'} onDismiss={handleSplashDismiss} />
+
+      {(!appReady || showSplash) && (
+        <SplashOverlay
+          isDark={themeMode === 'dark'}
+          readyToDismiss={!!(fontsLoaded && appReady)}
+          onDismiss={handleSplashDismiss}
+        />
       )}
     </GestureHandlerRootView>
   );

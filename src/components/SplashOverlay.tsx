@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -189,7 +189,7 @@ const LIGHT_PARTICLES = buildParticles(
 
 // ─── Animation hook ───────────────────────────────────────────────────────────
 
-function useSplashAnimation(onDismissRef: React.RefObject<() => void>) {
+function useSplashAnimation(readyToDismiss: boolean, onDismissRef: React.RefObject<() => void>) {
   const ringS  = useSharedValue(0.55);
   const ringOp = useSharedValue(0);
   const orbSc  = useSharedValue(0);
@@ -199,6 +199,8 @@ function useSplashAnimation(onDismissRef: React.RefObject<() => void>) {
   const barW   = useSharedValue(0);
   const exitOp = useSharedValue(1);
   const exitSc = useSharedValue(1);
+
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
   useEffect(() => {
     ringOp.value = withDelay(120, withTiming(1, { duration: 350 }));
@@ -212,22 +214,25 @@ function useSplashAnimation(onDismissRef: React.RefObject<() => void>) {
 
     barW.value = withDelay(320, withTiming(1, { duration: 1550, easing: Easing.inOut(Easing.quad) }));
 
-    // Plain timers — avoids the worklet/JS-thread boundary crash
-    const exitTimer = setTimeout(() => {
-      exitOp.value = withTiming(0,    { duration: EXIT_MS, easing: Easing.in(Easing.cubic) });
-      exitSc.value = withTiming(1.08, { duration: EXIT_MS });
+    const timer = setTimeout(() => {
+      setMinTimeElapsed(true);
     }, ANIM_TOTAL_MS);
 
-    const dismissTimer = setTimeout(
-      () => onDismissRef.current?.(),
-      ANIM_TOTAL_MS + EXIT_MS,
-    );
+    return () => clearTimeout(timer);
+  }, []);
 
-    return () => {
-      clearTimeout(exitTimer);
-      clearTimeout(dismissTimer);
-    };
-  }, []); // intentionally empty — runs once on mount
+  useEffect(() => {
+    if (minTimeElapsed && readyToDismiss) {
+      exitOp.value = withTiming(0,    { duration: EXIT_MS, easing: Easing.in(Easing.cubic) });
+      exitSc.value = withTiming(1.08, { duration: EXIT_MS });
+
+      const dismissTimer = setTimeout(() => {
+        onDismissRef.current?.();
+      }, EXIT_MS);
+
+      return () => clearTimeout(dismissTimer);
+    }
+  }, [minTimeElapsed, readyToDismiss]);
 
   const ringStyle = useAnimatedStyle(() => ({
     transform: [{ scale: ringS.value }],
@@ -389,17 +394,18 @@ const BAR_MID = DarkTheme.brand.secondary; // '#A78BFA'
 
 export interface SplashOverlayProps {
   isDark?:   boolean;
+  readyToDismiss?: boolean;
   onDismiss: () => void;
 }
 
-export function SplashOverlay({ isDark = false, onDismiss }: SplashOverlayProps) {
+export function SplashOverlay({ isDark = false, readyToDismiss = true, onDismiss }: SplashOverlayProps) {
   const T = isDark ? DARK_PALETTE : LIGHT_PALETTE;
 
   const onDismissRef = useRef(onDismiss);
   onDismissRef.current = onDismiss;
 
   const { ringStyle, orbStyle, subStyle, barStyle, rootStyle } =
-    useSplashAnimation(onDismissRef);
+    useSplashAnimation(readyToDismiss, onDismissRef);
 
   const letterNodes   = isDark ? DARK_LETTER_NODES   : LIGHT_LETTER_NODES;
   const particleNodes = isDark ? DARK_PARTICLE_NODES : LIGHT_PARTICLE_NODES;

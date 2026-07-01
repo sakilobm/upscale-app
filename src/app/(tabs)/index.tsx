@@ -8,10 +8,12 @@
  *   src/components/home/ (QuickAddSheet, HomeSetupPrompt, SectionTitle)
  */
 
+import { useEffect } from 'react';
 import {
   View, StyleSheet, ScrollView, RefreshControl,
   Pressable, Platform,
 } from 'react-native';
+import { useSplashStore } from '@store/splashStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -47,10 +49,10 @@ function DashboardLedgerRow({ entry }: { entry: LedgerEntry }) {
   const { symbol } = useFormatCurrency();
   const remaining = entry.totalAmount - entry.amountReturned;
   const progressPct = entry.totalAmount > 0 ? entry.amountReturned / entry.totalAmount : 0;
-  
+
   const isOwed = entry.direction === 'OWED_TO_ME';
-  const labelText = entry.status === 'SETTLED' 
-    ? 'Settled' 
+  const labelText = entry.status === 'SETTLED'
+    ? 'Settled'
     : isOwed ? 'Lent (They owe)' : 'Borrowed (You owe)';
   const labelColor = entry.status === 'SETTLED'
     ? colors.text.tertiary
@@ -92,10 +94,10 @@ function DashboardLedgerRow({ entry }: { entry: LedgerEntry }) {
 
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Ionicons 
-              name={entry.status === 'SETTLED' ? 'checkmark-circle' : isOwed ? 'arrow-up-circle' : 'arrow-down-circle'} 
-              size={11} 
-              color={labelColor} 
+            <Ionicons
+              name={entry.status === 'SETTLED' ? 'checkmark-circle' : isOwed ? 'arrow-up-circle' : 'arrow-down-circle'}
+              size={11}
+              color={labelColor}
             />
             <AppText variant="caption" style={{ color: labelColor, fontSize: 10, fontWeight: '600' }}>
               {labelText}
@@ -134,15 +136,15 @@ const BUDGET_CATEGORY_ICON: Record<string, IoniconName> = {
 function DashboardBudgetRow({ payment }: { payment: PlannedPayment }) {
   const { colors, isDark } = useTheme();
   const { symbol } = useFormatCurrency();
-  
+
   const paid = payment.amountPaid ?? 0;
   const progressPct = payment.amount > 0 ? paid / payment.amount : 0;
   const isPaid = payment.status === 'SETTLED';
 
-  const dotColor = isPaid 
-    ? colors.status.income 
-    : payment.status === 'OVERDUE' 
-      ? colors.status.expense 
+  const dotColor = isPaid
+    ? colors.status.income
+    : payment.status === 'OVERDUE'
+      ? colors.status.expense
       : '#10B981';
 
   return (
@@ -188,10 +190,10 @@ function DashboardBudgetRow({ payment }: { payment: PlannedPayment }) {
               </>
             ) : (
               <>
-                <Ionicons 
-                  name={payment.status === 'OVERDUE' ? 'alert-circle' : 'time-outline'} 
-                  size={11} 
-                  color={dotColor} 
+                <Ionicons
+                  name={payment.status === 'OVERDUE' ? 'alert-circle' : 'time-outline'}
+                  size={11}
+                  color={dotColor}
                 />
                 <AppText variant="caption" style={{ color: dotColor, fontSize: 10, fontWeight: '600' }}>
                   {payment.status === 'OVERDUE' ? 'Overdue' : 'Upcoming'}
@@ -219,6 +221,12 @@ function DashboardBudgetRow({ payment }: { payment: PlannedPayment }) {
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
+  const setAppReady = useSplashStore((s) => s.setAppReady);
+  
+  useEffect(() => {
+    setAppReady(true);
+  }, [setAppReady]);
+
   const { dashboard, user, addSheet, transferSheet, quickActions, handleTransactionPress, editingTransaction, setEditingTransaction } = useHomeScreen();
   const ledgerEntries = useLedgerStore((s) => s.entries);
   const activeLedgerEntries = ledgerEntries.filter(entry => entry.status !== 'SETTLED');
@@ -473,8 +481,8 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing['5'], gap: Spacing['3'] },
   avatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarEmoji: { fontSize: 24, lineHeight: 30 },
-  greetingBlock: { flex: 1, gap: 1 },
-  greetingName: { lineHeight: 22 },
+  greetingBlock: { flex: 1, gap: 1, },
+  greetingName: { lineHeight: 26, },
   headerAction: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   bellBadge: { position: 'absolute', top: -1, right: -1, minWidth: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2, borderWidth: 1.5 },
   bellBadgeText: { fontSize: 8, fontWeight: '900', lineHeight: 10, textAlign: 'center', includeFontPadding: false, textAlignVertical: 'center' },
