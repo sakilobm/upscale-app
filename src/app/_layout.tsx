@@ -9,6 +9,7 @@ import { useThemeStore } from '@store/themeStore';
 import { useNotificationStore } from '@store/notificationStore';
 import { useSplashStore } from '@store/splashStore';
 import { SplashOverlay } from '@components/SplashOverlay';
+import { LoadingOverlay } from '@components/LoadingOverlay';
 import { ToastContainer } from '@components/Toast';
 import { TutorialSpotlightModal } from '@components/tutorial/TutorialSpotlightModal';
 import { useTutorialStore } from '@features/tutorial/store/tutorialStore';
@@ -114,6 +115,7 @@ export default function RootLayout() {
       </Stack>
       <ToastContainer />
       <TutorialSpotlightModal />
+      <LoadingOverlay />
 
       {(!appReady || showSplash) && (
         <SplashOverlay

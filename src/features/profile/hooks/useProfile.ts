@@ -8,6 +8,7 @@ import { useTransactionStore } from '@store/transactionStore';
 import { toast } from '@store/toastStore';
 import { resetAllStores } from '@store/resetAllStores';
 import { seedDemoData, undoDemoData } from '@store/seedDemoData';
+import { useLoadingStore } from '@store/loadingStore';
 import type { CurrencyCode } from '@store/types';
 
 export function useProfile() {
@@ -83,19 +84,41 @@ export function useProfile() {
   }, []);
 
   const handleClearAllData = useCallback(async () => {
+    const showLoading = useLoadingStore.getState().showLoading;
+    const hideLoading = useLoadingStore.getState().hideLoading;
+    
+    showLoading('Wiping Database...', 'Resetting and clearing all local storage...');
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
     await resetAllStores();
+    hideLoading();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     toast.success('All data cleared successfully');
   }, []);
 
   const handleSeedDemoData = useCallback(async () => {
+    const showLoading = useLoadingStore.getState().showLoading;
+    const hideLoading = useLoadingStore.getState().hideLoading;
+    
+    showLoading('Populating Playground...', 'Generating mock accounts and transaction datasets...');
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
     await seedDemoData();
+    hideLoading();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     toast.success('Play Store demo data populated!');
   }, []);
 
   const handleUndoDemoData = useCallback(async () => {
+    const showLoading = useLoadingStore.getState().showLoading;
+    const hideLoading = useLoadingStore.getState().hideLoading;
+    
+    showLoading('Restoring Original Data...', 'Removing sandbox playground records...');
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
     const success = await undoDemoData();
+    hideLoading();
+    
     if (success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       toast.success('Demo data undone. Original state restored!');
