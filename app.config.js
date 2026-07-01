@@ -39,7 +39,7 @@ module.exports = {
   expo: {
     name: process.env.APP_NAME || "WhereCash",
     slug: "WhereCash",
-    version: "1.0.8",
+    version: "1.0.9",
     orientation: "portrait",
     icon: "./assets/app-icon/Icon-512x512.png",
     userInterfaceStyle: "dark",
@@ -61,7 +61,7 @@ module.exports = {
         monochromeImage: "./assets/app-icon/Icon-Monochrome.png"
       },
       package: process.env.APP_PACKAGE || "com.wherecash.app",
-      versionCode: 8,
+      versionCode: 9,
       predictiveBackGestureEnabled: false
     },
     web: {

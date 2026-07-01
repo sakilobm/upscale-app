@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2026-07-01 (Version Code 9)
+
+### Added
+- Created a global premium glassmorphic `LoadingOverlay.tsx` component with custom looping Reanimated animations (pulsing icon box, glowing pulse ring, and rotating dotted halo) to show during heavy database events.
+- Created `src/store/loadingStore.ts` and `src/store/splashStore.ts` to manage state synchronization globally.
+- Integrated `setAppReady(true)` callbacks inside the Home dashboard screen (`src/app/(tabs)/index.tsx`) and Onboarding (`src/app/onboarding.tsx`) to coordinate layout readiness with the custom splash screen.
+
+### Changed
+- Upgraded the `TutorialSpotlightModal.tsx` overlay from a full-screen blocking mask to a dynamic 4-panel viewport cutout backdrop, allowing users to touch and swipe highlighted tutorial elements directly.
+- Optimized tab switching inside heavy screens (Analytics, Transactions, Budget, Ledger, Profile) by integrating `requestIdleCallback` to defer rendering high-priority charts, lists, and animations until the UI thread is idle.
+- Refactored `_layout.tsx` to mount the navigation `<Stack>` unconditionally, solving deep link and route state warning messages.
+- Gated the root index [index.tsx](file:///c:/Users/sowbh/Desktop/MoneyApp/src/app/index.tsx) to redirect immediately on boot in the background underneath the Splash overlay, letting target screens mount invisibly.
+- Connected the `SplashOverlay` exit animation directly to the font loading status and target screen readiness flags (`appReady`), producing a gapless fade transition.
+
+### Fixed
+- Fixed a 3-second blank white screen freeze during app startup.
+- Fixed the double-render/flickering of the custom splash screen during font loading state switches by unifying root layout returns.
+- Fixed React state update warning messages (`Can't perform a React state update on a component that hasn't mounted yet`) during app launch.
+- Fixed file compilation lock issues during local exports on Windows by stopping stale Gradle daemons and Java processes.
+
+### Architectural Decisions
+- **Background Pre-rendering**: Chose to render and mount target screens underneath the Splash overlay while maintaining a 100% idle JS thread. This offloads the initial mount latency to the animation duration, creating a zero-delay landing experience.
+- **Single DOM Reconciliation Tree**: Unified layout returns into a single React tree, ensuring that components like `SplashOverlay` maintain their instance state and Reanimated shared values during runtime updates.
+
+### Rollback & Escape Plan
+- **Forward-fix path**: If background rendering creates startup performance constraints, re-introduce simple skeleton screens or adjust the minimum splash timeout (`ANIM_TOTAL_MS`).
+- **Rollback path**: Run `git checkout src/app/index.tsx src/app/_layout.tsx src/components/SplashOverlay.tsx` to restore original startup redirection configurations.
+
 ## [1.4.3] - 2026-06-13
 
 ### Fixed
