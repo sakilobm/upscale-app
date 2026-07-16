@@ -46,7 +46,14 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "build:android": "eas build --platform android --profile production --local",
-    "build:android-preview": "eas build --platform android --profile preview --local"
+    "build:android-preview": "eas build --platform android --profile preview --local",
+    "bump-version": "node scripts/export-build.js --command none",
+    "export:prod": "node scripts/export-build.js --env production --command \"npx expo export\"",
+    "export:dev": "node scripts/export-build.js --env development --command \"npx expo export\"",
+    "build:prod": "node scripts/export-build.js --env production --command \"eas build --platform android --profile production --local\"",
+    "build:preview": "node scripts/export-build.js --env development --command \"eas build --platform android --profile preview --local\"",
+    "build:prod-local": "node scripts/export-build.js --env production --command \"npx expo prebuild --clean && cd android && gradlew assembleRelease\"",
+    "build:prod-local-aab": "node scripts/export-build.js --env production --command \"npx expo prebuild --clean && cd android && gradlew bundleRelease\""
   },
   "private": true
 }

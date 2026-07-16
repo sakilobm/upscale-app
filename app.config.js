@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const versionInfo = require('./version.json');
 
 // Simple helper to load environment variables from a file into process.env
 function loadEnvFile(fileName) {
@@ -39,7 +40,7 @@ module.exports = {
   expo: {
     name: process.env.APP_NAME || "WhereCash",
     slug: "WhereCash",
-    version: "1.0.9",
+    version: versionInfo.version,
     orientation: "portrait",
     icon: "./assets/app-icon/Icon-512x512.png",
     userInterfaceStyle: "dark",
@@ -61,7 +62,7 @@ module.exports = {
         monochromeImage: "./assets/app-icon/Icon-Monochrome.png"
       },
       package: process.env.APP_PACKAGE || "com.wherecash.app",
-      versionCode: 9,
+      versionCode: versionInfo.versionCode,
       predictiveBackGestureEnabled: false
     },
     web: {
