@@ -247,7 +247,7 @@ export function NotifSheet({ prefs, onChange, onClose }: Props) {
 
 const s = StyleSheet.create({
   container: {
-    flex: 1,
+    flexShrink: 1,
     marginTop: Spacing['2'],
   },
   content: {

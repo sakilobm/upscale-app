@@ -166,5 +166,6 @@ const s = StyleSheet.create({
   closeBtn: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   contentContainer: {
     width: '100%',
+    flexShrink: 1,
   },
 });

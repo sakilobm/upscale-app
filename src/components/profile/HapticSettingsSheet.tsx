@@ -162,7 +162,7 @@ export function HapticSettingsSheet() {
 
 const s = StyleSheet.create({
   scroll: {
-    flex: 1,
+    flexShrink: 1,
   },
   container: {
     paddingHorizontal: Spacing['5'],

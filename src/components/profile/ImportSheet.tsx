@@ -612,7 +612,7 @@ export function ImportSheet({ onClose }: Props) {
       )}
 
       <ScrollView
-        style={{ flex: 1 }}
+        style={{ flexShrink: 1 }}
         contentContainerStyle={[is.root, { paddingBottom: 40 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -1234,7 +1234,7 @@ export function ImportSheet({ onClose }: Props) {
 
 const is = StyleSheet.create({
   wrapper: {
-    flex: 1,
+    flexShrink: 1,
   },
   root: {
     paddingHorizontal: Spacing['5'],

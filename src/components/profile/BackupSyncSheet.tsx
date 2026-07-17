@@ -507,7 +507,7 @@ export function BackupSyncSheet({ onClose }: Props) {
    ═══════════════════════════════════════════════════════════════════════════════ */
 const s = StyleSheet.create({
   container: {
-    flex: 1,
+    flexShrink: 1,
     marginTop: Spacing['1'],
   },
   content: {
