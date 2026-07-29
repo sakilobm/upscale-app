@@ -11,12 +11,19 @@
         "statusBar.background": "#7f13e6",
         "statusBar.foreground": "#e7e7e7",
         "statusBarItem.hoverBackground": "#983def",
-        "statusBarItem.remoteBackground": "#7f13e6",
+        "statusBarItem.remoteBackground": "#3b2105",
         "statusBarItem.remoteForeground": "#e7e7e7",
         "titleBar.activeBackground": "#7f13e6",
         "titleBar.activeForeground": "#e7e7e7",
         "titleBar.inactiveBackground": "#7f13e699",
-        "titleBar.inactiveForeground": "#e7e7e799"
+        "titleBar.inactiveForeground": "#e7e7e799",
+        "activityBarTop.activeBackground": "#983def",
+        "activityBarTop.background": "#983def",
+        "activityBarTop.foreground": "#e7e7e7",
+        "activityBarTop.inactiveForeground": "#e7e7e799",
+        "commandCenter.foreground": "#e7e7e7",
+        "statusBar.debuggingBackground": "#7f13e6",
+        "statusBar.debuggingForeground": "#e7e7e7"
     },
     "peacock.color": "#7f13e6",
     "java.configuration.updateBuildConfiguration": "interactive"

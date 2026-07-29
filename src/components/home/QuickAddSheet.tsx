@@ -54,8 +54,10 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
     accountId, setAccountId,
     note, setNote,
     cats, accounts, amountDisplay,
+    selectedAccount, projectedBalance, isOverdrawn,
     handleSave, reset, isSaving,
   } = useQuickAddTransaction(onClose);
+  const { format: formatCurrencyVal } = useFormatCurrency();
 
   const slideY = useSharedValue(SH * 0.9);
   const kbH = useKeyboardHeight();
@@ -82,7 +84,7 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
   const sheetBg = colors.background.secondary;
   const inputBg = colors.background.primary;
 
-  const selectedAccountCurrency = accounts.find((a) => a.id === accountId)?.currency ?? currency;
+  const selectedAccountCurrency = selectedAccount?.currency ?? currency;
   const currentSymbol = CURRENCY_SYMBOLS[selectedAccountCurrency] ?? '$';
   const accentColor = type === 'expense' ? colors.status.expense : colors.status.income;
 
@@ -176,6 +178,14 @@ export function QuickAddSheet({ visible, initialType, onClose }: Props) {
                     <AppText variant="caption" style={{ color: colors.text.tertiary }}>
                       {selectedAccountCurrency}
                     </AppText>
+                    {isOverdrawn && (
+                      <View style={[s.overdraftBadge, { backgroundColor: colors.status.expense + '15', borderColor: colors.status.expense + '40' }]}>
+                        <Ionicons name="warning" size={13} color={colors.status.expense} />
+                        <AppText style={{ color: colors.status.expense, fontSize: 11, fontWeight: '700' }}>
+                          Overdraft: Balance will be {formatCurrencyVal(projectedBalance, selectedAccountCurrency)}
+                        </AppText>
+                      </View>
+                    )}
                   </View>
 
                   {/* Numpad */}
@@ -369,6 +379,11 @@ const s = StyleSheet.create({
   typeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: Radius.lg },
   amountSection: { alignItems: 'center', paddingVertical: 8, marginBottom: 12 },
   amountDisplay: { fontSize: 42, fontWeight: '800', letterSpacing: -1, lineHeight: 52 },
+  overdraftBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.full,
+    borderWidth: 1, marginTop: 6,
+  },
   numpad: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   numKey: { width: '30%', flexGrow: 1, height: 52, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center' },
   numKeyText: { fontSize: 22, fontWeight: '600', lineHeight: 28 },

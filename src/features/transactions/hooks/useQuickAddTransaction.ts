@@ -98,6 +98,13 @@ export function useQuickAddTransaction(onSuccess: () => void) {
 
   const accentColor = type === 'expense' ? colors.status.expense : colors.status.income;
 
+  const selectedAccount = accounts.find((a) => a.id === accountId) ?? null;
+  const currentAmount = parseFloat(amountStr) || 0;
+  const projectedBalance = selectedAccount
+    ? (type === 'expense' ? selectedAccount.balance - currentAmount : selectedAccount.balance + currentAmount)
+    : 0;
+  const isOverdrawn = type === 'expense' && !!selectedAccount && selectedAccount.type !== 'credit' && projectedBalance < 0;
+
   return {
     type,
     handleTypeChange,
@@ -111,6 +118,9 @@ export function useQuickAddTransaction(onSuccess: () => void) {
     setNote,
     cats,
     accounts,
+    selectedAccount,
+    projectedBalance,
+    isOverdrawn,
     amountDisplay,
     accentColor,
     handleSave,
